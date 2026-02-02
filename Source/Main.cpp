@@ -53,7 +53,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	AESysSetWindowTitle("Merge Defenders");
 
 	GridSystem::Grid grid(16, 9, 100.0f, { -800.0f, -450.0f });
-	grid.InitScene();
+	grid.Init();
 
 	// Game Loop
 	while (gGameRunning)
