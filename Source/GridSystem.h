@@ -39,7 +39,7 @@ namespace GridSystem {
         void Destroy();
 
         // -----------------------------
-        // EDITOR HELPERS (NEW)
+        // EDITOR HELPERS
         // -----------------------------
         // Convert screen mouse (pixels) -> grid coord based on your current draw layout.
         // Returns false if mouse not over grid.

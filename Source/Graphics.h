@@ -1,40 +1,47 @@
 #pragma once
 #include "AEEngine.h"
+#include <cstdint>
 
 namespace Graphics
 {
-    // Must be called once at startup
-    void Init();
+    using ShapeId = uint32_t;
 
-    // Must be called once at shutdown
-    void Shutdown();
-
-    // =========================
-    // Primitive Drawing
-    // =========================
-
-    // Filled rectangle (world-space, centered)
-    void DrawRect(
-        float cx, float cy,
-        float width, float height,
-        float r, float g, float b, float a = 1.0f
-    );
-
-    // Square helper
-    inline void DrawSquare(
-        float cx, float cy,
-        float size,
-        float r, float g, float b, float a = 1.0f
-    )
+    enum class ShapeType : uint8_t
     {
-        DrawRect(cx, cy, size, size, r, g, b, a);
-    }
+        Rect,
+        Circle,
+        Sprite
+    };
 
-    // Filled circle (triangle fan approximation)
-    void DrawCircle(
-        float cx, float cy,
-        float radius,
-        int segments,
-        float r, float g, float b, float a = 1.0f
-    );
+    // Create retained shapes (they persist until Destroy/DeleteSelected)
+    ShapeId DrawRect(float cx, float cy, float w, float h,
+        float r, float g, float b, float a);
+
+    ShapeId DrawCircle(float cx, float cy, float radius, int segments,
+        float r, float g, float b, float a);
+
+    // NEW: Sprite (w/h = size in world pixels; UV defaults full texture)
+    ShapeId DrawSprite(AEGfxTexture* tex,
+        float cx, float cy, float w, float h,
+        float r = 1, float g = 1, float b = 1, float a = 1,
+        float u0 = 0.0f, float v0 = 0.0f, float u1 = 1.0f, float v1 = 1.0f);
+
+    // Modify later
+    void SetPosition(ShapeId id, float cx, float cy);
+    void SetScale(ShapeId id, float sx, float sy);
+    void SetColor(ShapeId id, float r, float g, float b, float a);
+    void SetUV(ShapeId id, float u0, float v0, float u1, float v1); // for sprite sheets
+    void Destroy(ShapeId id);
+
+    // Selection (single)
+    ShapeId SelectAtScreen(int mouseX, int mouseY); // sets selected internally, returns id or 0
+    void ClearSelection();
+    ShapeId GetSelected();
+    void DeleteSelected(); // destroys currently selected (if any)
+
+    // Render all
+    void RenderAll();
+
+    // Cleanup
+    void Shutdown();
 }

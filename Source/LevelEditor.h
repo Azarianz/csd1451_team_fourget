@@ -6,6 +6,7 @@
 class LevelEditor
 {
 public:
+    s8 m_uiFont = -1;
     enum class ActiveLayer
     {
         MapLayer,
@@ -33,6 +34,7 @@ private:
     void PaintAtMouse(bool erase);
     void DrawRegionOverlay() const;
     void DrawMapOverlay() const;
+    void DrawUI() const;
 
     void CycleMapTile(int dir);
     void CycleRegion(int dir);
