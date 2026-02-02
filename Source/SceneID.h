@@ -4,6 +4,7 @@ enum class SceneID
 {
     None = 0,
     LevelEditor,
+    Level1,
 
     // Teammates add more here:
     // Grid_Test,

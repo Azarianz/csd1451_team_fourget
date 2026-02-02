@@ -102,9 +102,11 @@ xcopy "$(SolutionDir)Extern\AlphaEngine\lib\fmod.dll" "$(OutDir)" /s /r /y /q</C
     <ClCompile Include="..\Source\HealthBar.cpp" />
     <ClCompile Include="..\Source\LevelData.cpp" />
     <ClCompile Include="..\Source\LevelEditor.cpp" />
+    <ClCompile Include="..\Source\LevelLoader.cpp" />
     <ClCompile Include="..\Source\Main.cpp" />
     <ClCompile Include="..\Source\Player.cpp" />
     <ClCompile Include="..\Source\SceneManager.cpp" />
+    <ClCompile Include="..\Source\Scene_Level1.cpp" />
     <ClCompile Include="..\Source\Scene_LevelEditor.cpp" />
     <ClCompile Include="..\Source\Tower.cpp" />
     <ClCompile Include="..\Source\Utility.cpp" />
@@ -116,9 +118,11 @@ xcopy "$(SolutionDir)Extern\AlphaEngine\lib\fmod.dll" "$(OutDir)" /s /r /y /q</C
     <ClInclude Include="..\Source\HealthBar.h" />
     <ClInclude Include="..\Source\LevelData.h" />
     <ClInclude Include="..\Source\LevelEditor.h" />
+    <ClInclude Include="..\Source\LevelLoader.h" />
     <ClInclude Include="..\Source\Player.h" />
     <ClInclude Include="..\Source\SceneID.h" />
     <ClInclude Include="..\Source\SceneManager.h" />
+    <ClInclude Include="..\Source\Scene_Level1.h" />
     <ClInclude Include="..\Source\Scene_LevelEditor.h" />
     <ClInclude Include="..\Source\Tower.h" />
     <ClInclude Include="..\Source\Utility.h" />
