@@ -186,9 +186,6 @@ void LevelEditor::Update(float /*dt*/)
         if (m_layer == ActiveLayer::MapLayer) CycleMapTile(+1);
         else CycleRegion(+1);
     }
-
-    Draw();
-    DrawUI();
 }
 
 void LevelEditor::DrawMapOverlay() const
@@ -328,6 +325,8 @@ void LevelEditor::Draw()
     GridSystem::GridCoord c;
     if (m_grid->ScreenToGrid(mx, my, c))
         m_grid->DrawTileTinted(c, 1, 1, 1, 0.75f);
+
+    DrawUI();
 }
 
 void LevelEditor::DrawUI() const

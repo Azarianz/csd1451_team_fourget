@@ -1,18 +1,5 @@
 #pragma once
 
-enum class SceneID
-{
-    None = 0,
-    Gameplay_Test,
-    Tower_Test,
-    Grid_Test,
-
-    // Teammates add more here:
-    // Azar_Test,
-    // Ryan_Test,
-    // ...
-};
-
 class Scene
 {
 public:
