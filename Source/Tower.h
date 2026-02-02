@@ -1,45 +1,46 @@
 #pragma once
 #include "AEEngine.h"
 #include "GameObject.h"
-
+#include <vector>
 
 namespace TowerHandler {
 
+    static int nextTowerID = 0;
+
+    enum TowerType{ BASIC_TOWER = 0, SNIPER_TOWER};
+
     struct ProjectileType
     {
-
         AEGfxTexture* sprite;
         float damage;
         float speed;
-
     };
 
     struct TowerDetails {
         int level;
         int ID;
         float range;
-        AEVec2 pos;
+        TowerType towerType;
         ProjectileType projectile;
     };
 
-    struct Tower : public GameObject
-    {
+    struct Tower : public GameObject{
         int tower_count; //amount of towers
-        bool isDragging{false};
-        float dragOffsetX{};
-        float dragOffsetY{};
-        TowerDetails* details; //dynamic array of tower details
+        bool isDragging;
+        float dragOffsetX;
+        float dragOffsetY;
+        TowerDetails details; //dynamic array of tower details
 
-        void Init(float startX, float startY, float sizeX, float sizeY, Color c, int segcount = 30);
-        void Update(float mouseX, float mouseY, Tower &tower);
+        void TowerInit(float xPos, float yPos, float xSize, float ySize, Color c, int segcount = 50);
         void Draw();
-        Tower* CreateTower(float startX, float startY, int towerID);
-        void DestroyTower(Tower* tower);
     };
-
     
-    
-    
+    // DUMMY TOWER TO BASICALLY ACT AS SHOP TOWER SPRITE TO SELECT
+    struct ShopTower : public GameObject {
+        void ShopTowerInit(float startX, float startY, float sizeX, float sizeY, Color c, int segcount = 50);
+        
+    };
+    void UpdateTowerSystem(float mouseX, float mouseY, ShopTower& shop, std::vector<Tower>& activeTowers);
 }
 
 

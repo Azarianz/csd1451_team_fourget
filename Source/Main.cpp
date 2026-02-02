@@ -25,24 +25,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	// - Initialization of your own variables go here -
 	// Init Game Vars
+	Color red{ 1, 0, 0, 1 };
+	Color green{ 0, 1, 0, 1 };
 	Color blue{ 0, 0, 1, 1 };
 	Color white{ 1, 1, 1, 1};
 	Player player;
 	player.Init(0.0f, 0.0f, 50, 50, blue);
 
 	//testing tower stuff
-	TowerHandler::Tower shopTower;
-	shopTower.Init(
+	std::vector<TowerHandler::Tower> towerList; // uninitialize tower list
+
+	TowerHandler::ShopTower shopTower; // acts as a spawner for tower
+	shopTower.ShopTowerInit(
 		600, 200,
 		50, 50,
 		white
-	);
-
-	TowerHandler::Tower towerObj;
-	towerObj.Init(
-		600, 200,		// x, y pos
-		50, 50,			// x, y scale
-		blue			// color
 	);
 
 	int mouseX{}, mouseY{};
@@ -64,9 +61,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		float dt = (float)AEFrameRateControllerGetFrameTime();
 
 		// Update
-		player.Update(dt);
-		//shopTower.Update((float)mouseX, (float)mouseY, towerObj); //could use overloading for different update logic
-		towerObj.Update((float)mouseX, (float)mouseY, towerObj);
+		UpdateTowerSystem(mouseX, mouseY, shopTower, towerList); // initializes and adds new tower to towerList
 
 		// Render setup
 		AEGfxSetBackgroundColor(.5f, .5f, .5f);
@@ -77,9 +72,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		AEGfxSetTransparency(1.0f);
 
 		// Draw
-		shopTower.Draw();
-		towerObj.Draw();
-		grid.Update();	//Call Update: Which also calls Draw() in it and other execution order need for updating per frame
+		shopTower.Draw(); // draws shop tower
+		for (TowerHandler::Tower& t : towerList) { // draw towers in towerList
+			for (TowerHandler::Tower& t : towerList) {
+				t.Draw();
+			}
+		}
 
 		AESysFrameEnd();
 
@@ -89,9 +87,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	}
 
 	// Cleanup
-	player.Destroy();
-	towerObj.Destroy();
-	grid.Destroy();
 
 	// free the system
 	AESysExit();
