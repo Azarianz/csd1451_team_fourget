@@ -100,11 +100,15 @@ xcopy "$(SolutionDir)Extern\AlphaEngine\lib\fmod.dll" "$(OutDir)" /s /r /y /q</C
     <ClCompile Include="..\Source\HealthBar.cpp" />
     <ClCompile Include="..\Source\Main.cpp" />
     <ClCompile Include="..\Source\Player.cpp" />
+    <ClCompile Include="..\Source\Tower.cpp" />
+    <ClCompile Include="..\Source\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Source\GameObject.h" />
     <ClInclude Include="..\Source\HealthBar.h" />
     <ClInclude Include="..\Source\Player.h" />
+    <ClInclude Include="..\Source\Tower.h" />
+    <ClInclude Include="..\Source\Utility.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
