@@ -1,8 +1,12 @@
-#include <cmath>   // std::floor
-#include "AEEngine.h"
 #include "GridSystem.h"
 
 namespace GridSystem {
+    enum TileFlags : unsigned char {
+        TF_NONE = 0,
+        TF_BUILDABLE = 1,
+        TF_ENEMYPATH = 2
+    };
+
     static float MinF(float a, float b) { return (a < b) ? a : b; }
 
     float RoundToPixel(float v)
@@ -112,7 +116,11 @@ namespace GridSystem {
             v = 0;
     }
 
-    void Grid::InitScene() {
+    void Grid::Init() {
+        // Build a unit quad mesh (VertexList) with UVs; we scale per-tile
+        pTileMesh = nullptr;
+        pTileTex = nullptr;
+
         // Your tile sprite (single square tile image)
         pTileTex = AEGfxTextureLoad("Assets/grid_highlighted.png");
         if (!pTileTex)
@@ -121,10 +129,12 @@ namespace GridSystem {
             // Common cause: AE build doesn't support PNG, or wrong relative path.
             OutputDebugStringA("FAILED to load Assets/grid_highlighted.png\n");
         }
+        else
+        {
+            OutputDebugStringA("Grid Init: texture loaded OK\n");
+        }
 
         // Build a unit quad mesh (VertexList) with UVs; we scale per-tile
-        pTileMesh = nullptr;
-
         AEGfxMeshStart();
 
         // Centered quad (-0.5..0.5) with UVs
@@ -137,6 +147,8 @@ namespace GridSystem {
             -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
 
         pTileMesh = AEGfxMeshEnd();
+
+        if (!pTileMesh) OutputDebugStringA("Grid Init: pTileMesh is NULL\n");
     }
 
     void Grid::Draw() {
@@ -144,59 +156,69 @@ namespace GridSystem {
         if (AEInputCheckTriggered(AEVK_G))
             showGrid = !showGrid;
 
+        // If hidden flag is TRUE don't draw
+        if (!showGrid || !pTileMesh)
+            return;
+
         // Render setup
-        AEGfxSetBackgroundColor(0.25f, 0.25f, 0.25f);
-        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxTextureSet(pTileTex, 0, 0);
-        AEGfxSetTransparency(1.0f);
-        AEGfxSetColorToMultiply(1, 1, 1, 1);
-        AEGfxSetColorToAdd(0, 0, 0, 0);
-
-        // -----------------------------
-        // DRAW GRID (auto-fit to screen)
-        // -----------------------------
-        //if (showGrid && pTileTex && pTileMesh)
-                //if (showGrid && pTileTex && pTileMesh)
-        if (showGrid && pTileTex && pTileMesh)
+        // If we have texture, draw textured. If not, draw solid color (debug).
+        if (pTileTex)
         {
-            // Fit inside screen (no cropping)
-            float screenW = (float)AEGfxGetWindowWidth();
-            float screenH = (float)AEGfxGetWindowHeight();
-            float tileSizeW = screenW / (float)cols;
-            float tileSizeH = screenH / (float)rows;
-            float tileSize = MinF(tileSizeW, tileSizeH);
+            AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+            AEGfxTextureSet(pTileTex, 0, 0);
+            AEGfxSetColorToMultiply(1, 1, 1, 1);
+            AEGfxSetColorToAdd(0, 0, 0, 0);
+        }
+        else
+        {
+            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+            AEGfxSetColorToMultiply(1.0f, 0.0f, 1.0f, 1.0f); // MAGENTA, opaque
+            AEGfxSetColorToAdd(0, 0, 0, 0);
+        }
 
-            // Pixel-art friendliness: snap to integer pixels
-            tileSize = floorf(tileSize);
-            if (tileSize < 1.0f) tileSize = 1.0f;
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
 
-            float gridW = tileSize * (float)cols;
-            float gridH = tileSize * (float)rows;
+        float screenW = (float)AEGfxGetWindowWidth();
+        float screenH = (float)AEGfxGetWindowHeight();
 
-            // Center the grid
-            float startX = -gridW * 0.5f + tileSize * 0.5f;
-            float startY = gridH * 0.5f - tileSize * 0.5f;
+        // Avoid divide by zero
+        if (m_width <= 0 || m_height <= 0) return;
 
-            for (int y = 0; y < rows; ++y)
+        float tileSizeW = screenW / (float)m_width;
+        float tileSizeH = screenH / (float)m_height;
+        float tileSize = MinF(tileSizeW, tileSizeH);
+
+        tileSize = floorf(tileSize);
+        if (tileSize < 1.0f) tileSize = 1.0f;
+
+        float gridW = tileSize * (float)m_width;
+        float gridH = tileSize * (float)m_height;
+
+        float startX = -gridW * 0.5f + tileSize * 0.5f;
+        float startY = gridH * 0.5f - tileSize * 0.5f;
+
+        // -----------------------------
+        // DRAW GRID
+        // -----------------------------
+        for (int y = 0; y < m_height; ++y)
+        {
+            for (int x = 0; x < m_width; ++x)
             {
-                for (int x = 0; x < cols; ++x)
-                {
-                    float worldX = startX + (float)x * tileSize;
-                    float worldY = startY - (float)y * tileSize;
+                float worldX = startX + (float)x * tileSize;
+                float worldY = startY - (float)y * tileSize;
 
-                    // Snap to pixel to reduce shimmer
-                    worldX = GridSystem::RoundToPixel(worldX);
-                    worldY = GridSystem::RoundToPixel(worldY);
+                // Snap to pixel to reduce shimmer
+                worldX = GridSystem::RoundToPixel(worldX);
+                worldY = GridSystem::RoundToPixel(worldY);
 
-                    AEMtx33 scale, trans, m;
-                    AEMtx33Scale(&scale, tileSize, tileSize);
-                    AEMtx33Trans(&trans, worldX, worldY);
-                    AEMtx33Concat(&m, &trans, &scale);
+                AEMtx33 scale, trans, m;
+                AEMtx33Scale(&scale, tileSize, tileSize);
+                AEMtx33Trans(&trans, worldX, worldY);
+                AEMtx33Concat(&m, &trans, &scale);
 
-                    AEGfxSetTransform(m.m);
-                    AEGfxMeshDraw(pTileMesh, AE_GFX_MDM_TRIANGLES);
-                }
+                AEGfxSetTransform(m.m);
+                AEGfxMeshDraw(pTileMesh, AE_GFX_MDM_TRIANGLES);
             }
         }
     }

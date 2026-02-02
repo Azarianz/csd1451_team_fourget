@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 #include <cstddef>
+#include <cmath>   // std::floor
+#include "AEEngine.h"
 
 namespace GridSystem {
     float RoundToPixel(float v); // <--- add this declaration
@@ -16,11 +18,7 @@ namespace GridSystem {
     };
 
     // Simple 2D float vector (so you don't depend on a math lib)
-    struct Vec2
-    {
-        float x{ 0.0f };
-        float y{ 0.0f };
-    };
+    struct Vec2 { float x{ 0 }, y{ 0 }; };
 
     class Grid
     {
@@ -30,15 +28,12 @@ namespace GridSystem {
         Grid(int width, int height, float cellSize, Vec2 originWorld = { 0.0f, 0.0f });
 
         // --- Grid Init Vars --- 
-        AEGfxTexture* pTileTex;
-        AEGfxVertexList* pTileMesh;
-
+        AEGfxTexture* pTileTex = nullptr;
+		AEGfxVertexList* pTileMesh = nullptr;
 
         // -----------------------------
         // GRID SETTINGS
         // -----------------------------
-        const int cols = 20;   // how many tiles across
-        const int rows = 11;   // how many tiles down
         bool showGrid = true;
 
 
@@ -79,7 +74,7 @@ namespace GridSystem {
         // Clear all tiles
         void Clear();
 
-        void InitScene();
+        void Init();
 
         void Update();
 
@@ -96,7 +91,6 @@ namespace GridSystem {
         // 0 = empty, non-zero = occupied (stores object id)
         std::vector<int> m_cells;
 
-    private:
         std::size_t Index(int x, int y) const;
     };
 }
