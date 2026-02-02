@@ -1,37 +1,24 @@
 #include "GridSystem.h"
 
 namespace GridSystem {
-    enum TileFlags : unsigned char {
-        TF_NONE = 0,
-        TF_BUILDABLE = 1,
-        TF_ENEMYPATH = 2
-    };
 
     static float MinF(float a, float b) { return (a < b) ? a : b; }
 
-    float RoundToPixel(float v)
-    {
-        return floorf(v + 0.5f);
-    }
+    float RoundToPixel(float v) { return floorf(v + 0.5f); }
 
     Grid::Grid(int width, int height, float cellSize, Vec2 originWorld)
-        : m_width(width)
-        , m_height(height)
-        , m_cellSize(cellSize)
-        , m_originWorld(originWorld)
-        , m_cells()
+        : m_width(width), m_height(height), m_cellSize(cellSize), m_originWorld(originWorld), m_cells()
     {
         if (m_width < 0)  m_width = 0;
         if (m_height < 0) m_height = 0;
         if (m_cellSize <= 0.0f) m_cellSize = 1.0f;
 
-        m_cells.assign(static_cast<std::size_t>(m_width) * static_cast<std::size_t>(m_height), 0);
+        m_cells.assign((size_t)m_width * (size_t)m_height, 0);
     }
 
     std::size_t Grid::Index(int x, int y) const
     {
-        return static_cast<std::size_t>(y) * static_cast<std::size_t>(m_width)
-            + static_cast<std::size_t>(x);
+        return (size_t)y * (size_t)m_width + (size_t)x;
     }
 
     bool Grid::InBounds(int x, int y) const
@@ -39,105 +26,21 @@ namespace GridSystem {
         return (x >= 0 && x < m_width && y >= 0 && y < m_height);
     }
 
-    bool Grid::InBounds(GridCoord c) const
+    bool Grid::InBounds(GridCoord c) const { return InBounds(c.x, c.y); }
+
+    void Grid::Init()
     {
-        return InBounds(c.x, c.y);
-    }
-
-    GridCoord Grid::WorldToGrid(Vec2 world) const
-    {
-        // translate relative to origin
-        const float localX = (world.x - m_originWorld.x) / m_cellSize;
-        const float localY = (world.y - m_originWorld.y) / m_cellSize;
-
-        // floor into cell index
-        GridCoord c;
-        c.x = static_cast<int>(std::floor(localX));
-        c.y = static_cast<int>(std::floor(localY));
-        return c;
-    }
-
-    Vec2 Grid::GridToWorldMin(GridCoord c) const
-    {
-        // bottom-left corner of tile
-        Vec2 w;
-        w.x = m_originWorld.x + (static_cast<float>(c.x) * m_cellSize);
-        w.y = m_originWorld.y + (static_cast<float>(c.y) * m_cellSize);
-        return w;
-    }
-
-    Vec2 Grid::GridToWorldCenter(GridCoord c) const
-    {
-        Vec2 min = GridToWorldMin(c);
-        Vec2 center;
-        center.x = min.x + m_cellSize * 0.5f;
-        center.y = min.y + m_cellSize * 0.5f;
-        return center;
-    }
-
-    bool Grid::Place(GridCoord c, int objectId)
-    {
-        if (!InBounds(c)) return false;
-        if (objectId == 0) objectId = 1; // keep 0 as "empty"
-
-        const std::size_t idx = Index(c.x, c.y);
-        if (m_cells[idx] != 0) return false; // already occupied
-
-        m_cells[idx] = objectId;
-        return true;
-    }
-
-    bool Grid::Remove(GridCoord c)
-    {
-        if (!InBounds(c)) return false;
-
-        const std::size_t idx = Index(c.x, c.y);
-        if (m_cells[idx] == 0) return false; // already empty
-
-        m_cells[idx] = 0;
-        return true;
-    }
-
-    bool Grid::IsOccupied(GridCoord c) const
-    {
-        if (!InBounds(c)) return false;
-        return m_cells[Index(c.x, c.y)] != 0;
-    }
-
-    int Grid::GetObjectId(GridCoord c) const
-    {
-        if (!InBounds(c)) return 0;
-        return m_cells[Index(c.x, c.y)];
-    }
-
-    void Grid::Clear()
-    {
-        for (int& v : m_cells)
-            v = 0;
-    }
-
-    void Grid::Init() {
-        // Build a unit quad mesh (VertexList) with UVs; we scale per-tile
         pTileMesh = nullptr;
         pTileTex = nullptr;
 
-        // Your tile sprite (single square tile image)
         pTileTex = AEGfxTextureLoad("Assets/grid_highlighted.png");
-        if (!pTileTex)
-        {
-            // If this prints in your debugger output, your texture isn't loading.
-            // Common cause: AE build doesn't support PNG, or wrong relative path.
-            OutputDebugStringA("FAILED to load Assets/grid_highlighted.png\n");
-        }
-        else
-        {
-            OutputDebugStringA("Grid Init: texture loaded OK\n");
+        if (!pTileTex) PRINT("FAILED to load Assets/grid_highlighted.png\n");
+        else {
+            PRINT("SUCCESSFULLY loaded Assets/grid_highlighted.png\n");
         }
 
-        // Build a unit quad mesh (VertexList) with UVs; we scale per-tile
         AEGfxMeshStart();
 
-        // Centered quad (-0.5..0.5) with UVs
         AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
             0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f,
             0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
@@ -147,73 +50,59 @@ namespace GridSystem {
             -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
 
         pTileMesh = AEGfxMeshEnd();
-
-        if (!pTileMesh) OutputDebugStringA("Grid Init: pTileMesh is NULL\n");
-    }
-
-    void Grid::Draw() {
-        // Toggle grid visibility
-        if (AEInputCheckTriggered(AEVK_G))
-            showGrid = !showGrid;
-
-        // If hidden flag is TRUE don't draw
-        if (!showGrid || !pTileMesh)
-            return;
-
-        // Render setup
-        // If we have texture, draw textured. If not, draw solid color (debug).
-        if (pTileTex)
-        {
-            AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-            AEGfxTextureSet(pTileTex, 0, 0);
-            AEGfxSetColorToMultiply(1, 1, 1, 1);
-            AEGfxSetColorToAdd(0, 0, 0, 0);
+        if (!pTileMesh) PRINT("Grid Init: pTileMesh is NULL\n");
+        else {
+            PRINT("SUCCESSFULLY init pTileMesh\n");
         }
-        else
-        {
-            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-            AEGfxSetColorToMultiply(1.0f, 0.0f, 1.0f, 1.0f); // MAGENTA, opaque
-            AEGfxSetColorToAdd(0, 0, 0, 0);
-        }
+    } 
 
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(1.0f);
-
+    void Grid::ComputeLayout(float& tileW, float& tileH, float& startX, float& startY) const
+    {
         float screenW = (float)AEGfxGetWindowWidth();
         float screenH = (float)AEGfxGetWindowHeight();
 
-        // Avoid divide by zero
+        tileW = screenW / (float)m_width;
+        tileH = screenH / (float)m_height;
+
+        // center of cell (0,0) top-left-ish
+        startX = -screenW * 0.5f + tileW * 0.5f;
+        startY = screenH * 0.5f - tileH * 0.5f;
+    }
+
+    void Grid::Draw()
+    {
+        if (AEInputCheckTriggered(AEVK_G))
+            showGrid = !showGrid;
+
+        if (!showGrid || !pTileMesh) return;
         if (m_width <= 0 || m_height <= 0) return;
+        if (!pTileTex) return;
 
-        float tileSizeW = screenW / (float)m_width;
-        float tileSizeH = screenH / (float)m_height;
-        float tileSize = MinF(tileSizeW, tileSizeH);
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxTextureSet(pTileTex, 0, 0);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
-        tileSize = floorf(tileSize);
-        if (tileSize < 1.0f) tileSize = 1.0f;
+        float tileW, tileH, startX, startY;
+        ComputeLayout(tileW, tileH, startX, startY);
 
-        float gridW = tileSize * (float)m_width;
-        float gridH = tileSize * (float)m_height;
+        // 1) Base grid faint
+        const float baseAlpha = 0.12f;
+        AEGfxSetTransparency(baseAlpha);
+        AEGfxSetColorToMultiply(1, 1, 1, 1);
+        AEGfxSetColorToAdd(0, 0, 0, 0);
 
-        float startX = -gridW * 0.5f + tileSize * 0.5f;
-        float startY = gridH * 0.5f - tileSize * 0.5f;
-
-        // -----------------------------
-        // DRAW GRID
-        // -----------------------------
         for (int y = 0; y < m_height; ++y)
         {
             for (int x = 0; x < m_width; ++x)
             {
-                float worldX = startX + (float)x * tileSize;
-                float worldY = startY - (float)y * tileSize;
+                float worldX = startX + (float)x * tileW;
+                float worldY = startY - (float)y * tileH;
 
-                // Snap to pixel to reduce shimmer
-                worldX = GridSystem::RoundToPixel(worldX);
-                worldY = GridSystem::RoundToPixel(worldY);
+                worldX = RoundToPixel(worldX);
+                worldY = RoundToPixel(worldY);
 
                 AEMtx33 scale, trans, m;
-                AEMtx33Scale(&scale, tileSize, tileSize);
+                AEMtx33Scale(&scale, tileW, tileH);
                 AEMtx33Trans(&trans, worldX, worldY);
                 AEMtx33Concat(&m, &trans, &scale);
 
@@ -221,16 +110,90 @@ namespace GridSystem {
                 AEGfxMeshDraw(pTileMesh, AE_GFX_MDM_TRIANGLES);
             }
         }
+
+        // 2) Hover highlight bright (opacity-only)
+        int mx = 0, my = 0;
+        AEInputGetCursorPosition(&mx, &my);
+
+        GridCoord hover;
+        if (ScreenToGrid(mx, my, hover))
+        {
+            // reuse your existing function
+            DrawTileTinted(hover, 1, 1, 1, 1.0f);
+        }
+
+        // Reset
+        AEGfxSetTransparency(1.0f);
     }
 
-    void Grid::Update()
+    void Grid::DrawTileTinted(GridCoord c, float r, float g, float b, float a) const
     {
-        Draw();
-        //Logic
-	}
+        if (!pTileMesh) return;
+        if (!InBounds(c)) return;
+        if (!pTileTex) return;
 
-    void Grid::Destroy() {
+
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxTextureSet(pTileTex, 0, 0);
+
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(a);                 // opacity lives here
+        AEGfxSetColorToMultiply(r, g, b, 1.0f);  // no alpha here
+        AEGfxSetColorToAdd(0, 0, 0, 0);
+
+        float tileW, tileH, startX, startY;
+        ComputeLayout(tileW, tileH, startX, startY);
+
+        float worldX = startX + (float)c.x * tileW;
+        float worldY = startY - (float)c.y * tileH;
+
+        worldX = RoundToPixel(worldX);
+        worldY = RoundToPixel(worldY);
+
+        AEMtx33 scale, trans, m;
+        AEMtx33Scale(&scale, tileW, tileH);
+        AEMtx33Trans(&trans, worldX, worldY);
+        AEMtx33Concat(&m, &trans, &scale);
+
+        AEGfxSetTransform(m.m);
+        AEGfxMeshDraw(pTileMesh, AE_GFX_MDM_TRIANGLES);
+
+        AEGfxSetTransparency(1.0f);
+    }
+
+    bool Grid::ScreenToGrid(int mouseX, int mouseY, GridCoord& out) const
+    {
+        if (m_width <= 0 || m_height <= 0) return false;
+
+        float screenW = (float)AEGfxGetWindowWidth();
+        float screenH = (float)AEGfxGetWindowHeight();
+
+        // screen (0,0) top-left -> world (0,0) center, y up
+        float worldX = (float)mouseX - screenW * 0.5f;
+        float worldY = screenH * 0.5f - (float)mouseY;
+
+        float tileW, tileH, startX, startY;
+        ComputeLayout(tileW, tileH, startX, startY);
+
+        // convert to grid indices (x increases right, y increases down)
+        float localX = (worldX - (startX - tileW * 0.5f)) / tileW;
+        float localY = ((startY + tileH * 0.5f) - worldY) / tileH;
+
+        int gx = (int)floorf(localX);
+        int gy = (int)floorf(localY);
+
+        if (!InBounds(gx, gy)) return false;
+
+        out.x = gx;
+        out.y = gy;
+        return true;
+    }
+
+    void Grid::Destroy()
+    {
         if (pTileMesh) AEGfxMeshFree(pTileMesh);
         if (pTileTex)  AEGfxTextureUnload(pTileTex);
+        pTileMesh = nullptr;
+        pTileTex = nullptr;
     }
 }
