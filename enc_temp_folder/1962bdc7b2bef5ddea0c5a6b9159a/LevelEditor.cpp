@@ -34,7 +34,8 @@ void LevelEditor::Init(int w, int h)
 
     const int tilePx = 16;
 
-    // NOTE: Hardcoded for now
+    // NOTE: use whatever your AE engine provides for texture dimensions.
+    // Common names are AEGfxTextureGetWidth/Height, but adjust if yours differ.
     const int texW = 80;
     const int texH = 160;
 

@@ -28,8 +28,8 @@ namespace GridSystem {
 
         bool showGrid = true;
 
-        int   GetWidth()  const { return m_width; }
-        int   GetHeight() const { return m_height; }
+        int  GetWidth()  const { return m_width; }
+        int  GetHeight() const { return m_height; }
 
         bool InBounds(GridCoord c) const;
         bool InBounds(int x, int y) const;
@@ -48,6 +48,8 @@ namespace GridSystem {
         // Draw a tinted tile at a given grid coord (uses same layout as Draw()).
         void DrawTileTinted(GridCoord c, float r, float g, float b, float a) const;
 
+        // Returns world center position of a cell and the computed tileSize being used.
+        void GetCellWorldCenter(GridCoord c, float& outX, float& outY, float& outTileSize) const;
     private:
         int m_width{ 0 };
         int m_height{ 0 };

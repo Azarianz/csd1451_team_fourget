@@ -189,6 +189,24 @@ namespace GridSystem {
         return true;
     }
 
+    void Grid::GetCellWorldCenter(GridCoord c,
+        float& outX,
+        float& outY,
+        float& outTileSize) const
+    {
+        float tileW = 1.0f, tileH = 1.0f;
+        float startX = 0.0f, startY = 0.0f;
+
+        ComputeLayout(tileW, tileH, startX, startY);
+
+        outTileSize = tileW;
+        outX = startX + c.x * tileW;
+        outY = startY - c.y * tileH;
+
+        outX = RoundToPixel(outX);
+        outY = RoundToPixel(outY);
+    }
+
     void Grid::Destroy()
     {
         if (pTileMesh) AEGfxMeshFree(pTileMesh);

@@ -2,6 +2,12 @@
 #include "AEEngine.h"
 #include <cstdint>
 
+// Scene Graph functionality
+// Manages drawn shapes, selection, and modification
+// Shapes are retained until destroyed
+// Shapes have unique IDs for modification
+// Supports rectangles, circles, and sprites
+
 namespace Graphics
 {
     using ShapeId = uint32_t;

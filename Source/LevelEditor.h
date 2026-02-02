@@ -2,6 +2,7 @@
 #include "GridSystem.h"
 #include "LevelData.h"
 #include <string>
+#include <vector>
 
 class LevelEditor
 {
@@ -19,7 +20,6 @@ public:
     void Shutdown();
 
     LevelData& GetData() { return m_level; }
-
 private:
     GridSystem::Grid* m_grid = nullptr;
     LevelData m_level;
@@ -28,6 +28,13 @@ private:
 
     int m_currentTileId = 1;
     RegionFlag m_currentRegion = RegionFlag::BUILDABLE;
+
+    // Tileset rendering
+    AEGfxTexture* m_tilesetTex = nullptr;
+    int m_tilesetCols = 1;
+    int m_tilesetRows = 1;
+    int m_maxTileId = 9; // you clamp brush 0..9
+    std::vector<AEGfxVertexList*> m_tileMeshes; // 0..m_maxTileId
 
     std::string m_path = "level_01.txt";
 
@@ -38,4 +45,8 @@ private:
 
     void CycleMapTile(int dir);
     void CycleRegion(int dir);
+
+    AEGfxVertexList* GetTileMesh(int tileId);
+    void DrawMapTiles(float alphaMul) const;
+    void DrawRegionNumbers() const;
 };
