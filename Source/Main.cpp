@@ -16,24 +16,89 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     AESysSetWindowTitle("Merge Defenders - Level Editor");
 
     // ---- Load Level Editor ----
-    LevelEditor editor;
-    editor.Init(20, 12); // change grid size here
+    //LevelEditor editor;
+    //editor.Init(20, 12); // change grid size here
 
-    int gGameRunning = 1;
-    while (gGameRunning)
-    {
-        AESysFrameStart();
-        float dt = (float)AEFrameRateControllerGetFrameTime();
+    // int gGameRunning = 1;
+    // while (gGameRunning)
+    // {
+    //     AESysFrameStart();
+    //     float dt = (float)AEFrameRateControllerGetFrameTime();
 
-        editor.Update(dt);
+    //     editor.Update(dt);
 
-        AESysFrameEnd();
+    //     AESysFrameEnd();
 
-        if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
-            gGameRunning = 0;
-    }
+    //     if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
+    //         gGameRunning = 0;
+    // }
 
-    editor.Shutdown();
+    // editor.Shutdown();
+	// - Initialization of your own variables go here -
+	// Init Game Vars
+	Color red{ 1, 0, 0, 1 };
+	Color green{ 0, 1, 0, 1 };
+	Color blue{ 0, 0, 1, 1 };
+	Color white{ 1, 1, 1, 1};
+	Player player;
+	player.Init(0.0f, 0.0f, 50, 50, blue);
 
-    AESysExit();
+	//testing tower stuff
+	std::vector<TowerHandler::Tower> towerList; // uninitialize tower list
+
+	TowerHandler::ShopTower shopTower; // acts as a spawner for tower
+	shopTower.ShopTowerInit(
+		600, 200,
+		50, 50,
+		white
+	);
+
+	int mouseX{}, mouseY{};
+	AEInputGetCursorPosition(&mouseX, &mouseY);
+
+	// Init engine
+	AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, true, NULL);
+	AESysSetWindowTitle("Merge Defenders");
+
+	GridSystem::Grid grid(16, 9, 100.0f, { -800.0f, -450.0f });
+	grid.InitScene();
+
+	// Game Loop
+	while (gGameRunning)
+	{
+		// Informing the system about the loop's start
+		AESysFrameStart();
+
+		float dt = (float)AEFrameRateControllerGetFrameTime();
+
+		// Update
+		UpdateTowerSystem(mouseX, mouseY, shopTower, towerList); // initializes and adds new tower to towerList
+
+		// Render setup
+		AEGfxSetBackgroundColor(.5f, .5f, .5f);
+		AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+		AEGfxSetColorToMultiply(1, 1, 1, 1);
+		AEGfxSetColorToAdd(0, 0, 0, 0);
+		AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+		AEGfxSetTransparency(1.0f);
+
+		// Draw
+		shopTower.Draw(); // draws shop tower
+		for (TowerHandler::Tower& t : towerList) { // draw towers in towerList
+			for (TowerHandler::Tower& t : towerList) {
+				t.Draw();
+			}
+		}
+
+		AESysFrameEnd();
+
+		// check if forcing the application to quit
+		if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
+			gGameRunning = 0;
+	}
+
+	// Cleanup
+
+	// free the system
+	AESysExit();
 }
