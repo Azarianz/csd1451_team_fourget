@@ -22,12 +22,25 @@ namespace GridSystem {
         float y{ 0.0f };
     };
 
-    class GridSystem
+    class Grid
     {
     public:
         // Create a grid with given dimensions and cell size.
         // originWorld = where grid cell (0,0) starts in world space (bottom-left style).
-        GridSystem(int width, int height, float cellSize, Vec2 originWorld = { 0.0f, 0.0f });
+        Grid(int width, int height, float cellSize, Vec2 originWorld = { 0.0f, 0.0f });
+
+        // --- Grid Init Vars --- 
+        AEGfxTexture* pTileTex;
+        AEGfxVertexList* pTileMesh;
+
+
+        // -----------------------------
+        // GRID SETTINGS
+        // -----------------------------
+        const int cols = 20;   // how many tiles across
+        const int rows = 11;   // how many tiles down
+        bool showGrid = true;
+
 
         // ---- Basic info ----
         int   GetWidth() const { return m_width; }
@@ -65,6 +78,14 @@ namespace GridSystem {
 
         // Clear all tiles
         void Clear();
+
+        void InitScene();
+
+        void Update();
+
+        void Draw();
+
+        void Destroy();
 
     private:
         int m_width{ 0 };

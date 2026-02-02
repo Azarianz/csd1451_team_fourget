@@ -8,6 +8,7 @@
 #include "GameObject.h"
 #include "HealthBar.h"
 #include "Tower.h"
+#include "GridSystem.h"
 
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -47,26 +48,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	int mouseX{}, mouseY{};
 	AEInputGetCursorPosition(&mouseX, &mouseY);
 
-	// Create game objects (circles)
-	Color red{ 1, 0, 0, 1 };
-	Color green{ 0, 1, 0, 1 };
-	//GameObject cRed, cGreen;
-	//cRed.Init(
-	//	static_cast<float>(AEGfxGetWindowWidth() - 400), 
-	//	static_cast<float>(AEGfxGetWindowHeight() / 2) - 100,
-	//	200, 200, red);
-	//cGreen.Init(
-	//	400, 
-	//	static_cast<float>(AEGfxGetWindowHeight() / 2) - 100,
-	//	200, 200, green);
-
-	// Create Healthbar
-	/*HealthBar hp;
-	hp.Init(100.0f);*/
-
 	// Init engine
 	AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, true, NULL);
-	AESysSetWindowTitle("Solo Project 1");
+	AESysSetWindowTitle("Merge Defenders");
+
+	GridSystem::Grid grid(16, 9, 100.0f, { -800.0f, -450.0f });
+	grid.InitScene();
 
 	// Game Loop
 	while (gGameRunning)
@@ -81,9 +68,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		//shopTower.Update((float)mouseX, (float)mouseY, towerObj); //could use overloading for different update logic
 		towerObj.Update((float)mouseX, (float)mouseY, towerObj);
 
-		// overlap effects on player HP
-		//hp.Update(player, cGreen, cRed, dt);
-
 		// Render setup
 		AEGfxSetBackgroundColor(.5f, .5f, .5f);
 		AEGfxSetRenderMode(AE_GFX_RM_COLOR);
@@ -93,14 +77,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		AEGfxSetTransparency(1.0f);
 
 		// Draw
-		//cRed.Draw();
-		//cGreen.Draw();
-		//player.Draw();
 		shopTower.Draw();
 		towerObj.Draw();
-
-		// draw healthbar above player
-		//hp.Draw();
+		grid.Update();	//Call Update: Which also calls Draw() in it and other execution order need for updating per frame
 
 		AESysFrameEnd();
 
@@ -111,9 +90,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	// Cleanup
 	player.Destroy();
-	//cRed.Destroy();
-	//cGreen.Destroy();
 	towerObj.Destroy();
+	grid.Destroy();
 
 	// free the system
 	AESysExit();
