@@ -1,6 +1,8 @@
 #include "GameObject.h"
 #include "AEMath.h"
 
+
+
 // Build mesh ONCE
 static AEGfxVertexList* BuildCircle(int segments)
 {
@@ -56,6 +58,10 @@ void GameObject::Draw()
     if (!mesh)
         mesh = BuildCircle(segments); // build during frame (safe)
 
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);   // 🔴 THIS WAS MISSING
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+
     // Set color using struct
     AEGfxSetColorToMultiply(
         color.r,
@@ -64,9 +70,9 @@ void GameObject::Draw()
         color.a
     );
 
-    // -------- TRANSFORM --------
-    AEMtx33 scaleM, rotM, transM, transform;
 
+    // --- TRANSFORM ---
+    AEMtx33 scaleM, rotM, transM, transform;
     AEMtx33Scale(&scaleM, _sizeX, _sizeY);
     AEMtx33Rot(&rotM, 0.0f);
     AEMtx33Trans(&transM, x, y);
@@ -74,9 +80,11 @@ void GameObject::Draw()
     AEMtx33Concat(&transform, &rotM, &scaleM);
     AEMtx33Concat(&transform, &transM, &transform);
 
-    // -------- DRAW --------
     AEGfxSetTransform(transform.m);
+
+    // --- DRAW ---
     AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
+
 }
 
 void GameObject::Destroy()

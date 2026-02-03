@@ -17,7 +17,7 @@ void Scene_TowerTest::Draw()
 {
     AEGfxSetBackgroundColor(0.05f, 0.05f, 0.05f);
 
-    //shopTower.Draw();
+    shopTower.Draw();
     for (auto& t : activeTowers) {
         t.Draw();
     }

@@ -64,7 +64,6 @@ namespace TowerHandler {
         segments = seg_count;
         color = c;
         mesh = nullptr; // don't build here
-
     }
 
     void UpdateTowerSystem(float mouseX, float mouseY, ShopTower& shop, std::vector<Tower>& activeTowers) {
