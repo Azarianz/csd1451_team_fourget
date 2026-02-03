@@ -17,7 +17,7 @@ void Scene_Enemy::Update(float dt)
     // --- INPUT: SPAWN ENEMIES ---
 
     // Press 1 for Zombie
-    if (AEInputCheckTriggered(AEVK_1))
+    if (AEInputCheckTriggered(AEVK_7))
     {
         Zombie* z = new Zombie();
         z->Init();
@@ -30,7 +30,7 @@ void Scene_Enemy::Update(float dt)
     }
 
     // Press 2 for Skeleton
-    if (AEInputCheckTriggered(AEVK_2))
+    if (AEInputCheckTriggered(AEVK_8))
     {
         Skeleton* s = new Skeleton();
         s->Init();
@@ -42,7 +42,7 @@ void Scene_Enemy::Update(float dt)
     }
 
     // Press 3 for Troll
-    if (AEInputCheckTriggered(AEVK_3))
+    if (AEInputCheckTriggered(AEVK_9))
     {
         Troll* t = new Troll();
         t->Init();
