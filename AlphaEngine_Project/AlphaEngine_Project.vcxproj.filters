@@ -58,6 +58,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Scene_TowerTest.cpp">
+    <ClCompile Include="..\Source\Scene_LoadLevel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -105,6 +106,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Source\Scene_TowerTest.h">
+    <ClInclude Include="..\Source\Scene_LoadLevel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
