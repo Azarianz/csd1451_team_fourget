@@ -1,6 +1,7 @@
 #pragma once
 #include "Scene.h"
 #include "Tower.h"
+#include <vector>
 
 class Scene_TowerTest : public Scene
 {
@@ -11,8 +12,7 @@ public:
     void Exit() override;
 
 private:
-    bool initialized = false;
     int mouseX{}, mouseY{};
     TowerHandler::ShopTower shopTower;
-    std::vector<TowerHandler::Tower>& activeTowers;
+    std::vector<TowerHandler::Tower> activeTowers{};
 };

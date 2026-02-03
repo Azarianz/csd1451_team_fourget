@@ -6,6 +6,7 @@
 #include "Scene_TowerTest.h"
 //#include "Scene_GridTest.h"
 #include "Scene_LevelEditor.h"
+#include "Scene_Level1.h"
 
 SceneManager& SceneManager::I()
 {
@@ -64,9 +65,10 @@ Scene* SceneManager::CreateScene(SceneID id)
     switch (id)
     {
     case SceneID::LevelEditor: return new Scene_LevelEditor();
-    case SceneID::TowerTest: return new Scene_TowerTest();
+    case SceneID::Level1: return new Scene_Level1();
     //case SceneID::Gameplay_Test: return new Scene_GameplayTest();
+    case SceneID::TowerTest:    return new Scene_TowerTest();
     //case SceneID::Grid_Test:     return new Scene_GridTest();
-    default:                   return nullptr;
+    default:                     return nullptr;
     }
 }
