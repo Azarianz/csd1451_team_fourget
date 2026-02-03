@@ -7,7 +7,7 @@ namespace TowerHandler {
 
     static int nextTowerID = 0;
 
-    enum TowerType{ BASIC_TOWER = 0, SNIPER_TOWER};
+    enum TowerType{ BASIC_TOWER, SNIPER_TOWER};
 
     struct ProjectileType
     {
