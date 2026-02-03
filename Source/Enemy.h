@@ -8,13 +8,11 @@ struct Point { float x, y; };
 
 struct Enemy : public GameObject
 {
-
-
     // Enemy Stats
-    float speed;
-    float health;
-    float maxhealth;
-    float damage;
+    float speed=0;
+    float health=0;
+    float maxhealth=1;
+    float damage=1;
 
     // Pathfinding Data
     int pathIndex = 0;

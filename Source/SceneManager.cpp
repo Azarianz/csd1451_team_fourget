@@ -2,13 +2,12 @@
 #include <cassert>
 
 // Include your scene scripts here:
-//#include "Scene_GameplayTest.h"
 #include "Scene_TowerTest.h"
-//#include "Scene_GridTest.h"
 #include "Scene_LevelEditor.h"
 #include "Scene_Level1.h"
 #include "Scene_ShopTest.h"
 #include "Scene_EnemyTest.h"
+#include "Scene_LoadLevel.h"
 
 SceneManager& SceneManager::I()
 {
@@ -66,13 +65,12 @@ Scene* SceneManager::CreateScene(SceneID id)
 {
     switch (id)
     {
-    case SceneID::LevelEditor: return new Scene_LevelEditor();
-    case SceneID::Level1: return new Scene_Level1();
-    //case SceneID::Gameplay_Test: return new Scene_GameplayTest();
-    case SceneID::TowerTest:    return new Scene_TowerTest();
-    case SceneID::ShopTest:    return new Scene_ShopTest();
-    //case SceneID::Grid_Test:     return new Scene_GridTest();
-    case SceneID::EnemyTest:   return new Scene_Enemy();
-    default:                     return nullptr;
+        case SceneID::LevelEditor:  return new Scene_LevelEditor();
+	    case SceneID::LoadLevel:    return new Scene_LoadLevel();
+        case SceneID::Level1:       return new Scene_Level1();
+        case SceneID::ShopTest:    return new Scene_ShopTest();
+        case SceneID::TowerTest:    return new Scene_TowerTest();
+        case SceneID::EnemyTest:    return new Scene_Enemy();
+        default:                    return nullptr;
     }
 }

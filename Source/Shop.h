@@ -4,13 +4,21 @@
 #include <vector>
 
 namespace TowerHandler {
-
     struct ShopSlot {
         float x, y;
         float size;
         TowerType typeContained;
         bool isRefreshButton;
         Color slotColor;
+
+        ShopSlot()
+            : x(0.0f)
+            , y(0.0f)
+            , size(0.0f)
+            , typeContained(BASIC_TOWER)   // safe default
+            , isRefreshButton(false)
+            , slotColor{ 1.0f, 1.0f, 1.0f, 1.0f }
+        {}
     };
 
     class Shop {
@@ -26,7 +34,7 @@ namespace TowerHandler {
     private:
         static const int TOTAL_SLOTS = 6;
         static const int TOWER_SLOTS = 5;
-        ShopSlot slots[TOTAL_SLOTS];
+        ShopSlot slots[TOTAL_SLOTS] = {};
 
         float slotSize = 60.0f;
         float padding = 60.0f;

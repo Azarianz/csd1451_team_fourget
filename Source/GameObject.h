@@ -9,12 +9,24 @@ struct Color
 
 struct GameObject
 {
-    float x, y;
-    float _sizeX = 50.0f, _sizeY = 50.0f;
-    Color color{};
+    float x;
+    float y;
+    float _sizeX;
+    float _sizeY;
+    Color color;
+    AEGfxVertexList* mesh;
+    int segments;
 
-    AEGfxVertexList* mesh = nullptr;
-    int segments;   //for circle
+    GameObject()
+        : x(0.0f)
+        , y(0.0f)
+        , _sizeX(50.0f)
+        , _sizeY(50.0f)
+        , color{}
+        , mesh(nullptr)
+        , segments(64)
+    {
+    }
 
     void Init(float startX, float startY, float sX, float sY, Color c);
     void Update(float dt);

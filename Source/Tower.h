@@ -11,26 +11,37 @@ namespace TowerHandler {
 
     struct ProjectileType
     {
-        AEGfxTexture* sprite;
-        float damage;
-        float speed;
+        AEGfxTexture* sprite = nullptr;
+        float damage = 0.0f;
+        float speed = 0.0f;
     };
 
     struct TowerDetails {
-        int level;
-        int ID;
-        float range;
-        TowerType towerType;
-        ProjectileType projectile;
+        int level = 0;
+        int ID = -1;
+        float range = 0.0f;
+        TowerType towerType = BASIC_TOWER;
+        ProjectileType projectile{ nullptr, 0.0f, 0.0f };
     };
 
     struct Tower : public GameObject{
-        int tower_count; //amount of towers
-        bool isDragging;
-        bool isSelected;
-        float dragOffsetX;
-        float dragOffsetY;
+        int tower_count = 0; //amount of towers
+        bool isDragging = false;
+        bool isSelected = false;
+        float dragOffsetX = 0.0f;
+        float dragOffsetY = 0.0f;
         TowerDetails details; //dynamic array of tower details
+
+        Tower()
+            : GameObject()
+            , tower_count(0)
+            , isDragging(false)
+            , isSelected(false)
+            , dragOffsetX(0.0f)
+            , dragOffsetY(0.0f)
+            , details()
+        {
+        }
 
         void TowerInit(float xPos, float yPos, float xSize, float ySize, Color c, int segcount = 50);
         void TowerShoot();
