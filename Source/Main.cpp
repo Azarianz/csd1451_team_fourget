@@ -18,7 +18,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     AESysSetWindowTitle("Merge Defenders Prototype");
 
     // Pick which scene to boot (each teammate can change this line on their branch)
-    SceneManager::I().Init(SceneID::TowerTest);   // <-- your editor scene
+    SceneManager::I().Init(SceneID::LoadLevel);   // <-- your editor scene
 
      int gGameRunning = 1;
      while (gGameRunning)
