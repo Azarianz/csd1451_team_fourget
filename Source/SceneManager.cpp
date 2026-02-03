@@ -7,6 +7,7 @@
 //#include "Scene_GridTest.h"
 #include "Scene_LevelEditor.h"
 #include "Scene_Level1.h"
+#include "Scene_EnemyTest.h"
 
 SceneManager& SceneManager::I()
 {
@@ -69,6 +70,7 @@ Scene* SceneManager::CreateScene(SceneID id)
     //case SceneID::Gameplay_Test: return new Scene_GameplayTest();
     case SceneID::TowerTest:    return new Scene_TowerTest();
     //case SceneID::Grid_Test:     return new Scene_GridTest();
+    case SceneID::EnemyTest:   return new Scene_Enemy();
     default:                     return nullptr;
     }
 }

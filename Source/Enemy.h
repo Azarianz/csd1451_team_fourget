@@ -1,36 +1,37 @@
 #pragma once
 #include "AEEngine.h"
 #include "GameObject.h"
+#include <vector> // Required for std::vector
 
-// Declare functions you want to use
+// Helper struct for path points
+struct Point { float x, y; };
+
 struct Enemy : public GameObject
 {
 
-    float x, y;
-    float width, height;
 
-
+    // Enemy Stats
     float speed;
     float health;
     float maxhealth;
     float damage;
 
+    // Pathfinding Data
+    int pathIndex = 0;
+    bool reachedEnd = false;
+
+    // Functions
     void Init(float sizeX, float sizeY, Color c, float _hp, float _damage, float _speed);
-
-    void Update(float dt);
+    void Update(float dt, const std::vector<Point>& path);
 };
 
-struct Zombie : public Enemy
-{
+// Specific Types
+struct Zombie : public Enemy {
+    void Init(); 
+};
+struct Skeleton : public Enemy { 
     void Init();
 };
-
-struct Skeleton : public Enemy
-{
-    void Init();
-};
-
-struct Troll : public Enemy
-{
-    void Init();
+struct Troll : public Enemy { 
+    void Init(); 
 };

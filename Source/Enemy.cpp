@@ -1,52 +1,78 @@
 #include "Enemy.h"
 #include "AEInput.h"
 #include "AEMath.h"
-
-const float FIXED_SPAWN_X = -300.0f;
-const float FIXED_SPAWN_Y = 0.0f;
+#include <cmath> // For sqrtf
 
 void Enemy::Init(float sizeX, float sizeY, Color c, float _hp, float _damage, float _speed)
 {
-    // FIX 1: Use local x/y/width/height (Instead of pos.x / scale.x)
-    x = FIXED_SPAWN_X;
-    y = FIXED_SPAWN_Y;
+    // 1. Initialize the Parent GameObject
+    // This sets x, y, _sizeX, _sizeY, and color for us.
+    // We start at 0,0, but the Path logic will move us immediately.
+    GameObject::Init(0.0f, 0.0f, sizeX, sizeY, c);
 
-    width = sizeX;
-    height = sizeY;
-
-    // This works fine
-    color = c;
-
-    // Stats
+    // 2. Set Enemy Stats
     maxhealth = _hp;
     health = _hp;
     damage = _damage;
     speed = _speed;
+
+    pathIndex = 0;
+    reachedEnd = false;
 }
 
-void Enemy::Update(float dt)
+void Enemy::Update(float dt, const std::vector<Point>& path)
 {
-    // FIX 2: Update local x
-    x += speed * dt;
+    // Safety checks
+    if (path.empty() || reachedEnd) return;
+    if (pathIndex >= (int)path.size()) {
+        reachedEnd = true;
+        return;
+    }
+
+    // 1. Get Target
+    Point target = path[pathIndex];
+
+    // 2. Calculate Distance
+    // Note: 'x' and 'y' here come from GameObject!
+    float dx = target.x - x;
+    float dy = target.y - y;
+    float distSq = dx * dx + dy * dy;
+
+    // 3. Move
+    if (distSq > 25.0f) // If we are far away (> 5 pixels)
+    {
+        float dist = sqrtf(distSq);
+
+        // Normalize and move
+        x += (dx / dist) * speed * dt;
+        y += (dy / dist) * speed * dt;
+    }
+    else
+    {
+        // 4. Reached Waypoint -> Go to next
+        pathIndex++;
+        if (pathIndex >= (int)path.size()) {
+            reachedEnd = true;
+        }
+    }
 }
 
 // --- Specific Enemies ---
 
 void Zombie::Init()
 {
-    // FIX 3: Use curly braces { ... } instead of Color( ... )
-    // This fixes "no instance of constructor" error
-    Enemy::Init(20.0f, 20.0f, { 1.0f, 0.0f, 0.0f, 1.0f }, 100.0f, 1.0f, 50.0f);
+    // Green
+    Enemy::Init(30.0f, 30.0f, { 0.0f, 1.0f, 0.0f, 1.0f }, 100.0f, 10.0f, 100.0f);
 }
 
 void Skeleton::Init()
 {
-    // White Color
-    Enemy::Init(15.0f, 15.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 50.0f, 1.0f, 90.0f);
+    // Blue (Faster)
+    Enemy::Init(20.0f, 20.0f, { 0.0f, 0.0f, 1.0f, 1.0f }, 60.0f, 5.0f, 250.0f);
 }
 
 void Troll::Init()
 {
-    // Green Color
-    Enemy::Init(40.0f, 40.0f, { 0.0f, 1.0f, 0.0f, 1.0f }, 200.0f, 1.0f, 25.0f);
+    // Red (Slower, Bigger)
+    Enemy::Init(50.0f, 50.0f, { 1.0f, 0.0f, 0.0f, 1.0f }, 300.0f, 20.0f, 40.0f);
 }
