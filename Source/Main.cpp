@@ -21,6 +21,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
 	int gGameRunning = 1;
+    SceneManager::I().Init(SceneID::TowerTest);   // <-- your editor scene
 
 	// - Initialization of your own variables go here -
 	// Init Game Vars

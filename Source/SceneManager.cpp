@@ -1,0 +1,72 @@
+#include "SceneManager.h"
+#include <cassert>
+
+// Include your scene scripts here:
+//#include "Scene_GameplayTest.h"
+#include "Scene_TowerTest.h"
+//#include "Scene_GridTest.h"
+#include "Scene_LevelEditor.h"
+
+SceneManager& SceneManager::I()
+{
+    static SceneManager inst;
+    return inst;
+}
+
+void SceneManager::Init(SceneID startScene)
+{
+    SwitchTo(startScene);
+}
+
+void SceneManager::Update(float dt)
+{
+    if (currentScene)
+        currentScene->Update(dt);
+}
+
+void SceneManager::Draw()
+{
+    if (currentScene)
+        currentScene->Draw();
+}
+
+void SceneManager::Exit()
+{
+    if (currentScene)
+    {
+        currentScene->Exit();
+        delete currentScene;
+        currentScene = nullptr;
+    }
+    currentId = SceneID::None;
+}
+
+void SceneManager::SwitchTo(SceneID next)
+{
+    // Exit old
+    if (currentScene)
+    {
+        currentScene->Exit();
+        delete currentScene;
+        currentScene = nullptr;
+    }
+
+    // Create new
+    currentScene = CreateScene(next);
+    currentId = next;
+
+    assert(currentScene && "CreateScene() returned nullptr. Did you register the scene?");
+    currentScene->Init();
+}
+
+Scene* SceneManager::CreateScene(SceneID id)
+{
+    switch (id)
+    {
+    case SceneID::LevelEditor: return new Scene_LevelEditor();
+    case SceneID::TowerTest: return new Scene_TowerTest();
+    //case SceneID::Gameplay_Test: return new Scene_GameplayTest();
+    //case SceneID::Grid_Test:     return new Scene_GridTest();
+    default:                   return nullptr;
+    }
+}

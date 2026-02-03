@@ -27,11 +27,13 @@ namespace TowerHandler {
     struct Tower : public GameObject{
         int tower_count; //amount of towers
         bool isDragging;
+        bool isSelected;
         float dragOffsetX;
         float dragOffsetY;
         TowerDetails details; //dynamic array of tower details
 
         void TowerInit(float xPos, float yPos, float xSize, float ySize, Color c, int segcount = 50);
+        void TowerShoot();
         void Draw();
     };
     
