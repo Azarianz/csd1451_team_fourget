@@ -13,6 +13,7 @@ public:
 
     std::vector<int> map;        // tile IDs
     std::vector<uint8_t> region; // 0 none, 1 buildable, 2 path
+    int Idx(int x, int y) const { return y * width + x; }
 
 public:
     bool LoadFromText(const char* path);
@@ -21,8 +22,6 @@ public:
     void Shutdown();
 
 private:
-    int Idx(int x, int y) const { return y * width + x; }
-
     // render cache (same idea as your editor)
     AEGfxTexture* m_tilesetTex = nullptr;
     int m_tilesetCols = 0;

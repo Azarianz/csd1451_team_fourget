@@ -7,6 +7,7 @@
 //#include "Scene_GridTest.h"
 #include "Scene_LevelEditor.h"
 #include "Scene_Level1.h"
+#include "Scene_LoadLevel.h"
 
 SceneManager& SceneManager::I()
 {
@@ -65,6 +66,7 @@ Scene* SceneManager::CreateScene(SceneID id)
     switch (id)
     {
     case SceneID::LevelEditor: return new Scene_LevelEditor();
+    case SceneID::LoadLevel: return new Scene_LoadLevel();
     case SceneID::Level1: return new Scene_Level1();
     //case SceneID::Gameplay_Test: return new Scene_GameplayTest();
     case SceneID::TowerTest:    return new Scene_TowerTest();
