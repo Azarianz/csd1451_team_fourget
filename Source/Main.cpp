@@ -24,8 +24,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
-	int playerMoney = 500; // Starting currency
-	Shop gameShop;
+    // Pick which scene to boot (each teammate can change this line on their branch)
+    SceneManager::I().Init(SceneID::TowerTest);   // <-- your editor scene
 
 	// Container for towers bought from the shop
 	std::vector<TowerHandler::Tower*> activeTowers;
