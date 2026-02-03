@@ -111,9 +111,6 @@ void Scene_Prototype::Update(float dt)
 {
     if (!grid) return;
 
-    if (AEInputCheckTriggered(AEVK_F5))
-        LoadLevel(levelIndex);
-
     // --- Mouse: get BOTH screen + world ---
     int mouseX = 0, mouseY = 0;
     AEInputGetCursorPosition(&mouseX, &mouseY);
