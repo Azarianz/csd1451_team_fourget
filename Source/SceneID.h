@@ -7,6 +7,7 @@ enum class SceneID
     TowerTest,
     Level1,
     ShopTest,
+    EnemyTest,
 
     // Teammates add more here:
     // Grid_Test,
