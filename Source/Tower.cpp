@@ -30,7 +30,7 @@ namespace TowerHandler {
     void Tower::Draw() {
 
         // drawing range
-        if (isDragging) {
+        if (isDragging || isSelected) {
             // save original tower settings
             float originalTowerSizeX = _sizeX;
             float originalTowerSizeY = _sizeY;
@@ -92,8 +92,14 @@ namespace TowerHandler {
                 }
             }
 
+            // Reset and deselect all towers after left click
+            for (auto& t : activeTowers) {
+                t.isSelected = false;
+            }
+
             // If top most tower exists and is selected
             if (topMostTower != nullptr) {
+                topMostTower->isSelected = true;
                 topMostTower->isDragging = true;
                 topMostTower->dragOffsetX = topMostTower->x - mouseX;
                 topMostTower->dragOffsetY = topMostTower->y - mouseY;
@@ -109,6 +115,7 @@ namespace TowerHandler {
                 newTower.TowerInit(shop.x, shop.y, 55.0f, 55.0f, { 0.0f, 0.0f, 1.0f, 1.0f });
 
                 // Force start dragging immediately
+                newTower.isSelected = true;
                 newTower.isDragging = true;
                 newTower.dragOffsetX = 0; // set offset to 0 so it will center the tower to the mouse
                 newTower.dragOffsetY = 0; // only done when tower is first spawned in
@@ -131,6 +138,10 @@ namespace TowerHandler {
                 }
             }
         }
+    }
+
+    void Tower::TowerShoot() {
+
     }
 
 }

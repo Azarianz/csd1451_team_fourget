@@ -4,6 +4,7 @@ enum class SceneID
 {
     None = 0,
     LevelEditor,
+    TowerTest,
     Level1,
 
     // Teammates add more here:
