@@ -1,13 +1,29 @@
 #include "Scene_LoadLevel.h"
 #include "AEEngine.h"
 #include "AEInput.h"
+#include <cstdio>  // sprintf_s
+#include <cmath>   // sqrtf
 
-void Scene_LoadLevel::Init()
+bool Scene_LoadLevel::LoadLevel(int idx)
 {
+    // Build file path: Assets/Levels/level_01.txt, level_02.txt, ...
+    // (adjust naming here if your files are Level_01.txt etc.)
+    sprintf_s(levelPath, "Assets/Levels/Level_%02d.txt", idx);
+
+    // Clean previous state if any
+    if (grid)
+    {
+        grid->Destroy();
+        delete grid;
+        grid = nullptr;
+    }
+
+    level.Shutdown();
+
     if (!level.LoadFromText(levelPath))
     {
         PRINT("FAILED to load level text: %s\n", levelPath);
-        return;
+        return false;
     }
 
     grid = new GridSystem::Grid(level.width, level.height, 1.0f);
@@ -16,6 +32,12 @@ void Scene_LoadLevel::Init()
     occupied.assign((size_t)level.width * level.height, 0);
 
     BuildXMeshIfNeeded();
+    return true;
+}
+
+void Scene_LoadLevel::Init()
+{
+    LoadLevel(levelIndex);
 }
 
 void Scene_LoadLevel::Update(float /*dt*/)
@@ -26,9 +48,13 @@ void Scene_LoadLevel::Update(float /*dt*/)
     if (AEInputCheckTriggered(AEVK_B))
         buildMode = !buildMode;
 
+    // Hot reload current level while testing
+    if (AEInputCheckTriggered(AEVK_F5))
+        LoadLevel(levelIndex);
+
     if (!buildMode) return;
 
-    // Optional: click to place (demo)
+    // Demo placement
     int mx = 0, my = 0;
     AEInputGetCursorPosition(&mx, &my);
 
@@ -38,10 +64,7 @@ void Scene_LoadLevel::Update(float /*dt*/)
         if (AEInputCheckTriggered(AEVK_LBUTTON))
         {
             if (IsPlaceable(c.x, c.y))
-            {
-                // Mark occupied (spawn tower here in your system)
                 occupied[Idx(c.x, c.y)] = 1;
-            }
         }
     }
 }
@@ -86,25 +109,19 @@ void Scene_LoadLevel::BuildXMeshIfNeeded()
 {
     if (xMesh) return;
 
-    // Two thin diagonal rectangles would look nicer, but simplest is 2 lines made from skinny triangles.
-    // We'll approximate with two skinny triangles per diagonal (total 4 tris).
-
-    const float half = 0.45f;     // X size inside a cell (in local mesh space)
-    const float thick = 0.06f;    // thickness
+    const float half = 0.45f;
+    const float thick = 0.06f;
 
     auto AddQuad = [](float x0, float y0, float x1, float y1, float t)
         {
-            // build a quad around a line segment (x0,y0)->(x1,y1) with thickness t
             float dx = x1 - x0, dy = y1 - y0;
             float len = sqrtf(dx * dx + dy * dy);
             if (len <= 0.0001f) return;
 
             dx /= len; dy /= len;
-            // perpendicular
             float px = -dy * t;
             float py = dx * t;
 
-            // quad points
             float ax = x0 + px, ay = y0 + py;
             float bx = x0 - px, by = y0 - py;
             float cx = x1 - px, cy = y1 - py;
@@ -115,16 +132,14 @@ void Scene_LoadLevel::BuildXMeshIfNeeded()
         };
 
     AEGfxMeshStart();
-    // Diagonal 1: bottom-left to top-right
     AddQuad(-half, -half, half, half, thick);
-    // Diagonal 2: top-left to bottom-right
     AddQuad(-half, half, half, -half, thick);
     xMesh = AEGfxMeshEnd();
 }
 
 void Scene_LoadLevel::DrawXAtCell(int x, int y, float alpha)
 {
-    if (!xMesh) return;
+    if (!xMesh || !grid) return;
 
     float wx, wy, tileSize;
     grid->GetCellWorldCenter({ x, y }, wx, wy, tileSize);
@@ -148,10 +163,10 @@ void Scene_LoadLevel::DrawXAtCell(int x, int y, float alpha)
 
 void Scene_LoadLevel::DrawBuildOverlay()
 {
-    // show grid while building
+    if (!grid) return;
+
     grid->Draw();
 
-    // draw X on every non-placeable cell
     for (int y = 0; y < level.height; ++y)
     {
         for (int x = 0; x < level.width; ++x)
@@ -161,7 +176,6 @@ void Scene_LoadLevel::DrawBuildOverlay()
         }
     }
 
-    // hover feedback
     int mx = 0, my = 0;
     AEInputGetCursorPosition(&mx, &my);
 
@@ -169,8 +183,8 @@ void Scene_LoadLevel::DrawBuildOverlay()
     if (grid->ScreenToGrid(mx, my, c))
     {
         if (IsPlaceable(c.x, c.y))
-            grid->DrawTileTinted(c, 0.2f, 1.0f, 0.2f, 0.55f); // green-ish
+            grid->DrawTileTinted(c, 0.2f, 1.0f, 0.2f, 0.55f);
         else
-            grid->DrawTileTinted(c, 1.0f, 0.2f, 0.2f, 0.55f); // red-ish
+            grid->DrawTileTinted(c, 1.0f, 0.2f, 0.2f, 0.55f);
     }
 }

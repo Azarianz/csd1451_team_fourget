@@ -10,4 +10,5 @@ enum class SceneID
     ShopTest,
     EnemyTest,
 	LoadLevel,
+    Prototype,
 };

@@ -8,6 +8,9 @@
 class Scene_LoadLevel : public Scene
 {
 public:
+    // SceneManager will call this before Init()
+    void SetLevelIndex(int idx) { levelIndex = idx; }
+
     void Init() override;
     void Update(float dt) override;
     void Draw() override;
@@ -17,7 +20,10 @@ private:
     LevelLoader level;
     GridSystem::Grid* grid = nullptr;
 
-    const char* levelPath = "Assets/Levels/Level_01.txt";   //Hardcoded for now
+    int levelIndex = 1;                 // default
+    char levelPath[128] = { 0 };        // built from index
+
+    bool LoadLevel(int idx);            // helper (rebuilds grid, occupied, etc.)
 
     // ---- Build Mode ----
     bool buildMode = false;

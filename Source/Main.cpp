@@ -18,7 +18,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     AESysSetWindowTitle("Merge Defenders Prototype");
 
     // Pick which scene to boot (each teammate can change this line on their branch)
-    SceneManager::I().Init(SceneID::Level1);   // <-- your editor scene
+    SceneManager::I().Init(SceneID::Prototype);   // <-- your editor scene
 
      int gGameRunning = 1;
      while (gGameRunning)
@@ -32,6 +32,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
          if (AEInputCheckTriggered(AEVK_3)) SceneManager::I().SwitchTo(SceneID::TowerTest);
          if (AEInputCheckTriggered(AEVK_4)) SceneManager::I().SwitchTo(SceneID::EnemyTest);
          if (AEInputCheckTriggered(AEVK_5)) SceneManager::I().SwitchTo(SceneID::ShopTest);
+         if (AEInputCheckTriggered(AEVK_9)) SceneManager::I().SwitchTo(SceneID::Prototype);
 
          // Update + Draw current scene
          SceneManager::I().Update(dt);

@@ -8,6 +8,8 @@
 #include "Scene_ShopTest.h"
 #include "Scene_EnemyTest.h"
 #include "Scene_LoadLevel.h"
+#include "Scene_Prototype.h"
+#include "SceneManager.h"
 
 SceneManager& SceneManager::I()
 {
@@ -71,6 +73,7 @@ Scene* SceneManager::CreateScene(SceneID id)
         case SceneID::ShopTest:    return new Scene_ShopTest();
         case SceneID::TowerTest:    return new Scene_TowerTest();
         case SceneID::EnemyTest:    return new Scene_Enemy();
+        case SceneID::Prototype:     return new Scene_Prototype();
         default:                    return nullptr;
     }
 }
