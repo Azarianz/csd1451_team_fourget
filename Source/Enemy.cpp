@@ -62,7 +62,8 @@ void Enemy::Update(float dt, const std::vector<Point>& path)
 void Zombie::Init()
 {
     // Green
-    Enemy::Init(30.0f, 30.0f, { 0.0f, 1.0f, 0.0f, 1.0f }, 100.0f, 10.0f, 100.0f);
+    //          Size,   Size,   Colour,                 Health, Damage, Speed
+    Enemy::Init(30.0f, 30.0f, { 0.0f, 1.0f, 0.0f, 1.0f }, 100.0f, 10.0f, 150.0f);
 }
 
 void Skeleton::Init()
@@ -74,5 +75,18 @@ void Skeleton::Init()
 void Troll::Init()
 {
     // Red (Slower, Bigger)
-    Enemy::Init(50.0f, 50.0f, { 1.0f, 0.0f, 0.0f, 1.0f }, 300.0f, 20.0f, 40.0f);
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 0.0f, 0.0f, 1.0f }, 300.0f, 15.0f, 100.0f);
+}
+void Golem::Init()
+{
+    // PURPLE (Mix of Red + Blue)
+    // R: 0.6f, G: 0.0f, B: 1.0f, Alpha: 1.0f
+    Enemy::Init(60.0f, 60.0f, { 0.6f, 0.0f, 1.0f, 1.0f }, 300.0f, 40.0f, 50.0f);
+}
+
+void Titan::Init()
+{
+    // ORANGE (Full Red + Half Green)
+    // R: 1.0f, G: 0.5f, B: 0.0f, Alpha: 1.0f
+    Enemy::Init(50.0f, 50.0f, { 1.0f, 0.5f, 0.0f, 1.0f }, 250.0f, 30.0f, 75.0f);
 }

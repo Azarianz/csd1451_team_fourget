@@ -35,3 +35,9 @@ struct Skeleton : public Enemy {
 struct Troll : public Enemy { 
     void Init(); 
 };
+struct Golem : public Enemy {
+    void Init();
+};
+struct Titan : public Enemy {
+    void Init();
+};

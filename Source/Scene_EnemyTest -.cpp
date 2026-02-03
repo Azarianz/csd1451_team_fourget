@@ -17,7 +17,7 @@ void Scene_Enemy::Update(float dt)
     // --- INPUT: SPAWN ENEMIES ---
 
     // Press 1 for Zombie
-    if (AEInputCheckTriggered(AEVK_7))
+    if (AEInputCheckTriggered(AEVK_C))
     {
         Zombie* z = new Zombie();
         z->Init();
@@ -30,7 +30,7 @@ void Scene_Enemy::Update(float dt)
     }
 
     // Press 2 for Skeleton
-    if (AEInputCheckTriggered(AEVK_8))
+    if (AEInputCheckTriggered(AEVK_V))
     {
         Skeleton* s = new Skeleton();
         s->Init();
@@ -42,7 +42,7 @@ void Scene_Enemy::Update(float dt)
     }
 
     // Press 3 for Troll
-    if (AEInputCheckTriggered(AEVK_9))
+    if (AEInputCheckTriggered(AEVK_B))
     {
         Troll* t = new Troll();
         t->Init();
@@ -53,6 +53,29 @@ void Scene_Enemy::Update(float dt)
         activeEnemies.push_back(t);
     }
 
+    // Press 3 for Golem
+    if (AEInputCheckTriggered(AEVK_N))
+    {
+        Golem* t = new Golem();
+        t->Init();
+        if (!myPath.empty()) {
+            t->x = myPath[0].x;
+            t->y = myPath[0].y;
+        }
+        activeEnemies.push_back(t);
+    }
+
+    // Press 3 for Titan
+    if (AEInputCheckTriggered(AEVK_M))
+    {
+        Titan* t = new Titan();
+        t->Init();
+        if (!myPath.empty()) {
+            t->x = myPath[0].x;
+            t->y = myPath[0].y;
+        }
+        activeEnemies.push_back(t);
+    }
     // --- UPDATE ENEMIES ---
     for (auto* e : activeEnemies)
     {
