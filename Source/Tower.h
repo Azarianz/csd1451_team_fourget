@@ -30,7 +30,7 @@ namespace TowerHandler {
         bool isSelected;
         float dragOffsetX;
         float dragOffsetY;
-        TowerDetails details; //dynamic array of tower details
+        TowerDetails details;
 
         void TowerInit(float xPos, float yPos, float xSize, float ySize, Color c, int segcount = 50);
         void TowerShoot();
