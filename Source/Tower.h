@@ -7,30 +7,42 @@ namespace TowerHandler {
 
     static int nextTowerID = 0;
 
-    enum TowerType{ BASIC_TOWER, SNIPER_TOWER};
+    enum TowerType{ BASIC_TOWER, SNIPER_TOWER, SLOW_TOWER};
+	enum ProjectileType { BASIC_PROJECTILE, SNIPER_PROJECTILE, SLOW_PROJECTILE };
 
-    struct ProjectileType
+    struct Projectile
     {
-        AEGfxTexture* sprite;
-        float damage;
-        float speed;
+        AEGfxTexture* sprite = nullptr;
+		ProjectileType projectileType = BASIC_PROJECTILE;
+        float damage = 0.0f;
+        float speed = 0.0f;
     };
 
     struct TowerDetails {
-        int level;
-        int ID;
-        float range;
-        TowerType towerType;
-        ProjectileType projectile;
+        int level = 0;
+        int ID = -1;
+        float range = 0.0f;
+        TowerType towerType = BASIC_TOWER;
+        Projectile projectile{};
     };
 
     struct Tower : public GameObject{
-        int tower_count; //amount of towers
-        bool isDragging;
-        bool isSelected;
-        float dragOffsetX;
-        float dragOffsetY;
-        TowerDetails details;
+        int tower_count = 0; //amount of towers
+        bool isDragging = false;
+        bool isSelected = false;
+        float dragOffsetX = 0.0f;
+        float dragOffsetY = 0.0f;
+        TowerDetails details; 
+
+        Tower()
+            : GameObject()
+            , tower_count(0)
+            , isDragging(false)
+            , isSelected(false)
+            , dragOffsetX(0.0f)
+            , dragOffsetY(0.0f)
+            , details()
+        {}
 
         void TowerInit(float xPos, float yPos, float xSize, float ySize, Color c, int segcount = 50);
         void TowerShoot();

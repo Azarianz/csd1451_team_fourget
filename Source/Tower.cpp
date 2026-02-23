@@ -23,7 +23,6 @@ namespace TowerHandler {
         details.ID = nextTowerID++;
         details.range = 200.f;
         details.towerType = BASIC_TOWER;
-
     }
 
 

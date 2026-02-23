@@ -2,13 +2,13 @@
 
 enum class SceneID
 {
+    // Teammates add more here:
     None = 0,
     LevelEditor,
     TowerTest,
     Level1,
-
-    // Teammates add more here:
-    // Grid_Test,
-    // Level1,
-    // etc...
+    ShopTest,
+    EnemyTest,
+	LoadLevel,
+    Prototype,
 };
