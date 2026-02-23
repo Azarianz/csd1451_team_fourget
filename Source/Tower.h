@@ -7,11 +7,13 @@ namespace TowerHandler {
 
     static int nextTowerID = 0;
 
-    enum TowerType{ BASIC_TOWER, SNIPER_TOWER};
+    enum TowerType{ BASIC_TOWER, SNIPER_TOWER, SLOW_TOWER};
+	enum ProjectileType { BASIC_PROJECTILE, SNIPER_PROJECTILE, SLOW_PROJECTILE };
 
-    struct ProjectileType
+    struct Projectile
     {
         AEGfxTexture* sprite = nullptr;
+		ProjectileType projectileType = BASIC_PROJECTILE;
         float damage = 0.0f;
         float speed = 0.0f;
     };
@@ -21,7 +23,7 @@ namespace TowerHandler {
         int ID = -1;
         float range = 0.0f;
         TowerType towerType = BASIC_TOWER;
-        ProjectileType projectile{ nullptr, 0.0f, 0.0f };
+        Projectile projectile{};
     };
 
     struct Tower : public GameObject{
@@ -30,7 +32,7 @@ namespace TowerHandler {
         bool isSelected = false;
         float dragOffsetX = 0.0f;
         float dragOffsetY = 0.0f;
-        TowerDetails details; //dynamic array of tower details
+        TowerDetails details; 
 
         Tower()
             : GameObject()
@@ -40,8 +42,7 @@ namespace TowerHandler {
             , dragOffsetX(0.0f)
             , dragOffsetY(0.0f)
             , details()
-        {
-        }
+        {}
 
         void TowerInit(float xPos, float yPos, float xSize, float ySize, Color c, int segcount = 50);
         void TowerShoot();
