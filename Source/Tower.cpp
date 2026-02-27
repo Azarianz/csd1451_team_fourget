@@ -3,14 +3,13 @@
 #include <cmath>
 
 namespace TowerHandler {
-    void Tower::TowerInit(float xPos, float yPos, float xSize, float ySize, Color c, int seg_count) {
+    void Tower::TowerInit(float xPos, float yPos, float xSize, float ySize, ShopTower shop, int seg_count) {
         //gameobj data
         x = xPos;
         y = yPos;
         _sizeX = xSize;
         _sizeY = ySize;
         segments = seg_count;
-        color = c;
         mesh = nullptr; // don't build here
 
         //base tower data
@@ -21,8 +20,31 @@ namespace TowerHandler {
 
         details.level = 1;
         details.ID = nextTowerID++;
-        details.range = 200.f;
-        details.towerType = BASIC_TOWER;
+        details.towerType = shop.GetTowerType();
+
+        switch (details.towerType)
+        {
+        case TowerHandler::BASIC_TOWER:
+            color = { 0.0f, 0.0f, 1.0f, 1.0f }; //blue
+            details.range = 400.f;
+            break;
+        case TowerHandler::SNIPER_TOWER:
+            color = { 0.0f, 1.0f, 0.0f, 1.0f }; //red
+            details.range = 600.f;
+            break;
+        case TowerHandler::SLOW_TOWER:
+            color = { 1.0f, 0.0f, 0.0f, 1.0f }; //green
+            details.range = 200.f;
+            break;
+        case TowerHandler::RAPID_TOWER:
+            color = { 1.0f, 0.0f, 1.0f, 1.0f }; //purple
+            details.range = 250.f;
+            break;
+        default:
+            color = { 1.0f, 1.0f, 1.0f, 1.0f }; //white
+            details.range = 100.f;
+            break;
+        }
     }
 
 
@@ -54,15 +76,35 @@ namespace TowerHandler {
 
     }
 
-    void ShopTower::ShopTowerInit(float xPos, float yPos, float xSize, float ySize, Color c, int seg_count) {
+    void ShopTower::ShopTowerInit(float xPos, float yPos, float xSize, float ySize, TowerType towerType, int seg_count) {
         //gameobj data
         x = xPos;
         y = yPos;
         _sizeX = xSize;
         _sizeY = ySize;
         segments = seg_count;
-        color = c;
+        
         mesh = nullptr; // don't build here
+
+        shopTowerType = towerType;
+        switch (towerType)
+        {
+        case TowerHandler::BASIC_TOWER:
+            color = { 0.0f, 0.0f, 1.0f, 1.0f }; //blue
+            break;
+        case TowerHandler::SNIPER_TOWER:
+            color = { 0.0f, 1.0f, 0.0f, 1.0f }; //red
+            break;
+        case TowerHandler::SLOW_TOWER:
+            color = { 1.0f, 0.0f, 0.0f, 1.0f }; //green
+            break;
+        case TowerHandler::RAPID_TOWER:
+            color = { 1.0f, 0.0f, 1.0f, 1.0f }; //purple
+            break;
+        default:
+            color = { 1.0f, 1.0f, 1.0f, 1.0f }; //white
+            break;
+        }
     }
 
     void UpdateTowerSystem(float mouseX, float mouseY, ShopTower& shop, std::vector<Tower>& activeTowers) {
@@ -91,7 +133,7 @@ namespace TowerHandler {
             }
 
             // Reset and deselect all towers after left click
-            for (auto& t : activeTowers) {
+            for (Tower& t : activeTowers) {
                 t.isSelected = false;
             }
 
@@ -110,7 +152,7 @@ namespace TowerHandler {
                 Tower newTower;
 
                 // Initialize tower at shop position with its own parameters
-                newTower.TowerInit(shop.x, shop.y, 55.0f, 55.0f, { 0.0f, 0.0f, 1.0f, 1.0f });
+                newTower.TowerInit(shop.x, shop.y, 55.0f, 55.0f, shop);
 
                 // Force start dragging immediately
                 newTower.isSelected = true;
@@ -138,8 +180,8 @@ namespace TowerHandler {
         }
     }
 
-    void Tower::TowerShoot() {
-
+    void Tower::TowerShoot(Tower& tower) {
+        
     }
 
 }

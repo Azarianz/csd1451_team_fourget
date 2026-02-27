@@ -86,7 +86,8 @@ namespace TowerHandler {
 
                     // Drag Asset Out Logic
                     Tower newTower;
-                    newTower.TowerInit(mouseX, mouseY, 55.0f, 55.0f, slots[i].slotColor);
+                    ShopTower sh;
+                    newTower.TowerInit(mouseX, mouseY, 55.0f, 55.0f, sh);
                     newTower.details.towerType = slots[i].typeContained;
 
                     newTower.isSelected = true;

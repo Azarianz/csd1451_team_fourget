@@ -1,10 +1,15 @@
 #include "Scene_TowerTest.h"
 #include "AEEngine.h"
+#include "math.h"
 #include "Tower.h"
 
 void Scene_TowerTest::Init()
 {
-    shopTower.ShopTowerInit(0, 0, 50, 50, {1, 1, 1, 1});
+    TowerHandler::TowerType tTypes[] = {TowerHandler::BASIC_TOWER, TowerHandler::SNIPER_TOWER, TowerHandler::SLOW_TOWER, TowerHandler::RAPID_TOWER};
+    int numOfTowerTypes = sizeof(tTypes) / sizeof(tTypes[0]);
+
+    int rndIndex = rand() % numOfTowerTypes;
+    shopTower.ShopTowerInit(0, 0, 50, 50, tTypes[rndIndex]);
 }
 
 void Scene_TowerTest::Update(float dt)

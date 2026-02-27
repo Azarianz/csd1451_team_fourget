@@ -7,8 +7,10 @@ namespace TowerHandler {
 
     static int nextTowerID = 0;
 
-    enum TowerType{ BASIC_TOWER, SNIPER_TOWER, SLOW_TOWER};
-	enum ProjectileType { BASIC_PROJECTILE, SNIPER_PROJECTILE, SLOW_PROJECTILE };
+    enum TowerType{ BASIC_TOWER, SNIPER_TOWER, SLOW_TOWER, RAPID_TOWER};
+	enum ProjectileType { BASIC_PROJECTILE, SNIPER_PROJECTILE, SLOW_PROJECTILE, RAPID_PROJECTILE };
+    struct ShopTower;
+    struct Tower;
 
     struct Projectile
     {
@@ -44,15 +46,20 @@ namespace TowerHandler {
             , details()
         {}
 
-        void TowerInit(float xPos, float yPos, float xSize, float ySize, Color c, int segcount = 50);
-        void TowerShoot();
+        void TowerInit(float xPos, float yPos, float xSize, float ySize, ShopTower shopType, int segcount = 50);
+        void TowerShoot(Tower& tower);
         void Draw();
     };
     
     // DUMMY TOWER TO BASICALLY ACT AS SHOP TOWER SPRITE TO SELECT
     struct ShopTower : public GameObject {
-        void ShopTowerInit(float startX, float startY, float sizeX, float sizeY, Color c, int segcount = 50);
-        
+    private:
+        TowerType shopTowerType = BASIC_TOWER;
+
+    public:
+        void ShopTowerInit(float startX, float startY, float sizeX, 
+            float sizeY, TowerType towerType, int segcount = 50);
+        TowerType const GetTowerType() { return shopTowerType; }
     };
     void UpdateTowerSystem(float mouseX, float mouseY, ShopTower& shop, std::vector<Tower>& activeTowers);
 }
