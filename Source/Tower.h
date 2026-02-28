@@ -1,6 +1,7 @@
 #pragma once
 #include "AEEngine.h"
 #include "GameObject.h"
+#include "Enemy.h"
 #include <vector>
 
 namespace TowerHandler {
@@ -11,6 +12,7 @@ namespace TowerHandler {
 	enum ProjectileType { BASIC_PROJECTILE, SNIPER_PROJECTILE, SLOW_PROJECTILE, RAPID_PROJECTILE };
     struct ShopTower;
     struct Tower;
+    struct ActiveBullet;
 
     struct Projectile
     {
@@ -24,6 +26,7 @@ namespace TowerHandler {
         int level = 0;
         int ID = -1;
         float range = 0.0f;
+        float rateOfFire = 0.f;
         TowerType towerType = BASIC_TOWER;
         Projectile projectile{};
     };
@@ -47,7 +50,7 @@ namespace TowerHandler {
         {}
 
         void TowerInit(float xPos, float yPos, float xSize, float ySize, ShopTower shopType, int segcount = 50);
-        void TowerShoot(Tower& tower);
+        void TowerShoot(Tower& tower, Enemy& enemy);
         void Draw();
     };
     
@@ -62,6 +65,28 @@ namespace TowerHandler {
         TowerType const GetTowerType() { return shopTowerType; }
     };
     void UpdateTowerSystem(float mouseX, float mouseY, ShopTower& shop, std::vector<Tower>& activeTowers);
+    bool CircleCircleCollision(float x1, float y1, float r1, float x2, float y2, float r2);
+
+    struct ActiveBullet : public GameObject {
+        float damage = 0;
+        float speed = 0;
+        float dirX = 0, dirY = 0; // Direction vector
+        bool shouldRemove = false;
+
+        // Use a simple update to move the bullet
+        void Update(float dt) {
+            x += dirX * speed * dt;
+            y += dirY * speed * dt;
+        }
+    };
+
+    // Global container for the system
+    static std::vector<ActiveBullet> activeBullets;
+
+    // Function signatures
+    void UpdateProjectiles(float dt, std::vector<Enemy>& enemies);
+    void DrawProjectiles();
+
 }
 
 

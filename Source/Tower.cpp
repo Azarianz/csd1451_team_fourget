@@ -1,5 +1,6 @@
 #include "Tower.h"
 #include "Utility.h"
+#include "Enemy.h"
 #include <cmath>
 
 namespace TowerHandler {
@@ -22,27 +23,44 @@ namespace TowerHandler {
         details.ID = nextTowerID++;
         details.towerType = shop.GetTowerType();
 
+        //base color, range, damage
         switch (details.towerType)
         {
         case TowerHandler::BASIC_TOWER:
             color = { 0.0f, 0.0f, 1.0f, 1.0f }; //blue
             details.range = 400.f;
+            details.rateOfFire = 2.f;
+            details.projectile.damage = 200.f;
+            details.projectile.speed = 100.f;
             break;
         case TowerHandler::SNIPER_TOWER:
             color = { 0.0f, 1.0f, 0.0f, 1.0f }; //red
             details.range = 600.f;
+            details.rateOfFire = 5.f;
+            details.projectile.damage = 400.f;
+            details.projectile.speed = 300.f;
             break;
         case TowerHandler::SLOW_TOWER:
             color = { 1.0f, 0.0f, 0.0f, 1.0f }; //green
             details.range = 200.f;
+            details.rateOfFire = 2.5f;
+            details.projectile.damage = 50.f;
+            details.projectile.speed = 100.f;
             break;
         case TowerHandler::RAPID_TOWER:
             color = { 1.0f, 0.0f, 1.0f, 1.0f }; //purple
             details.range = 250.f;
+            details.rateOfFire = 1.25f;
+            details.projectile.damage = 200.f;
+            details.projectile.speed = 100.f;
             break;
         default:
+            // slow rof and white to show that its bugged if it ever reaches here
             color = { 1.0f, 1.0f, 1.0f, 1.0f }; //white
             details.range = 100.f;
+            details.rateOfFire = 10.f;          //bad rof
+            details.projectile.damage = 0.f;    //no damage
+            details.projectile.speed = 50.f;    //bad projectile
             break;
         }
     }
@@ -180,8 +198,79 @@ namespace TowerHandler {
         }
     }
 
-    void Tower::TowerShoot(Tower& tower) {
-        
+    void Tower::TowerShoot(Tower& tower, Enemy& enemy) {
+        if (CircleCircleCollision(tower.x, tower.y, tower.details.range, enemy.x, enemy.y, enemy._sizeX)) {
+            ActiveBullet newBullet;
+            newBullet.x = tower.x;
+            newBullet.y = tower.y;
+            // Inside TowerShoot when creating newBullet:
+            newBullet._sizeX = 10.0f;
+            newBullet._sizeY = 10.0f;
+
+            // Copy stats from the tower's projectile template
+            newBullet.damage = tower.details.projectile.damage;
+            newBullet.speed = tower.details.projectile.speed;
+            newBullet.color = tower.color; // Match tower color for visual consistency
+
+            // Calculate Direction Vector
+            float dx = enemy.x - tower.x;
+            float dy = enemy.y - tower.y;
+            float length = sqrtf(dx * dx + dy * dy);
+
+            if (length > 0) {
+                newBullet.dirX = dx / length; // Normalized X
+                newBullet.dirY = dy / length; // Normalized Y
+            }
+
+            activeBullets.push_back(newBullet);
+        }
+    }
+
+    bool CircleCircleCollision(float x1, float y1, float r1, float x2, float y2, float r2) {
+		bool flag = false;
+        float dx = x2 - x1;
+		float dy = y2 - y1;
+		float sqrDistance = dx * dx + dy * dy;
+		float sqrRadiusSum = (r1 + r2) * (r1 + r2);
+
+        if (sqrDistance <= sqrRadiusSum) {
+            // Collision detected
+			flag = true;
+		}
+
+		return flag;
+	}
+
+    void UpdateProjectiles(float dt, std::vector<Enemy>& enemies) {
+        for (auto& b : activeBullets) {
+            b.Update(dt);
+
+            // 1. Check Collision with Enemies
+            for (auto& e : enemies) {
+                if (CircleCircleCollision(b.x, b.y, b._sizeX, e.x, e.y, e._sizeX)) {
+                    // e.health -= b.damage; // Assuming Enemy has health
+                    b.shouldRemove = true;
+                }
+            }
+
+            // 2. Check Out of Bounds (Example: 1000px range)
+            if (abs(b.x) > 2000 || abs(b.y) > 2000) {
+                b.shouldRemove = true;
+            }
+        }
+
+        // 3. The Removal Template: Removes all bullets marked 'true'
+        activeBullets.erase(
+            std::remove_if(activeBullets.begin(), activeBullets.end(),
+                [](const ActiveBullet& b) { return b.shouldRemove; }),
+            activeBullets.end()
+        );
+    }
+
+    void DrawProjectiles() {
+        for (ActiveBullet& bullet : activeBullets) {
+            bullet.Draw();
+        }
     }
 
 }
