@@ -29,28 +29,28 @@ namespace TowerHandler {
         case TowerHandler::BASIC_TOWER:
             color = { 0.0f, 0.0f, 1.0f, 1.0f }; //blue
             details.range = 400.f;
-            details.rateOfFire = 2.f;
+            details.fireTimer = 2.f;
             details.projectile.damage = 200.f;
             details.projectile.speed = 100.f;
             break;
         case TowerHandler::SNIPER_TOWER:
             color = { 0.0f, 1.0f, 0.0f, 1.0f }; //red
             details.range = 600.f;
-            details.rateOfFire = 5.f;
+            details.fireTimer = 5.f;
             details.projectile.damage = 400.f;
             details.projectile.speed = 300.f;
             break;
         case TowerHandler::SLOW_TOWER:
             color = { 1.0f, 0.0f, 0.0f, 1.0f }; //green
             details.range = 200.f;
-            details.rateOfFire = 2.5f;
+            details.fireTimer = 2.5f;
             details.projectile.damage = 50.f;
             details.projectile.speed = 100.f;
             break;
         case TowerHandler::RAPID_TOWER:
             color = { 1.0f, 0.0f, 1.0f, 1.0f }; //purple
             details.range = 250.f;
-            details.rateOfFire = 1.25f;
+            details.fireTimer = 1.25f;
             details.projectile.damage = 200.f;
             details.projectile.speed = 100.f;
             break;
@@ -58,7 +58,7 @@ namespace TowerHandler {
             // slow rof and white to show that its bugged if it ever reaches here
             color = { 1.0f, 1.0f, 1.0f, 1.0f }; //white
             details.range = 100.f;
-            details.rateOfFire = 10.f;          //bad rof
+            details.fireTimer = 10.f;          //bad rof
             details.projectile.damage = 0.f;    //no damage
             details.projectile.speed = 50.f;    //bad projectile
             break;
@@ -181,6 +181,13 @@ namespace TowerHandler {
                 activeTowers.push_back(newTower);
                 return; // exit early to not trigger left click on the same frame again
             }
+
+            for (Tower& t : activeTowers) {
+                // Decrease the fire timer by the time passed since last frame
+                if (t.details.fireTimer > 0.0f) {
+					t.details.fireTimer -= 0.1f; //CHANGE TO DT LATER, JUST FOR TESTING PURPOSES
+                }
+            }
         }
 
         // Dragging tower (check through all towers to find the one that is selected (isDragging == true)
@@ -199,6 +206,11 @@ namespace TowerHandler {
     }
 
     void Tower::TowerShoot(Tower& tower, Enemy& enemy) {
+
+        if (tower.details.fireTimer > 0.0f) {
+            return;
+        }
+
         if (CircleCircleCollision(tower.x, tower.y, tower.details.range, enemy.x, enemy.y, enemy._sizeX)) {
             ActiveBullet newBullet;
             newBullet.x = tower.x;

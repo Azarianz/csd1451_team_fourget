@@ -26,7 +26,7 @@ namespace TowerHandler {
         int level = 0;
         int ID = -1;
         float range = 0.0f;
-        float rateOfFire = 0.f;
+        float fireTimer = 0.f;
         TowerType towerType = BASIC_TOWER;
         Projectile projectile{};
     };
