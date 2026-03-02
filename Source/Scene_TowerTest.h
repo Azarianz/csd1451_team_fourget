@@ -1,6 +1,7 @@
 #pragma once
 #include "Scene.h"
 #include "Tower.h"
+#include "Enemy.h"
 #include <vector>
 
 class Scene_TowerTest : public Scene
@@ -15,4 +16,8 @@ private:
     int mouseX{}, mouseY{};
     TowerHandler::ShopTower shopTower;
     std::vector<TowerHandler::Tower> activeTowers{};
+
+	//enemy test data
+    std::vector<Enemy*> activeEnemies;
+    std::vector<Point> myPath; // The path points
 };

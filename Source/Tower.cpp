@@ -205,7 +205,7 @@ namespace TowerHandler {
         }
     }
 
-    void Tower::TowerShoot(Tower& tower, Enemy& enemy) {
+    void TowerShoot(Tower& tower, Enemy& enemy) {
 
         if (tower.details.fireTimer > 0.0f) {
             return;
@@ -238,6 +238,7 @@ namespace TowerHandler {
         }
     }
 
+	// bullet and enemy collision, both treated as circles for simplicity
     bool CircleCircleCollision(float x1, float y1, float r1, float x2, float y2, float r2) {
 		bool flag = false;
         float dx = x2 - x1;
@@ -246,24 +247,22 @@ namespace TowerHandler {
 		float sqrRadiusSum = (r1 + r2) * (r1 + r2);
 
         if (sqrDistance <= sqrRadiusSum) {
-            // Collision detected
 			flag = true;
 		}
 
 		return flag;
 	}
 
-    void UpdateProjectiles(float dt, std::vector<Enemy>& enemies) {
+    void UpdateProjectiles(float dt, Enemy& e) {
         for (auto& b : activeBullets) {
             b.Update(dt);
 
             // 1. Check Collision with Enemies
-            for (auto& e : enemies) {
-                if (CircleCircleCollision(b.x, b.y, b._sizeX, e.x, e.y, e._sizeX)) {
-                    // e.health -= b.damage; // Assuming Enemy has health
-                    b.shouldRemove = true;
-                }
+            if (CircleCircleCollision(b.x, b.y, b._sizeX, e.x, e.y, e._sizeX)) {
+                e.health -= b.damage;
+                b.shouldRemove = true;
             }
+
 
             // 2. Check Out of Bounds (Example: 1000px range)
             if (abs(b.x) > 2000 || abs(b.y) > 2000) {
