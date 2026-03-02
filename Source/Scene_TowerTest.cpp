@@ -25,8 +25,8 @@ void Scene_TowerTest::Update(float dt)
     TowerHandler::UpdateTowerSystem((float)mouseX, (float)mouseY, shopTower, activeTowers);
     for (auto& t : activeTowers) {
         for (auto* e : activeEnemies) {
-            TowerHandler::TowerShoot(t, *e);
-			TowerHandler::UpdateProjectiles(dt, *e);
+            TowerHandler::TowerShoot(t, *e, activeBullets);
+			TowerHandler::UpdateProjectiles(dt, *e, activeBullets);
 		}
     }
     
@@ -108,7 +108,6 @@ void Scene_TowerTest::Draw()
     for (auto& t : activeTowers) {
         t.Draw();
     }
-	TowerHandler::DrawProjectiles();
 
     for (auto* e : activeEnemies){
         e->Draw();

@@ -205,14 +205,14 @@ namespace TowerHandler {
         }
     }
 
-    void TowerShoot(Tower& tower, Enemy& enemy) {
+    void TowerShoot(Tower& tower, Enemy& enemy, std::vector<ActiveBullet>& bullets) {
 
         if (tower.details.fireTimer > 0.0f) {
             return;
         }
 
         if (CircleCircleCollision(tower.x, tower.y, tower.details.range, enemy.x, enemy.y, enemy._sizeX)) {
-            ActiveBullet newBullet;
+			ActiveBullet newBullet;
             newBullet.x = tower.x;
             newBullet.y = tower.y;
             // Inside TowerShoot when creating newBullet:
@@ -233,8 +233,7 @@ namespace TowerHandler {
                 newBullet.dirX = dx / length; // Normalized X
                 newBullet.dirY = dy / length; // Normalized Y
             }
-
-            activeBullets.push_back(newBullet);
+            bullets.push_back(newBullet);
         }
     }
 
@@ -253,7 +252,7 @@ namespace TowerHandler {
 		return flag;
 	}
 
-    void UpdateProjectiles(float dt, Enemy& e) {
+    void UpdateProjectiles(float dt, Enemy& e, std::vector<ActiveBullet> activeBullets) {
         for (auto& b : activeBullets) {
             b.Update(dt);
 
@@ -278,10 +277,10 @@ namespace TowerHandler {
         );
     }
 
-    void DrawProjectiles() {
+    /*void DrawProjectiles() {
         for (ActiveBullet& bullet : activeBullets) {
             bullet.Draw();
         }
-    }
+    }*/
 
 }

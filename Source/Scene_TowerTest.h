@@ -16,6 +16,7 @@ private:
     int mouseX{}, mouseY{};
     TowerHandler::ShopTower shopTower;
     std::vector<TowerHandler::Tower> activeTowers{};
+	std::vector<TowerHandler::ActiveBullet> activeBullets;
 
 	//enemy test data
     std::vector<Enemy*> activeEnemies;

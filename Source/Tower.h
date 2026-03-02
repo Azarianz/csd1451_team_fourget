@@ -52,7 +52,7 @@ namespace TowerHandler {
         void TowerInit(float xPos, float yPos, float xSize, float ySize, ShopTower shopType, int segcount = 50);
         void Draw();
     };
-    void TowerShoot(Tower& tower, Enemy& enemy);
+    void TowerShoot(Tower& tower, Enemy& enemy, std::vector<ActiveBullet>& bullets);
     
     // DUMMY TOWER TO BASICALLY ACT AS SHOP TOWER SPRITE TO SELECT
     struct ShopTower : public GameObject {
@@ -80,12 +80,9 @@ namespace TowerHandler {
         }
     };
 
-    // Global container for the system
-    static std::vector<ActiveBullet> activeBullets;
-
     // Function signatures
-    void UpdateProjectiles(float dt, Enemy& enemies);
-    void DrawProjectiles();
+    void UpdateProjectiles(float dt, Enemy& enemies, std::vector<ActiveBullet> activeBullets);
+    //void DrawProjectiles();
 
 }
 
