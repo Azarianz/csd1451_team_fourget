@@ -2,6 +2,7 @@
 #include "Utility.h"
 #include "Enemy.h"
 #include <cmath>
+#include <algorithm>
 
 namespace TowerHandler {
     void Tower::TowerInit(float xPos, float yPos, float xSize, float ySize, ShopTower shop, int seg_count) {
@@ -22,6 +23,7 @@ namespace TowerHandler {
         details.level = 1;
         details.ID = nextTowerID++;
         details.towerType = shop.GetTowerType();
+        details.fireTimer = 0.f;
 
         //base color, range, damage
         switch (details.towerType)
@@ -29,28 +31,28 @@ namespace TowerHandler {
         case TowerHandler::BASIC_TOWER:
             color = { 0.0f, 0.0f, 1.0f, 1.0f }; //blue
             details.range = 400.f;
-            details.fireTimer = 2.f;
+            details.fireCooldown = 2.f;
             details.projectile.damage = 200.f;
             details.projectile.speed = 100.f;
             break;
         case TowerHandler::SNIPER_TOWER:
             color = { 0.0f, 1.0f, 0.0f, 1.0f }; //red
             details.range = 600.f;
-            details.fireTimer = 5.f;
+            details.fireCooldown = 5.f;
             details.projectile.damage = 400.f;
             details.projectile.speed = 300.f;
             break;
         case TowerHandler::SLOW_TOWER:
             color = { 1.0f, 0.0f, 0.0f, 1.0f }; //green
             details.range = 200.f;
-            details.fireTimer = 2.5f;
+            details.fireCooldown = 2.5f;
             details.projectile.damage = 50.f;
             details.projectile.speed = 100.f;
             break;
         case TowerHandler::RAPID_TOWER:
             color = { 1.0f, 0.0f, 1.0f, 1.0f }; //purple
             details.range = 250.f;
-            details.fireTimer = 1.25f;
+            details.fireCooldown = 1.25f;
             details.projectile.damage = 200.f;
             details.projectile.speed = 100.f;
             break;
@@ -58,9 +60,9 @@ namespace TowerHandler {
             // slow rof and white to show that its bugged if it ever reaches here
             color = { 1.0f, 1.0f, 1.0f, 1.0f }; //white
             details.range = 100.f;
-            details.fireTimer = 10.f;          //bad rof
+            details.fireCooldown = 10.f;        //bad rof
             details.projectile.damage = 0.f;    //no damage
-            details.projectile.speed = 50.f;    //bad projectile
+            details.projectile.speed = 100.f;    //bad projectile
             break;
         }
     }
@@ -234,6 +236,7 @@ namespace TowerHandler {
                 newBullet.dirY = dy / length; // Normalized Y
             }
             bullets.push_back(newBullet);
+            tower.details.fireTimer = tower.details.fireCooldown;
         }
     }
 
@@ -252,14 +255,19 @@ namespace TowerHandler {
 		return flag;
 	}
 
-    void UpdateProjectiles(float dt, Enemy& e, std::vector<ActiveBullet> activeBullets) {
+    void UpdateProjectiles(float dt, std::vector<Enemy*>& enemies, std::vector<ActiveBullet> activeBullets) {
         for (auto& b : activeBullets) {
             b.Update(dt);
 
-            // 1. Check Collision with Enemies
-            if (CircleCircleCollision(b.x, b.y, b._sizeX, e.x, e.y, e._sizeX)) {
-                e.health -= b.damage;
-                b.shouldRemove = true;
+            // Hit test vs enemies
+            for (Enemy* e : enemies) {
+                if (!e || e->health <= 0.0f) continue;
+
+                if (CircleCircleCollision(b.x, b.y, b._sizeX, e->x, e->y, e->_sizeX)) {
+                    e->health -= b.damage;
+                    b.shouldRemove = true;
+                    break;
+                }
             }
 
 
@@ -276,11 +284,5 @@ namespace TowerHandler {
             activeBullets.end()
         );
     }
-
-    /*void DrawProjectiles() {
-        for (ActiveBullet& bullet : activeBullets) {
-            bullet.Draw();
-        }
-    }*/
 
 }

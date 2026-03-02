@@ -26,7 +26,8 @@ namespace TowerHandler {
         int level = 0;
         int ID = -1;
         float range = 0.0f;
-        float fireTimer = 0.f;
+		float fireCooldown = 0.0f;          // seconds between shots (constant for each tower type)
+		float fireTimer = 0.f;              // seconds until next shot (counts down)
         TowerType towerType = BASIC_TOWER;
         Projectile projectile{};
     };
@@ -81,8 +82,7 @@ namespace TowerHandler {
     };
 
     // Function signatures
-    void UpdateProjectiles(float dt, Enemy& enemies, std::vector<ActiveBullet> activeBullets);
-    //void DrawProjectiles();
+    void UpdateProjectiles(float dt, std::vector<Enemy*>& enemies, std::vector<ActiveBullet> activeBullets);
 
 }
 

@@ -21,14 +21,32 @@ void Scene_TowerTest::Init()
 
 void Scene_TowerTest::Update(float dt)
 {
+    for (auto& t : activeTowers) {
+        if (t.details.fireTimer > 0.f) {
+            t.details.fireTimer -= dt;
+            if (t.details.fireTimer < 0.f) t.details.fireTimer = 0.f;
+        }
+    }
+
     AEInputGetCursorPosition(&mouseX, &mouseY);
     TowerHandler::UpdateTowerSystem((float)mouseX, (float)mouseY, shopTower, activeTowers);
+    // Each tower shoots at most ONE enemy per frame
     for (auto& t : activeTowers) {
         for (auto* e : activeEnemies) {
+            if (!e || e->health <= 0.0f) continue;
+
+            float before = t.details.fireTimer;
             TowerHandler::TowerShoot(t, *e, activeBullets);
-			TowerHandler::UpdateProjectiles(dt, *e, activeBullets);
-		}
+
+            // If tower fired (timer got reset), stop so it doesn't shoot multiple enemies
+            if (before == 0.f && t.details.fireTimer > 0.f) {
+                break;
+            }
+        }
     }
+
+    // Move bullets + apply damage + remove bullets
+    TowerHandler::UpdateProjectiles(dt, activeEnemies, activeBullets);
     
 
     // INPUT: SPAWN ENEMIES
@@ -107,6 +125,10 @@ void Scene_TowerTest::Draw()
     shopTower.Draw();
     for (auto& t : activeTowers) {
         t.Draw();
+    }
+
+    for (auto& b : activeBullets) {
+        b.Draw();
     }
 
     for (auto* e : activeEnemies){
