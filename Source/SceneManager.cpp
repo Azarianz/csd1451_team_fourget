@@ -9,7 +9,6 @@
 #include "Scene_EnemyTest.h"
 #include "Scene_LoadLevel.h"
 #include "Scene_Prototype.h"
-#include "SceneManager.h"
 
 SceneManager& SceneManager::I()
 {
