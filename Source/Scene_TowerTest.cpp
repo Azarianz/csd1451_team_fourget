@@ -34,18 +34,11 @@ void Scene_TowerTest::Update(float dt)
     for (auto& t : activeTowers) {
         for (auto* e : activeEnemies) {
             if (!e || e->health <= 0.0f) continue;
-
-            float before = t.details.fireTimer;
             TowerHandler::TowerShoot(t, *e, activeBullets);
-
-            // If tower fired (timer got reset), stop so it doesn't shoot multiple enemies
-            if (before == 0.f && t.details.fireTimer > 0.f) {
-                break;
-            }
+            break; // one target per tower per frame (simple)
         }
     }
 
-    // Move bullets + apply damage + remove bullets
     TowerHandler::UpdateProjectiles(dt, activeEnemies, activeBullets);
     
 

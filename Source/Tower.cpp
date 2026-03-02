@@ -226,6 +226,10 @@ namespace TowerHandler {
             newBullet.speed = tower.details.projectile.speed;
             newBullet.color = tower.color; // Match tower color for visual consistency
 
+            newBullet.segments = 20;
+            newBullet.mesh = nullptr;
+            newBullet.target = &enemy;
+
             // Calculate Direction Vector
             float dx = enemy.x - tower.x;
             float dy = enemy.y - tower.y;
@@ -255,11 +259,11 @@ namespace TowerHandler {
 		return flag;
 	}
 
-    void UpdateProjectiles(float dt, std::vector<Enemy*>& enemies, std::vector<ActiveBullet> activeBullets) {
+    void UpdateProjectiles(float dt, std::vector<Enemy*>& enemies,
+        std::vector<ActiveBullet>& activeBullets){
         for (auto& b : activeBullets) {
             b.Update(dt);
 
-            // Hit test vs enemies
             for (Enemy* e : enemies) {
                 if (!e || e->health <= 0.0f) continue;
 
@@ -270,19 +274,14 @@ namespace TowerHandler {
                 }
             }
 
-
-            // 2. Check Out of Bounds (Example: 1000px range)
-            if (abs(b.x) > 2000 || abs(b.y) > 2000) {
+            if (std::fabs(b.x) > 2000.f || std::fabs(b.y) > 2000.f)
                 b.shouldRemove = true;
-            }
         }
 
-        // 3. The Removal Template: Removes all bullets marked 'true'
         activeBullets.erase(
             std::remove_if(activeBullets.begin(), activeBullets.end(),
-                [](const ActiveBullet& b) { return b.shouldRemove; }),
-            activeBullets.end()
-        );
+            [](const ActiveBullet& b) { return b.shouldRemove; }),
+            activeBullets.end());
     }
 
 }

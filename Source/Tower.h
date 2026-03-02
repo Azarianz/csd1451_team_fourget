@@ -71,18 +71,32 @@ namespace TowerHandler {
     struct ActiveBullet : public GameObject {
         float damage = 0;
         float speed = 0;
-        float dirX = 0, dirY = 0; // Direction vector
+
+        // Current movement direction (normalized)
+        float dirX = 0, dirY = 0;
+
+        // Homing target (OK in your scene because enemies are only deleted in Scene::Exit)
+        Enemy* target = nullptr;
+
         bool shouldRemove = false;
 
-        // Use a simple update to move the bullet
         void Update(float dt) {
+            if (target && target->health > 0.0f) {
+                float dx = target->x - x;
+                float dy = target->y - y;
+                float len = sqrtf(dx * dx + dy * dy);
+                if (len > 0.0001f) {
+                    dirX = dx / len;
+                    dirY = dy / len;
+                }
+            }
             x += dirX * speed * dt;
             y += dirY * speed * dt;
         }
     };
 
-    // Function signatures
-    void UpdateProjectiles(float dt, std::vector<Enemy*>& enemies, std::vector<ActiveBullet> activeBullets);
+    void UpdateProjectiles(float dt, std::vector<Enemy*>& enemies,
+        std::vector<ActiveBullet>& activeBullets);
 
 }
 
