@@ -31,30 +31,30 @@ namespace TowerHandler {
         case TowerHandler::BASIC_TOWER:
             color = { 0.0f, 0.0f, 1.0f, 1.0f }; //blue
             details.range = 400.f;
-            details.fireCooldown = 2.f;
-            details.projectile.damage = 200.f;
-            details.projectile.speed = 100.f;
+            details.fireCooldown = 1.5f;
+            details.projectile.damage = 15.f;
+            details.projectile.speed = 400.f;
             break;
         case TowerHandler::SNIPER_TOWER:
-            color = { 0.0f, 1.0f, 0.0f, 1.0f }; //red
+            color = { 0.0f, 1.0f, 0.0f, 1.0f }; //green
             details.range = 600.f;
-            details.fireCooldown = 5.f;
-            details.projectile.damage = 400.f;
-            details.projectile.speed = 300.f;
+            details.fireCooldown = 3.f;
+            details.projectile.damage = 50.f;
+            details.projectile.speed = 600.f;
             break;
         case TowerHandler::SLOW_TOWER:
-            color = { 1.0f, 0.0f, 0.0f, 1.0f }; //green
+            color = { 1.0f, 0.0f, 0.0f, 1.0f }; //red
             details.range = 200.f;
-            details.fireCooldown = 2.5f;
-            details.projectile.damage = 50.f;
-            details.projectile.speed = 100.f;
+            details.fireCooldown = 2.f;
+            details.projectile.damage = 5.f;
+            details.projectile.speed = 350.f;
             break;
         case TowerHandler::RAPID_TOWER:
             color = { 1.0f, 0.0f, 1.0f, 1.0f }; //purple
-            details.range = 250.f;
-            details.fireCooldown = 1.25f;
-            details.projectile.damage = 200.f;
-            details.projectile.speed = 100.f;
+            details.range = 300.f;
+            details.fireCooldown = 1.f;
+            details.projectile.damage = 10.f;
+            details.projectile.speed = 400.f;
             break;
         default:
             // slow rof and white to show that its bugged if it ever reaches here
