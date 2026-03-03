@@ -4,9 +4,9 @@
 #include "Enemy.h"
 #include <vector>
 
-namespace TowerHandler {
+extern int nextTowerID;
 
-    static int nextTowerID = 0;
+namespace TowerHandler {
 
     enum TowerType{ BASIC_TOWER, SNIPER_TOWER, SLOW_TOWER, RAPID_TOWER};
 	enum ProjectileType { BASIC_PROJECTILE, SNIPER_PROJECTILE, SLOW_PROJECTILE, RAPID_PROJECTILE };
@@ -53,7 +53,7 @@ namespace TowerHandler {
         void TowerInit(float xPos, float yPos, float xSize, float ySize, ShopTower shopType, int segcount = 50);
         void Draw();
     };
-    void TowerShoot(Tower& tower, Enemy& enemy, std::vector<ActiveBullet>& bullets);
+    bool TowerShoot(Tower& tower, Enemy& enemy, std::vector<ActiveBullet>& bullets);
     
     // DUMMY TOWER TO BASICALLY ACT AS SHOP TOWER SPRITE TO SELECT
     struct ShopTower : public GameObject {

@@ -34,8 +34,8 @@ void Scene_TowerTest::Update(float dt)
     for (auto& t : activeTowers) {
         for (auto* e : activeEnemies) {
             if (!e || e->health <= 0.0f) continue;
-            TowerHandler::TowerShoot(t, *e, activeBullets);
-            break; // one target per tower per frame (simple)
+            if (TowerHandler::TowerShoot(t, *e, activeBullets))
+                break; // found & shot a valid target
         }
     }
 
@@ -108,6 +108,21 @@ void Scene_TowerTest::Update(float dt)
     {
         e->Update(dt, myPath);
     }
+
+
+    for (auto* e : activeEnemies) {
+        if (e && e->health <= 0.0f) {
+            // Null out bullet targets pointing to this enemy
+            for (auto& b : activeBullets)
+                if (b.target == e) b.target = nullptr;
+            e->Destroy();
+            delete e;
+        }
+    }
+    activeEnemies.erase(
+        std::remove_if(activeEnemies.begin(), activeEnemies.end(),
+            [](Enemy* e) { return !e || e->health <= 0.0f; }),
+        activeEnemies.end());
 
 }
 

@@ -5,6 +5,9 @@
 #include <algorithm>
 
 namespace TowerHandler {
+
+    
+    int nextTowerID = 0;
     void Tower::TowerInit(float xPos, float yPos, float xSize, float ySize, ShopTower shop, int seg_count) {
         //gameobj data
         x = xPos;
@@ -183,13 +186,6 @@ namespace TowerHandler {
                 activeTowers.push_back(newTower);
                 return; // exit early to not trigger left click on the same frame again
             }
-
-            for (Tower& t : activeTowers) {
-                // Decrease the fire timer by the time passed since last frame
-                if (t.details.fireTimer > 0.0f) {
-					t.details.fireTimer -= 0.1f; //CHANGE TO DT LATER, JUST FOR TESTING PURPOSES
-                }
-            }
         }
 
         // Dragging tower (check through all towers to find the one that is selected (isDragging == true)
@@ -207,10 +203,10 @@ namespace TowerHandler {
         }
     }
 
-    void TowerShoot(Tower& tower, Enemy& enemy, std::vector<ActiveBullet>& bullets) {
+    bool TowerShoot(Tower& tower, Enemy& enemy, std::vector<ActiveBullet>& bullets) {
 
         if (tower.details.fireTimer > 0.0f) {
-            return;
+            return false;
         }
 
         if (CircleCircleCollision(tower.x, tower.y, tower.details.range, enemy.x, enemy.y, enemy._sizeX)) {
@@ -241,7 +237,10 @@ namespace TowerHandler {
             }
             bullets.push_back(newBullet);
             tower.details.fireTimer = tower.details.fireCooldown;
+
+            return true;
         }
+        return false;
     }
 
 	// bullet and enemy collision, both treated as circles for simplicity
