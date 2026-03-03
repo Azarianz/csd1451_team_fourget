@@ -68,6 +68,9 @@ namespace TowerHandler {
         if (!pMesh) {
             PRINT("Shop Init: Failed to create circle mesh!\n");
         }
+
+        m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
+        m_points = 100; // Starting currency
     }
 
     void Shop::Update(std::vector<Tower>& activeTowers) {
@@ -76,7 +79,6 @@ namespace TowerHandler {
 
         if (AEInputCheckTriggered(AEVK_LBUTTON)) {
             for (int i = 0; i < TOTAL_SLOTS; ++i) {
-                // Check if mouse click is within the shop slot
                 if (Utility::IsCircleClicked(slots[i].x, slots[i].y, slots[i].size / 2.0f, mouseX, mouseY)) {
 
                     if (slots[i].isRefreshButton) {
@@ -84,16 +86,19 @@ namespace TowerHandler {
                         return;
                     }
 
-                    // Drag Asset Out Logic
+                    // CHECK: Insufficient points check
+                    if (m_points < TOWER_COST) {
+                        PRINT("Not enough points! Need %d\n", TOWER_COST);
+                        return;
+                    }
+
+                    // Deduct points and spawn tower
+                    m_points -= TOWER_COST;
+
                     Tower newTower;
                     newTower.TowerInit(mouseX, mouseY, 55.0f, 55.0f, slots[i].slotColor);
                     newTower.details.towerType = slots[i].typeContained;
-
-                    newTower.isSelected = true;
                     newTower.isDragging = true;
-                    newTower.dragOffsetX = 0;
-                    newTower.dragOffsetY = 0;
-
                     activeTowers.push_back(newTower);
                     break;
                 }
@@ -111,7 +116,7 @@ namespace TowerHandler {
 
         for (int i = 0; i < TOTAL_SLOTS; ++i) {
             AEMtx33 scale, trans, transform;
-            AEMtx33Scale(&scale, slots[i].size, slots[i].size);
+            AEMtx33Scale(&scale, slots[i].  size, slots[i].size);
             AEMtx33Trans(&trans, slots[i].x, slots[i].y);
             AEMtx33Concat(&transform, &trans, &scale);
 
@@ -128,9 +133,27 @@ namespace TowerHandler {
                     slots[i].slotColor.b,
                     1.0f );   
             }
-
+            
             AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
         }
+
+        DrawPoints();
+    }
+
+    void Shop::DrawPoints() {
+        if (m_uiFont < 0) {
+            PRINT("Font failed to load! Check Assets folder.\n");
+            return;
+        }
+
+        char buf[32];
+        sprintf_s(buf, "POINTS: %d", m_points);
+
+        float textPosX = 0.6f;
+        float textPosY = 0.9f;
+
+        // AEGfxPrint(fontId, str, x, y, scale, r, g, b, a)
+        AEGfxPrint(m_uiFont, buf, textPosX, textPosY, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f);
     }
 
     void Shop::RefreshSlots() {
@@ -156,8 +179,7 @@ namespace TowerHandler {
     }
 
     void Shop::Exit() {
-        if (pMesh) {
-            AEGfxMeshFree(pMesh);
-        }
+        if (pMesh) AEGfxMeshFree(pMesh);
+        if (m_uiFont >= 0) AEGfxDestroyFont(m_uiFont);
     }
 }
