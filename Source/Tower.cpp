@@ -6,8 +6,15 @@
 
 namespace TowerHandler {
 
-    
+    static AEGfxTexture* g_TowerSheet = nullptr;
     int nextTowerID = 0;
+
+    void LoadTowerAssets()
+    {
+        if (!g_TowerSheet)
+            g_TowerSheet = AEGfxTextureLoad("Assets/spritesheet.png");
+    }
+
     void Tower::TowerInit(float xPos, float yPos, float xSize, float ySize, ShopTower shop, int seg_count) {
         //gameobj data
         x = xPos;
@@ -68,10 +75,29 @@ namespace TowerHandler {
             details.projectile.speed = 100.f;    //bad projectile
             break;
         }
+
+        UVRect uv;
+        switch (details.towerType)
+        {
+        case BASIC_TOWER:  uv = GetSpriteUV(1, 0, 13, 10); break;
+        case SNIPER_TOWER: uv = GetSpriteUV(2, 0, 13, 10); break;
+        case SLOW_TOWER:   uv = GetSpriteUV(3, 0, 13, 10); break;
+        case RAPID_TOWER:  uv = GetSpriteUV(4, 0, 13, 10); break;
+        default:           uv = { 0,0,1,1 }; break;
+        }
+
+        // Store the Graphics shape ID on the tower
+        spriteId = Graphics::DrawSprite(g_TowerSheet,
+            x, y, _sizeX, _sizeY,      // position & size
+            1.f, 1.f, 1.f, 1.f,        // tint white
+            uv.u0, uv.v0, uv.u1, uv.v1);
+
     }
 
 
     void Tower::Draw() {
+
+        Graphics::SetPosition(spriteId, x, y);
 
         // drawing range
         if (isDragging || isSelected) {

@@ -2,6 +2,7 @@
 #include "AEEngine.h"
 #include "GameObject.h"
 #include "Enemy.h"
+#include "Graphics.h"
 #include <vector>
 
 extern int nextTowerID;
@@ -39,6 +40,7 @@ namespace TowerHandler {
         float dragOffsetX = 0.0f;
         float dragOffsetY = 0.0f;
         TowerDetails details; 
+        Graphics::ShapeId spriteId = 0;
 
         Tower()
             : GameObject()
@@ -55,7 +57,7 @@ namespace TowerHandler {
     };
     bool TowerShoot(Tower& tower, Enemy& enemy, std::vector<ActiveBullet>& bullets);
     
-    // DUMMY TOWER TO BASICALLY ACT AS SHOP TOWER SPRITE TO SELECT
+    // SHOP TOWER STUFF
     struct ShopTower : public GameObject {
     private:
         TowerType shopTowerType = BASIC_TOWER;
@@ -68,6 +70,7 @@ namespace TowerHandler {
     void UpdateTowerSystem(float mouseX, float mouseY, ShopTower& shop, std::vector<Tower>& activeTowers);
     bool CircleCircleCollision(float x1, float y1, float r1, float x2, float y2, float r2);
 
+	// ACTIVE BULLET STUFF
     struct ActiveBullet : public GameObject {
         float damage = 0;
         float speed = 0;
@@ -97,6 +100,18 @@ namespace TowerHandler {
 
     void UpdateProjectiles(float dt, std::vector<Enemy*>& enemies,
         std::vector<ActiveBullet>& activeBullets);
+
+
+	// SPRITE UV CALCULATION
+    struct UVRect { float u0, v0, u1, v1; };
+
+    inline UVRect GetSpriteUV(int col, int row, int totalCols, int totalRows)
+    {
+        float w = 1.0f / totalCols;
+        float h = 1.0f / totalRows;
+        return { col * w, row * h, (col + 1) * w, (row + 1) * h };
+    }
+    void LoadTowerAssets();
 
 }
 

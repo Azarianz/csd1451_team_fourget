@@ -4,11 +4,15 @@
 
 void Scene_TowerTest::Init()
 {
+    TowerHandler::LoadTowerAssets();
+
+	// Just for testing, randomly assign the shop tower type each time we enter the scene
     TowerHandler::TowerType tTypes[] = {TowerHandler::BASIC_TOWER, TowerHandler::SNIPER_TOWER, TowerHandler::SLOW_TOWER, TowerHandler::RAPID_TOWER};
     int numOfTowerTypes = sizeof(tTypes) / sizeof(tTypes[0]);
 
     int rndIndex = rand() % numOfTowerTypes;
     shopTower.ShopTowerInit(0, 0, 50, 50, tTypes[rndIndex]);
+
 
     // 1. Define the Path (A -> B -> C -> D)
     // Adjust these numbers to fit your screen resolution (1600x900)
@@ -16,7 +20,7 @@ void Scene_TowerTest::Init()
     myPath.push_back({ 600.0f,  300.0f }); // Top Right
     myPath.push_back({ 600.0f, -300.0f }); // Bottom Right
     myPath.push_back({ -600.0f, -300.0f }); // Bottom Left
-
+    
 }
 
 void Scene_TowerTest::Update(float dt)
@@ -43,7 +47,7 @@ void Scene_TowerTest::Update(float dt)
     
 
     // INPUT: SPAWN ENEMIES
-    // Press 1 for Zombie
+    // Press c for Zombie
     if (AEInputCheckTriggered(AEVK_C))
     {
         Zombie* z = new Zombie();
@@ -56,7 +60,7 @@ void Scene_TowerTest::Update(float dt)
         activeEnemies.push_back(z);
     }
 
-    // Press 2 for Skeleton
+    // Press v for Skeleton
     if (AEInputCheckTriggered(AEVK_V))
     {
         Skeleton* s = new Skeleton();
@@ -68,7 +72,7 @@ void Scene_TowerTest::Update(float dt)
         activeEnemies.push_back(s);
     }
 
-    // Press 3 for Troll
+    // Press b for Troll
     if (AEInputCheckTriggered(AEVK_B))
     {
         Troll* t = new Troll();
@@ -80,7 +84,7 @@ void Scene_TowerTest::Update(float dt)
         activeEnemies.push_back(t);
     }
 
-    // Press 3 for Golem
+    // Press n for Golem
     if (AEInputCheckTriggered(AEVK_N))
     {
         Golem* t = new Golem();
@@ -92,7 +96,7 @@ void Scene_TowerTest::Update(float dt)
         activeEnemies.push_back(t);
     }
 
-    // Press 3 for Titan
+    // Press m for Titan
     if (AEInputCheckTriggered(AEVK_M))
     {
         Titan* t = new Titan();
@@ -124,6 +128,8 @@ void Scene_TowerTest::Update(float dt)
             [](Enemy* e) { return !e || e->health <= 0.0f; }),
         activeEnemies.end());
 
+
+	
 }
 
 void Scene_TowerTest::Draw()
@@ -142,6 +148,8 @@ void Scene_TowerTest::Draw()
     for (auto* e : activeEnemies){
         e->Draw();
     }
+
+    Graphics::RenderAll();
 }
 
 void Scene_TowerTest::Exit()
@@ -157,4 +165,6 @@ void Scene_TowerTest::Exit()
         delete e;
     }
     activeEnemies.clear();
+
+	Graphics::Shutdown();
 }
