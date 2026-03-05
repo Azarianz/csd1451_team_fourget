@@ -1,16 +1,27 @@
 #include "Tower.h"
 #include "Utility.h"
+#include "Enemy.h"
 #include <cmath>
+#include <algorithm>
 
 namespace TowerHandler {
-    void Tower::TowerInit(float xPos, float yPos, float xSize, float ySize, Color c, int seg_count) {
+
+    static AEGfxTexture* g_TowerSheet = nullptr;
+    int nextTowerID = 0;
+
+    void LoadTowerAssets()
+    {
+        if (!g_TowerSheet)
+            g_TowerSheet = AEGfxTextureLoad("Assets/spritesheet.png");
+    }
+
+    void Tower::TowerInit(float xPos, float yPos, float xSize, float ySize, ShopTower shop, int seg_count) {
         //gameobj data
         x = xPos;
         y = yPos;
         _sizeX = xSize;
         _sizeY = ySize;
         segments = seg_count;
-        color = c;
         mesh = nullptr; // don't build here
 
         //base tower data
@@ -21,12 +32,72 @@ namespace TowerHandler {
 
         details.level = 1;
         details.ID = nextTowerID++;
-        details.range = 200.f;
-        details.towerType = BASIC_TOWER;
+        details.towerType = shop.GetTowerType();
+        details.fireTimer = 0.f;
+
+        //base color, range, damage
+        switch (details.towerType)
+        {
+        case TowerHandler::BASIC_TOWER:
+            color = { 0.0f, 0.0f, 1.0f, 1.0f }; //blue
+            details.range = 400.f;
+            details.fireCooldown = 1.5f;
+            details.projectile.damage = 15.f;
+            details.projectile.speed = 400.f;
+            break;
+        case TowerHandler::SNIPER_TOWER:
+            color = { 0.0f, 1.0f, 0.0f, 1.0f }; //green
+            details.range = 600.f;
+            details.fireCooldown = 3.f;
+            details.projectile.damage = 50.f;
+            details.projectile.speed = 600.f;
+            break;
+        case TowerHandler::SLOW_TOWER:
+            color = { 1.0f, 0.0f, 0.0f, 1.0f }; //red
+            details.range = 200.f;
+            details.fireCooldown = 2.f;
+            details.projectile.damage = 5.f;
+            details.projectile.speed = 350.f;
+            break;
+        case TowerHandler::RAPID_TOWER:
+            color = { 1.0f, 0.0f, 1.0f, 1.0f }; //purple
+            details.range = 300.f;
+            details.fireCooldown = 1.f;
+            details.projectile.damage = 10.f;
+            details.projectile.speed = 400.f;
+            break;
+        default:
+            // slow rof and white to show that its bugged if it ever reaches here
+            color = { 1.0f, 1.0f, 1.0f, 1.0f }; //white
+            details.range = 100.f;
+            details.fireCooldown = 10.f;        //bad rof
+            details.projectile.damage = 0.f;    //no damage
+            details.projectile.speed = 100.f;    //bad projectile
+            break;
+        }
+
+        UVRect uv;
+        switch (details.towerType)
+        {
+        case BASIC_TOWER:  uv = GetSpriteUV(1, 0, 13, 10); break;
+        case SNIPER_TOWER: uv = GetSpriteUV(2, 0, 13, 10); break;
+        case SLOW_TOWER:   uv = GetSpriteUV(3, 0, 13, 10); break;
+        case RAPID_TOWER:  uv = GetSpriteUV(4, 0, 13, 10); break;
+        default:           uv = { 0,0,1,1 }; break;
+        }
+
+        // Store the Graphics shape ID on the tower
+        spriteId = Graphics::DrawSprite(g_TowerSheet,
+            x, y, _sizeX, _sizeY,      // position & size
+            1.f, 1.f, 1.f, 1.f,        // tint white
+            uv.u0, uv.v0, uv.u1, uv.v1);
+
     }
 
 
     void Tower::Draw() {
+
+        Graphics::SetPosition(spriteId, x, y);
 
         // drawing range
         if (isDragging || isSelected) {
@@ -54,15 +125,35 @@ namespace TowerHandler {
 
     }
 
-    void ShopTower::ShopTowerInit(float xPos, float yPos, float xSize, float ySize, Color c, int seg_count) {
+    void ShopTower::ShopTowerInit(float xPos, float yPos, float xSize, float ySize, TowerType towerType, int seg_count) {
         //gameobj data
         x = xPos;
         y = yPos;
         _sizeX = xSize;
         _sizeY = ySize;
         segments = seg_count;
-        color = c;
+        
         mesh = nullptr; // don't build here
+
+        shopTowerType = towerType;
+        switch (towerType)
+        {
+        case TowerHandler::BASIC_TOWER:
+            color = { 0.0f, 0.0f, 1.0f, 1.0f }; //blue
+            break;
+        case TowerHandler::SNIPER_TOWER:
+            color = { 0.0f, 1.0f, 0.0f, 1.0f }; //red
+            break;
+        case TowerHandler::SLOW_TOWER:
+            color = { 1.0f, 0.0f, 0.0f, 1.0f }; //green
+            break;
+        case TowerHandler::RAPID_TOWER:
+            color = { 1.0f, 0.0f, 1.0f, 1.0f }; //purple
+            break;
+        default:
+            color = { 1.0f, 1.0f, 1.0f, 1.0f }; //white
+            break;
+        }
     }
 
     void UpdateTowerSystem(float mouseX, float mouseY, ShopTower& shop, std::vector<Tower>& activeTowers) {
@@ -91,7 +182,7 @@ namespace TowerHandler {
             }
 
             // Reset and deselect all towers after left click
-            for (auto& t : activeTowers) {
+            for (Tower& t : activeTowers) {
                 t.isSelected = false;
             }
 
@@ -110,7 +201,7 @@ namespace TowerHandler {
                 Tower newTower;
 
                 // Initialize tower at shop position with its own parameters
-                newTower.TowerInit(shop.x, shop.y, 55.0f, 55.0f, { 0.0f, 0.0f, 1.0f, 1.0f });
+                newTower.TowerInit(shop.x, shop.y, 55.0f, 55.0f, shop);
 
                 // Force start dragging immediately
                 newTower.isSelected = true;
@@ -138,8 +229,84 @@ namespace TowerHandler {
         }
     }
 
-    void Tower::TowerShoot() {
+    bool TowerShoot(Tower& tower, Enemy& enemy, std::vector<ActiveBullet>& bullets) {
 
+        if (tower.details.fireTimer > 0.0f) {
+            return false;
+        }
+
+        if (CircleCircleCollision(tower.x, tower.y, tower.details.range, enemy.x, enemy.y, enemy._sizeX)) {
+			ActiveBullet newBullet;
+            newBullet.x = tower.x;
+            newBullet.y = tower.y;
+            // Inside TowerShoot when creating newBullet:
+            newBullet._sizeX = 10.0f;
+            newBullet._sizeY = 10.0f;
+
+            // Copy stats from the tower's projectile template
+            newBullet.damage = tower.details.projectile.damage;
+            newBullet.speed = tower.details.projectile.speed;
+            newBullet.color = tower.color; // Match tower color for visual consistency
+
+            newBullet.segments = 20;
+            newBullet.mesh = nullptr;
+            newBullet.target = &enemy;
+
+            // Calculate Direction Vector
+            float dx = enemy.x - tower.x;
+            float dy = enemy.y - tower.y;
+            float length = sqrtf(dx * dx + dy * dy);
+
+            if (length > 0) {
+                newBullet.dirX = dx / length; // Normalized X
+                newBullet.dirY = dy / length; // Normalized Y
+            }
+            bullets.push_back(newBullet);
+            tower.details.fireTimer = tower.details.fireCooldown;
+
+            return true;
+        }
+        return false;
+    }
+
+	// bullet and enemy collision, both treated as circles for simplicity
+    bool CircleCircleCollision(float x1, float y1, float r1, float x2, float y2, float r2) {
+		bool flag = false;
+        float dx = x2 - x1;
+		float dy = y2 - y1;
+		float sqrDistance = dx * dx + dy * dy;
+		float sqrRadiusSum = (r1 + r2) * (r1 + r2);
+
+        if (sqrDistance <= sqrRadiusSum) {
+			flag = true;
+		}
+
+		return flag;
+	}
+
+    void UpdateProjectiles(float dt, std::vector<Enemy*>& enemies,
+        std::vector<ActiveBullet>& activeBullets){
+        for (auto& b : activeBullets) {
+            b.Update(dt);
+
+            for (Enemy* e : enemies) {
+                if (!e || e->health <= 0.0f) continue;
+
+                if (CircleCircleCollision(b.x, b.y, b._sizeX, e->x, e->y, e->_sizeX)) {
+                    e->health -= b.damage;
+                    b.shouldRemove = true;
+                    break;
+                }
+            }
+
+            if (std::fabs(b.x) > 2000.f || std::fabs(b.y) > 2000.f)
+                b.shouldRemove = true;
+        }
+
+        activeBullets.erase(
+            std::remove_if(activeBullets.begin(), activeBullets.end(),
+            [](const ActiveBullet& b) { return b.shouldRemove; }),
+            activeBullets.end());
     }
 
 }
