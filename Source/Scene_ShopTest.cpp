@@ -15,19 +15,22 @@ void Scene_ShopTest::Update(float dt) {
     shop.Update(activeTowers);
 
     // Update existing towers logic
-    // Created a dummy ShopTower to satisfy the function signature
     TowerHandler::ShopTower dummyShop;
     TowerHandler::UpdateTowerSystem(mX, mY, dummyShop, activeTowers);
 }
 
 void Scene_ShopTest::Draw() {
     AEGfxSetBackgroundColor(0.05f, 0.05f, 0.05f);
-    // Draw towers
+
+    // 1. Draw tower circles (unchanged Tower::Draw())
     for (auto& t : activeTowers) {
         t.Draw();
     }
 
-    // Draw the shop UI
+    // 2. Shop draws sprites locked on top of each placed tower
+    shop.DrawTowerSprites(activeTowers);
+
+    // 3. Draw the shop UI
     shop.Draw();
 }
 

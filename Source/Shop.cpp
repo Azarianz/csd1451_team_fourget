@@ -1,185 +1,274 @@
 #include "Shop.h"
 #include "Utility.h"
-#include <iostream>
+#include <cstdlib>
+#include <cstdio>
 
 namespace TowerHandler {
-    // Helper to build a unit circle mesh
+
+    // ----------------------------------------------------------------
+    // Tower definition table
+    // Each row = one distinct tower kind: { color, spriteCol, spriteRow, type }
+    // spriteCol/Row are 0-based into the 13x10 spritesheet.
+    // Edit this table to change which sprite belongs to which color.
+    // ----------------------------------------------------------------
+    const TowerDef Shop::TOWER_DEFS[TOWER_DEF_COUNT] = {
+        { { 0.1f, 0.9f, 0.2f, 1.0f }, 0, 0, BASIC_TOWER  }, // Green  -> sprite (0,0)
+        { { 1.0f, 0.9f, 0.1f, 1.0f }, 1, 0, BASIC_TOWER  }, // Yellow -> sprite (1,0)
+        { { 0.7f, 0.2f, 0.9f, 1.0f }, 2, 0, SNIPER_TOWER }, // Purple -> sprite (2,0)
+        { { 1.0f, 0.5f, 0.1f, 1.0f }, 3, 0, SNIPER_TOWER }, // Orange -> sprite (3,0)
+        { { 0.1f, 0.8f, 0.9f, 1.0f }, 4, 0, BASIC_TOWER  }, // Cyan   -> sprite (4,0)
+        { { 0.9f, 0.1f, 0.5f, 1.0f }, 5, 0, SNIPER_TOWER }, // Pink   -> sprite (5,0)
+        { { 0.5f, 1.0f, 0.0f, 1.0f }, 6, 0, BASIC_TOWER  }, // Lime   -> sprite (6,0)
+        { { 0.2f, 0.4f, 1.0f, 1.0f }, 7, 0, SNIPER_TOWER }, // Blue   -> sprite (7,0)
+    };
+
+    // ----------------------------------------------------------------
+    // Internal helpers
+    // ----------------------------------------------------------------
+
     static AEGfxVertexList* BuildCircleMesh(int segments)
     {
         AEGfxMeshStart();
-
-        float cx = 0.0f, cy = 0.0f;
-        float step = 2.0f * 3.14159f / (float)segments;
-
+        const float step = 2.0f * 3.14159f / (float)segments;
         for (int i = 0; i < segments; ++i)
         {
             float a0 = step * (float)i;
             float a1 = step * (float)(i + 1);
-
-            float x0 = cosf(a0);
-            float y0 = sinf(a0);
-            float x1 = cosf(a1);
-            float y1 = sinf(a1);
-
-            unsigned int col = 0xFFFFFFFF; // Pure white 
-
-            AEGfxTriAdd(
-                cx, cy, col, 0.5f, 0.5f,
+            float x0 = cosf(a0), y0 = sinf(a0);
+            float x1 = cosf(a1), y1 = sinf(a1);
+            unsigned int col = 0xFFFFFFFF;
+            AEGfxTriAdd(0.0f, 0.0f, col, 0.5f, 0.5f,
                 x0, y0, col, 0.5f + 0.5f * x0, 0.5f - 0.5f * y0,
-                x1, y1, col, 0.5f + 0.5f * x1, 0.5f - 0.5f * y1
-            );
+                x1, y1, col, 0.5f + 0.5f * x1, 0.5f - 0.5f * y1);
         }
-
         return AEGfxMeshEnd();
     }
 
-    void Shop::Init() {
-        float windowWidth = (float)AEGfxGetWindowWidth();
+    SpriteUV Shop::GetUV(int col, int row) const
+    {
+        SpriteUV uv;
+        uv.u0 = (float)col / (float)SHEET_COLS;
+        uv.u1 = (float)(col + 1) / (float)SHEET_COLS;
+        uv.v0 = (float)row / (float)SHEET_ROWS;
+        uv.v1 = (float)(row + 1) / (float)SHEET_ROWS;
+        return uv;
+    }
+
+    void Shop::DrawSpriteAt(float cx, float cy, float size, int col, int row) const
+    {
+        if (!pSpritesheet) return;
+
+        SpriteUV uv = GetUV(col, row);
+
+        AEGfxMeshStart();
+        AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, uv.u0, uv.v1,
+            0.5f, -0.5f, 0xFFFFFFFF, uv.u1, uv.v1,
+            0.5f, 0.5f, 0xFFFFFFFF, uv.u1, uv.v0);
+        AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, uv.u0, uv.v1,
+            0.5f, 0.5f, 0xFFFFFFFF, uv.u1, uv.v0,
+            -0.5f, 0.5f, 0xFFFFFFFF, uv.u0, uv.v0);
+        AEGfxVertexList* mesh = AEGfxMeshEnd();
+        if (!mesh) return;
+
+        float spriteSize = size * 0.80f;
+
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxTextureSet(pSpritesheet, 0, 0);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+
+        AEMtx33 scale, trans, transform;
+        AEMtx33Scale(&scale, spriteSize, spriteSize);
+        AEMtx33Trans(&trans, cx, cy);
+        AEMtx33Concat(&transform, &trans, &scale);
+        AEGfxSetTransform(transform.m);
+        AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
+        AEGfxMeshFree(mesh);
+    }
+
+    // ----------------------------------------------------------------
+    // Init
+    // ----------------------------------------------------------------
+
+    void Shop::Init()
+    {
         float windowHeight = (float)AEGfxGetWindowHeight();
 
-        // Calculate layout: Center slots at the bottom
         float totalWidth = (TOTAL_SLOTS * slotSize) + ((TOTAL_SLOTS - 1) * padding);
         float startX = -(totalWidth / 2.0f) + (slotSize / 2.0f);
         float posY = -(windowHeight / 2.0f) + (slotSize / 2.0f) + 30.0f;
 
-        Color uniqueColors[TOWER_SLOTS] = {
-        { 0.1f, 0.9f, 0.2f, 1.0f }, // Green
-        { 1.0f, 0.9f, 0.1f, 1.0f }, // Yellow
-        { 0.7f, 0.2f, 0.9f, 1.0f }, // Purple
-        { 1.0f, 0.5f, 0.1f, 1.0f }, // Orange
-        { 0.1f, 0.8f, 0.9f, 1.0f }  // Cyan
-        };
-
-        for (int i = 0; i < TOTAL_SLOTS; ++i) {
+        for (int i = 0; i < TOTAL_SLOTS; ++i)
+        {
             slots[i].x = startX + (i * (slotSize + padding));
             slots[i].y = posY;
             slots[i].size = slotSize;
-            slots[i].isRefreshButton = (i == 5);
-
-            if (!slots[i].isRefreshButton) {
-                slots[i].typeContained = (i % 2 == 0) ? BASIC_TOWER : SNIPER_TOWER;
-                slots[i].slotColor = uniqueColors[i];
-            }
+            slots[i].isRefreshButton = (i == TOWER_SLOTS);
         }
 
-        // Create a Circle Mesh
-        pMesh = BuildCircleMesh(64);
+        pCircleMesh = BuildCircleMesh(64);
+        pSpritesheet = AEGfxTextureLoad("Assets/spritesheet.png");
 
-        if (!pMesh) {
-            PRINT("Shop Init: Failed to create circle mesh!\n");
-        }
+        if (!pCircleMesh)  PRINT("Shop Init: Failed to create circle mesh!\n");
+        if (!pSpritesheet) PRINT("Shop Init: Failed to load Assets/spritesheet.png!\n");
 
         m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
-        m_points = 100; // Starting currency
+        m_points = 1000;
+
+        RefreshSlots();
     }
 
-    void Shop::Update(std::vector<Tower>& activeTowers) {
+    // ----------------------------------------------------------------
+    // RefreshSlots — picks TOWER_SLOTS unique TowerDefs (shuffle, no repeat)
+    // ----------------------------------------------------------------
+
+    void Shop::RefreshSlots()
+    {
+        // Shuffle indices 0..TOWER_DEF_COUNT-1 (Fisher-Yates)
+        int idx[TOWER_DEF_COUNT];
+        for (int i = 0; i < TOWER_DEF_COUNT; ++i) idx[i] = i;
+        for (int i = TOWER_DEF_COUNT - 1; i > 0; --i)
+        {
+            int j = rand() % (i + 1);
+            int tmp = idx[i]; idx[i] = idx[j]; idx[j] = tmp;
+        }
+
+        // Assign the first TOWER_SLOTS shuffled defs to the non-refresh slots
+        for (int i = 0; i < TOWER_SLOTS; ++i)
+            slots[i].defIndex = idx[i];
+    }
+
+    // ----------------------------------------------------------------
+    // Update
+    // ----------------------------------------------------------------
+
+    void Shop::Update(std::vector<Tower>& activeTowers)
+    {
         float mouseX, mouseY;
         Utility::GetWorldMousePos(mouseX, mouseY);
 
-        if (AEInputCheckTriggered(AEVK_LBUTTON)) {
-            for (int i = 0; i < TOTAL_SLOTS; ++i) {
-                if (Utility::IsCircleClicked(slots[i].x, slots[i].y, slots[i].size / 2.0f, mouseX, mouseY)) {
+        if (AEInputCheckTriggered(AEVK_LBUTTON))
+        {
+            for (int i = 0; i < TOTAL_SLOTS; ++i)
+            {
+                if (!Utility::IsCircleClicked(slots[i].x, slots[i].y,
+                    slots[i].size / 2.0f,
+                    mouseX, mouseY))
+                    continue;
 
-                    if (slots[i].isRefreshButton) {
-                        RefreshSlots();
-                        return;
-                    }
+                if (slots[i].isRefreshButton) { RefreshSlots(); return; }
 
-                    // CHECK: Insufficient points check
-                    if (m_points < TOWER_COST) {
-                        PRINT("Not enough points! Need %d\n", TOWER_COST);
-                        return;
-                    }
-
-                    // Deduct points and spawn tower
-                    m_points -= TOWER_COST;
-
-                    Tower newTower;
-                    newTower.TowerInit(mouseX, mouseY, 55.0f, 55.0f, slots[i].slotColor);
-                    newTower.details.towerType = slots[i].typeContained;
-                    newTower.isDragging = true;
-                    activeTowers.push_back(newTower);
-                    break;
+                if (m_points < TOWER_COST)
+                {
+                    PRINT("Not enough points! Need %d\n", TOWER_COST);
+                    return;
                 }
+
+                m_points -= TOWER_COST;
+
+                const TowerDef& def = TOWER_DEFS[slots[i].defIndex];
+
+                Tower newTower;
+                newTower.TowerInit(mouseX, mouseY, 55.0f, 55.0f, def.color);
+                newTower.details.towerType = def.type;
+                newTower.isDragging = true;
+
+                // Map tower ID -> def index (color and sprite are both read from the def)
+                m_towerDefIndex[newTower.details.ID] = slots[i].defIndex;
+
+                activeTowers.push_back(newTower);
+                break;
             }
         }
     }
 
-    void Shop::Draw() {
-        if (!pMesh) return;
+    // ----------------------------------------------------------------
+    // DrawTowerSprites — call AFTER all towers are drawn each frame
+    // ----------------------------------------------------------------
 
-        // Set the state ONCE before the loop to prevent GL state collisions
+    void Shop::DrawTowerSprites(const std::vector<Tower>& activeTowers) const
+    {
+        for (const Tower& t : activeTowers)
+        {
+            auto it = m_towerDefIndex.find(t.details.ID);
+            if (it == m_towerDefIndex.end()) continue;
+
+            const TowerDef& def = TOWER_DEFS[it->second];
+            DrawSpriteAt(t.x, t.y, t._sizeX, def.spriteCol, def.spriteRow);
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // Draw — shop UI only
+    // ----------------------------------------------------------------
+
+    void Shop::Draw()
+    {
+        if (!pCircleMesh) return;
+
+        // Pass 1: colored circles
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
-        for (int i = 0; i < TOTAL_SLOTS; ++i) {
+        for (int i = 0; i < TOTAL_SLOTS; ++i)
+        {
             AEMtx33 scale, trans, transform;
-            AEMtx33Scale(&scale, slots[i].  size, slots[i].size);
+            AEMtx33Scale(&scale, slots[i].size, slots[i].size);
             AEMtx33Trans(&trans, slots[i].x, slots[i].y);
             AEMtx33Concat(&transform, &trans, &scale);
-
             AEGfxSetTransform(transform.m);
 
-            // Refresh button
-            if (slots[i].isRefreshButton) {
-                AEGfxSetColorToMultiply(0.4f, 0.4f, 0.4f, 1.0f); // Dark Grey button
+            if (slots[i].isRefreshButton)
+            {
+                AEGfxSetColorToMultiply(0.4f, 0.4f, 0.4f, 1.0f);
             }
-            else {
-                AEGfxSetColorToMultiply(
-                    slots[i].slotColor.r,
-                    slots[i].slotColor.g,
-                    slots[i].slotColor.b,
-                    1.0f );   
+            else
+            {
+                const Color& c = TOWER_DEFS[slots[i].defIndex].color;
+                AEGfxSetColorToMultiply(c.r, c.g, c.b, 1.0f);
             }
-            
-            AEGfxMeshDraw(pMesh, AE_GFX_MDM_TRIANGLES);
+
+            AEGfxMeshDraw(pCircleMesh, AE_GFX_MDM_TRIANGLES);
+        }
+
+        // Pass 2: sprites on top of tower slots
+        for (int i = 0; i < TOTAL_SLOTS; ++i)
+        {
+            if (slots[i].isRefreshButton) continue;
+            const TowerDef& def = TOWER_DEFS[slots[i].defIndex];
+            DrawSpriteAt(slots[i].x, slots[i].y, slots[i].size,
+                def.spriteCol, def.spriteRow);
         }
 
         DrawPoints();
     }
 
-    void Shop::DrawPoints() {
-        if (m_uiFont < 0) {
-            PRINT("Font failed to load! Check Assets folder.\n");
-            return;
-        }
+    // ----------------------------------------------------------------
+    // DrawPoints
+    // ----------------------------------------------------------------
 
+    void Shop::DrawPoints() const
+    {
+        if (m_uiFont < 0) return;
         char buf[32];
         sprintf_s(buf, "POINTS: %d", m_points);
-
-        float textPosX = 0.6f;
-        float textPosY = 0.9f;
-
-        // AEGfxPrint(fontId, str, x, y, scale, r, g, b, a)
-        AEGfxPrint(m_uiFont, buf, textPosX, textPosY, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f);
+        AEGfxPrint(m_uiFont, buf, 0.6f, 0.9f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f);
     }
 
-    void Shop::RefreshSlots() {
-        // Define a larger pool of colors to pick from for variety
-        Color colorPool[] = {
-            { 0.1f, 0.9f, 0.2f, 1.0f }, // Green
-            { 1.0f, 0.9f, 0.1f, 1.0f }, // Yellow
-            { 0.7f, 0.2f, 0.9f, 1.0f }, // Purple
-            { 1.0f, 0.5f, 0.1f, 1.0f }, // Orange
-            { 0.1f, 0.8f, 0.9f, 1.0f }, // Cyan
-            { 0.9f, 0.1f, 0.5f, 1.0f }, // Pink
-            { 0.5f, 1.0f, 0.0f, 1.0f }  // Lime
-        };
-        int poolSize = sizeof(colorPool) / sizeof(Color);
+    // ----------------------------------------------------------------
+    // Exit
+    // ----------------------------------------------------------------
 
-        for (int i = 0; i < TOWER_SLOTS; ++i) {
-            // Randomize Type
-            slots[i].typeContained = (rand() % 2 == 0) ? BASIC_TOWER : SNIPER_TOWER;
-
-            // Randomize Color from the pool
-            slots[i].slotColor = colorPool[rand() % poolSize];
-        }
+    void Shop::Exit()
+    {
+        if (pCircleMesh) { AEGfxMeshFree(pCircleMesh);       pCircleMesh = nullptr; }
+        if (pSpritesheet) { AEGfxTextureUnload(pSpritesheet); pSpritesheet = nullptr; }
+        if (m_uiFont >= 0) { AEGfxDestroyFont(m_uiFont);       m_uiFont = -1; }
+        m_towerDefIndex.clear();
     }
 
-    void Shop::Exit() {
-        if (pMesh) AEGfxMeshFree(pMesh);
-        if (m_uiFont >= 0) AEGfxDestroyFont(m_uiFont);
-    }
-}
+} // namespace TowerHandler
