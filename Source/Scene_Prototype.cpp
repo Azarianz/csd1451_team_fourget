@@ -3,8 +3,10 @@
 #include "AEEngine.h"
 #include "AEInput.h"
 #include "Utility.h"   // IMPORTANT (for GetWorldMousePos)
+#include "LevelData.h"
 #include <cstdio>
 #include <cmath>
+#include <algorithm>
 
 // ----------------------------------------------------
 // Drag helpers
@@ -23,6 +25,151 @@ bool Scene_Prototype::IsDraggingTower() const
 }
 
 // ----------------------------------------------------
+// Merge System
+// ----------------------------------------------------
+void Scene_Prototype::RebuildOccupiedFromTowers()
+{
+    const size_t expected = (size_t)level.width * (size_t)level.height;
+    occupied.assign(expected, 0);
+
+    for (const auto& t : activeTowers)
+    {
+        GridSystem::GridCoord c;
+        if (GetTowerCell(t, c) && InBounds(c.x, c.y))
+        {
+            occupied[Idx(c.x, c.y)] = 1;
+        }
+    }
+}
+
+bool Scene_Prototype::GetTowerCell(const TowerHandler::Tower& t, GridSystem::GridCoord& outCell) const
+{
+    if (!grid) return false;
+
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    // convert tower world position back to screen pixels
+    int mouseX = (int)(t.x + screenW * 0.5f);
+    int mouseY = (int)(screenH * 0.5f - t.y);
+
+    return grid->ScreenToGrid(mouseX, mouseY, outCell);
+}
+
+int Scene_Prototype::FindTowerIndexAtCell(int x, int y) const
+{
+    for (int i = 0; i < (int)activeTowers.size(); ++i)
+    {
+        GridSystem::GridCoord c;
+        if (GetTowerCell(activeTowers[i], c) && c.x == x && c.y == y)
+            return i;
+    }
+    return -1;
+}
+
+void Scene_Prototype::CollectConnectedMergeGroup(
+    int startX,
+    int startY,
+    TowerHandler::TowerType type,
+    int towerLevel,
+    std::vector<GridSystem::GridCoord>& outGroup) const
+{
+    outGroup.clear();
+
+    if (!InBounds(startX, startY))
+        return;
+
+    const int total = this->level.width * this->level.height;
+    if (total <= 0)
+        return;
+
+    std::vector<uint8_t> visited((size_t)total, 0);
+    std::vector<GridSystem::GridCoord> open;
+
+    open.push_back({ startX, startY });
+
+    while (!open.empty())
+    {
+        GridSystem::GridCoord cur = open.back();
+        open.pop_back();
+
+        if (!InBounds(cur.x, cur.y))
+            continue;
+
+        int idx = Idx(cur.x, cur.y);
+        if (visited[(size_t)idx])
+            continue;
+
+        visited[(size_t)idx] = 1;
+
+        int towerIndex = FindTowerIndexAtCell(cur.x, cur.y);
+        if (towerIndex < 0)
+            continue;
+
+        const TowerHandler::Tower& t = activeTowers[(size_t)towerIndex];
+        if (t.details.towerType != type || t.details.level != towerLevel)
+            continue;
+
+        outGroup.push_back(cur);
+
+        open.push_back({ cur.x + 1, cur.y });
+        open.push_back({ cur.x - 1, cur.y });
+        open.push_back({ cur.x, cur.y + 1 });
+        open.push_back({ cur.x, cur.y - 1 });
+    }
+}
+
+bool Scene_Prototype::TryMergeAtCell(int placedX, int placedY)
+{
+    int centerIndex = FindTowerIndexAtCell(placedX, placedY);
+    if (centerIndex < 0)
+        return false;
+
+    TowerHandler::Tower& placedTower = activeTowers[(size_t)centerIndex];
+    TowerHandler::TowerType type = placedTower.details.towerType;
+    int level = placedTower.details.level;
+
+    std::vector<GridSystem::GridCoord> group;
+    CollectConnectedMergeGroup(placedX, placedY, type, level, group);
+
+    // merge rule: at least 3 connected matching towers
+    if (group.size() < 3)
+        return false;
+
+    // keep the newly placed tower, remove the others
+    std::vector<int> toRemove;
+    for (const auto& cell : group)
+    {
+        if (cell.x == placedX && cell.y == placedY)
+            continue;
+
+        int idx = FindTowerIndexAtCell(cell.x, cell.y);
+        if (idx >= 0)
+            toRemove.push_back(idx);
+    }
+
+    // level up the placed tower first
+    activeTowers[(size_t)centerIndex].LevelUp();
+
+    // erase from back to front
+    std::sort(toRemove.begin(), toRemove.end());
+    toRemove.erase(std::unique(toRemove.begin(), toRemove.end()), toRemove.end());
+
+    for (int i = (int)toRemove.size() - 1; i >= 0; --i)
+    {
+        int idx = toRemove[(size_t)i];
+
+        // if a removed index is before centerIndex, centerIndex shifts left
+        if (idx < centerIndex)
+            --centerIndex;
+
+        activeTowers.erase(activeTowers.begin() + idx);
+    }
+
+    return true;
+}
+
+// ----------------------------------------------------
 // Level loading
 // ----------------------------------------------------
 bool Scene_Prototype::LoadLevel(int idx)
@@ -31,7 +178,7 @@ bool Scene_Prototype::LoadLevel(int idx)
 
     if (grid)
     {
-        grid->Destroy();
+        grid->Destroy();    
         delete grid;
         grid = nullptr;
     }
@@ -60,28 +207,157 @@ bool Scene_Prototype::LoadLevel(int idx)
     grid->Init();
 
     path.clear();
-    BuildPathFromRegionScan();
+    if (!BuildPathFromRegionScan())
+    {
+        PRINT("FAILED to build enemy path from region flags.\n");
+        return false;
+    }
 
     return true;
 }
 
-void Scene_Prototype::BuildPathFromRegionScan()
+bool Scene_Prototype::BuildPathFromRegionScan()
 {
-    if (!grid) return;
+    path.clear();
 
+    if (!grid) return false;
+    if (level.width <= 0 || level.height <= 0) return false;
+
+    GridSystem::GridCoord spawn{};
+    if (!FindSpawnCell(spawn))
+    {
+        PRINT("No ENEMYSPAWN found.\n");
+        return false;
+    }
+
+    // first point = spawn center
+    PushCellCenterToPath(spawn);
+
+    GridSystem::GridCoord current = spawn;
+    GridSystem::GridCoord next{};
+
+    if (!FindNextFromSpawn(spawn, next))
+    {
+        PRINT("Spawn does not connect to any enemy path or goal.\n");
+        return false;
+    }
+
+    // safety against infinite loops
+    const int maxSteps = level.width * level.height + 8;
+
+    for (int step = 0; step < maxSteps; ++step)
+    {
+        current = next;
+        PushCellCenterToPath(current);
+
+        RegionFlag flag = static_cast<RegionFlag>(level.region[Idx(current.x, current.y)]);
+
+        if (flag == RegionFlag::ENEMYGOAL)
+        {
+            PRINT("Enemy path built. Total points: %d\n", (int)path.size());
+            return true;
+        }
+
+        if (!StepFromRegionFlag(current, next))
+        {
+            PRINT("Broken enemy path at cell (%d, %d)\n", current.x, current.y);
+            return false;
+        }
+    }
+
+    PRINT("Enemy path exceeded safety limit. Possible loop.\n");
+    return false;
+}
+
+bool Scene_Prototype::FindSpawnCell(GridSystem::GridCoord& outSpawn) const
+{
     for (int y = 0; y < level.height; ++y)
     {
         for (int x = 0; x < level.width; ++x)
         {
-            // REGION == 2 means enemy path
-            if (level.region[Idx(x, y)] == 2)
+            RegionFlag flag = static_cast<RegionFlag>(level.region[Idx(x, y)]);
+            if (flag == RegionFlag::ENEMYSPAWN)
             {
-                float wx, wy, tileSize;
-                grid->GetCellWorldCenter({ x, y }, wx, wy, tileSize);
-                path.push_back({ wx, wy });
+                outSpawn = { x, y };
+                return true;
             }
         }
     }
+
+    return false;
+}
+
+bool Scene_Prototype::FindNextFromSpawn(const GridSystem::GridCoord& spawn, GridSystem::GridCoord& outNext) const
+{
+    const GridSystem::GridCoord neighbors[4] =
+    {
+        { spawn.x,     spawn.y - 1 }, // up
+        { spawn.x,     spawn.y + 1 }, // down
+        { spawn.x - 1, spawn.y     }, // left
+        { spawn.x + 1, spawn.y     }  // right
+    };
+
+    for (const auto& n : neighbors)
+    {
+        if (!InBounds(n.x, n.y))
+            continue;
+
+        RegionFlag flag = static_cast<RegionFlag>(level.region[Idx(n.x, n.y)]);
+
+        if (flag == RegionFlag::ENEMYGOAL ||
+            flag == RegionFlag::ENEMYPATH_UP ||
+            flag == RegionFlag::ENEMYPATH_DOWN ||
+            flag == RegionFlag::ENEMYPATH_LEFT ||
+            flag == RegionFlag::ENEMYPATH_RIGHT)
+        {
+            outNext = n;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool Scene_Prototype::StepFromRegionFlag(const GridSystem::GridCoord& current, GridSystem::GridCoord& outNext) const
+{
+    RegionFlag flag = static_cast<RegionFlag>(level.region[Idx(current.x, current.y)]);
+    outNext = current;
+
+    switch (flag)
+    {
+    case RegionFlag::ENEMYPATH_UP:
+        outNext.y -= 1;
+        break;
+
+    case RegionFlag::ENEMYPATH_DOWN:
+        outNext.y += 1;
+        break;
+
+    case RegionFlag::ENEMYPATH_LEFT:
+        outNext.x -= 1;
+        break;
+
+    case RegionFlag::ENEMYPATH_RIGHT:
+        outNext.x += 1;
+        break;
+
+    default:
+        return false;
+    }
+
+    if (!InBounds(outNext.x, outNext.y))
+        return false;
+
+    return true;
+}
+
+void Scene_Prototype::PushCellCenterToPath(const GridSystem::GridCoord& cell)
+{
+    float wx = 0.0f;
+    float wy = 0.0f;
+    float tileSize = 0.0f;
+    grid->GetCellWorldCenter(cell, wx, wy, tileSize);
+    path.push_back({ wx, wy });
 }
 
 // ----------------------------------------------------
@@ -221,6 +497,7 @@ void Scene_Prototype::SnapDraggedTowerToGrid(int mouseX, int mouseY)
     {
         // released off-grid -> cancel tower
         activeTowers.erase(activeTowers.begin() + draggedIndex);
+        RebuildOccupiedFromTowers();
         return;
     }
 
@@ -228,21 +505,25 @@ void Scene_Prototype::SnapDraggedTowerToGrid(int mouseX, int mouseY)
     {
         // not placeable -> cancel tower
         activeTowers.erase(activeTowers.begin() + draggedIndex);
+        RebuildOccupiedFromTowers();
         return;
     }
 
-    // snap to CELL CENTER (world coords)
+    // snap to cell center
     float wx, wy, tileSize;
     grid->GetCellWorldCenter({ c.x, c.y }, wx, wy, tileSize);
 
     activeTowers[draggedIndex].x = wx;
     activeTowers[draggedIndex].y = wy;
-
-    // STOP dragging so UpdateTowerSystem won't override next frame
     activeTowers[draggedIndex].isDragging = false;
     activeTowers[draggedIndex].isSelected = false;
 
-    occupied[Idx(c.x, c.y)] = 1;
+    RebuildOccupiedFromTowers();
+
+    // try merge after placement
+    TryMergeAtCell(c.x, c.y);
+
+    RebuildOccupiedFromTowers();
 }
 
 // ----------------------------------------------------

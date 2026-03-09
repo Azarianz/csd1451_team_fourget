@@ -49,9 +49,25 @@ private:
     int  FindDraggedTowerIndex() const;
     bool IsDraggingTower() const;
 
+    // merge helpers
+    void RebuildOccupiedFromTowers();
+    bool GetTowerCell(const TowerHandler::Tower& t, GridSystem::GridCoord& outCell) const;
+    int FindTowerIndexAtCell(int x, int y) const;
+    void CollectConnectedMergeGroup(
+        int startX,
+        int startY,
+        TowerHandler::TowerType type,
+        int towerLevel,
+        std::vector<GridSystem::GridCoord>& outGroup) const;
+    bool TryMergeAtCell(int placedX, int placedY);
+
     // level helpers
     bool LoadLevel(int idx);
-    void BuildPathFromRegionScan();
+    bool BuildPathFromRegionScan();
+    bool FindSpawnCell(GridSystem::GridCoord& outSpawn) const;
+    bool FindNextFromSpawn(const GridSystem::GridCoord& spawn, GridSystem::GridCoord& outNext) const;
+    bool StepFromRegionFlag(const GridSystem::GridCoord& current, GridSystem::GridCoord& outNext) const;
+    void PushCellCenterToPath(const GridSystem::GridCoord& cell);
 
     // build overlay render
     void BuildXMeshIfNeeded();

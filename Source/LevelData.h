@@ -5,9 +5,14 @@
 
 enum class RegionFlag : uint8_t
 {
-    NONE = 0,
-    BUILDABLE = 1,
-    ENEMYPATH = 2
+    NONE = 0,               // Nothing, Clear
+    BUILDABLE = 1,          // Player Tower Build Zones
+    ENEMYSPAWN = 2,         // Where Enemy Spawn From (only one for now)
+    ENEMYGOAL = 3,          // Enemy End Path (Despawn and Damage Player Health)
+	ENEMYPATH_UP = 4,       // Enemy GO Next Path: UP
+    ENEMYPATH_DOWN = 5,     // Enemy GO Next Path: DOWN
+    ENEMYPATH_LEFT = 6,     // Enemy GO Next Path: LEFT
+    ENEMYPATH_RIGHT = 7,    // Enemy GO Next Path: RIGHT
 };
 
 struct LevelData

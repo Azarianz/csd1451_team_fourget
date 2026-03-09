@@ -16,8 +16,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, true, NULL);
     AESysSetWindowTitle("Merge Defenders Prototype");
 
-    // CONFLICT RESOLVED: kept HEAD (ShopTest). Change this line to boot a different scene.
-    SceneManager::I().Init(SceneID::ShopTest);
+    // Pick which scene to boot (each teammate can change this line on their branch)
+    SceneManager::I().Init(SceneID::MainMenu);   // <-- your editor scene
 
     int gGameRunning = 1;
     while (gGameRunning)

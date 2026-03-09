@@ -93,7 +93,7 @@ void LevelEditor::CycleRegion(int dir)
     int v = (int)m_currentRegion;
     v += dir;
     if (v < 0) v = 2;
-    if (v > 2) v = 0;
+    if (v > 7) v = 0;
     m_currentRegion = (RegionFlag)v;
 }
 
@@ -392,6 +392,11 @@ void LevelEditor::DrawUI() const
     PrintLine("Region Numbers:", info);
     PrintLine("  0 = NONE", info);
     PrintLine("  1 = BUILDABLE", info);
-    PrintLine("  2 = ENEMYPATH", info);
+    PrintLine("  2 = ENEMYSPAWN", info);
+    PrintLine("  3 = ENEMYGOAL", info);
+    PrintLine("  4 = ENEMYPATH_UP", info);
+    PrintLine("  5 = ENEMYPATH_DOWN", info);
+    PrintLine("  6 = ENEMYPATH_LEFT", info);
+    PrintLine("  7 = ENEMYPATH_RIGHT", info);
 }
 
