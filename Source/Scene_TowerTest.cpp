@@ -129,6 +129,21 @@ void Scene_TowerTest::Update(float dt)
         activeEnemies.end());
 
 
+	// test input for leveling up towers, only applies to selected tower(s)
+    if (AEInputCheckTriggered(AEVK_U))
+    {
+        for (auto& t : activeTowers)
+        {
+            if (t.isSelected)
+            {
+                if (!t.LevelUp())
+                {
+                    // Designed to be empty
+                }
+                break;
+            }
+        }
+    }
 	
 }
 

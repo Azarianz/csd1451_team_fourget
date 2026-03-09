@@ -35,6 +35,8 @@ namespace TowerHandler {
         details.towerType = shop.GetTowerType();
         details.fireTimer = 0.f;
 
+        ApplyLevelStats();
+
         //base color, range, damage
         switch (details.towerType)
         {
@@ -76,7 +78,10 @@ namespace TowerHandler {
             break;
         }
 
-        UVRect uv;
+        int col = (int)details.towerType;
+        int row = details.level - 1; // level 1 -> row 0
+        UVRect uv = GetSpriteUV(col, row, 13, 10);
+
         switch (details.towerType)
         {
         case BASIC_TOWER:  uv = GetSpriteUV(1, 0, 13, 10); break;
@@ -123,6 +128,38 @@ namespace TowerHandler {
         // draw tower itself
         GameObject::Draw();
 
+    }
+
+    bool Tower::LevelUp()
+    {
+        if (details.level >= 3)
+            return false; // already max level
+
+        details.level++;
+        ApplyLevelStats();
+
+        int col = (int)details.towerType;   // column = tower type, stays fixed
+        int row = details.level - 1;        // row 0=lvl1, 1=lvl2, 2=lvl3
+        UVRect uv = GetSpriteUV(col, row, 13, 10);
+        Graphics::SetUV(spriteId, uv.u0, uv.v0, uv.u1, uv.v1);
+
+        return true; // successfully levelled up
+    }
+
+    void Tower::ApplyLevelStats()
+    {
+        int typeIndex = (int)details.towerType;  // 0..3
+        int levelIndex = details.level - 1;      // level 1 -> index 0, etc.
+
+        // Clamp just in case
+        if (levelIndex < 0) levelIndex = 0;
+        if (levelIndex > 2) levelIndex = 2;
+
+        const LevelStats& ls = TOWER_LEVEL_STATS[typeIndex][levelIndex];
+        details.range = ls.range;
+        details.fireCooldown = ls.fireCooldown;
+        details.projectile.damage = ls.damage;
+        details.projectile.speed = ls.speed;
     }
 
     void ShopTower::ShopTowerInit(float xPos, float yPos, float xSize, float ySize, TowerType towerType, int seg_count) {
@@ -308,5 +345,7 @@ namespace TowerHandler {
             [](const ActiveBullet& b) { return b.shouldRemove; }),
             activeBullets.end());
     }
+
+
 
 }

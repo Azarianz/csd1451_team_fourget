@@ -15,6 +15,41 @@ namespace TowerHandler {
     struct Tower;
     struct ActiveBullet;
 
+    struct LevelStats {
+        float range;
+        float fireCooldown;
+        float damage;
+        float speed;
+    };
+
+    // 3 levels for each tower type [level 0..2]
+    const LevelStats TOWER_LEVEL_STATS[4][3] = {
+        // BASIC_TOWER
+        {
+            { 400.f, 1.5f, 15.f, 400.f },  // Level 1
+            { 500.f, 1.2f, 25.f, 450.f },  // Level 2
+            { 600.f, 0.9f, 40.f, 500.f },  // Level 3
+        },
+        // SNIPER_TOWER
+        {
+            { 600.f, 3.0f,  50.f, 600.f }, // Level 1
+            { 750.f, 2.5f,  80.f, 700.f }, // Level 2
+            { 900.f, 2.0f, 120.f, 800.f }, // Level 3
+        },
+        // SLOW_TOWER
+        {
+            { 200.f, 2.0f,  5.f, 350.f },  // Level 1
+            { 250.f, 1.7f, 10.f, 380.f },  // Level 2
+            { 300.f, 1.4f, 18.f, 420.f },  // Level 3
+        },
+        // RAPID_TOWER
+        {
+            { 300.f, 1.0f, 10.f, 400.f },  // Level 1
+            { 350.f, 0.7f, 16.f, 450.f },  // Level 2
+            { 400.f, 0.5f, 24.f, 500.f },  // Level 3
+        },
+    };
+
     struct Projectile
     {
         AEGfxTexture* sprite = nullptr;
@@ -54,6 +89,8 @@ namespace TowerHandler {
 
         void TowerInit(float xPos, float yPos, float xSize, float ySize, ShopTower shopType, int segcount = 50);
         void Draw();
+        void ApplyLevelStats();
+        bool LevelUp(); // returns false if already max level
     };
     bool TowerShoot(Tower& tower, Enemy& enemy, std::vector<ActiveBullet>& bullets);
     
