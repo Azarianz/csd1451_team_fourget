@@ -83,6 +83,7 @@ void Scene_ShopTest::Update(float dt)
         if (e && e->health <= 0.0f) {
             for (auto& b : activeBullets)
                 if (b.target == e) b.target = nullptr;
+            shop.AddPoints(5);
             e->Destroy();
             delete e;
             e = nullptr;
@@ -96,7 +97,13 @@ void Scene_ShopTest::Update(float dt)
     // Level up selected tower (U key)
     if (AEInputCheckTriggered(AEVK_U)) {
         for (auto& t : activeTowers) {
-            if (t.isSelected) { t.LevelUp(); break; }
+            if (t.isSelected) { 
+                int cost = (t.details.level == 1) ? 50 : 100;
+                if (shop.SpendPoints(cost)) {
+                    t.LevelUp(); 
+                break;
+                } 
+            }
         }
     }
 }

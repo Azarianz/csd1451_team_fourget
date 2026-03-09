@@ -34,6 +34,12 @@ namespace TowerHandler {
         void Exit();
         void AddPoints(int amount) { m_points += amount; }
 
+        bool SpendPoints(int amount) {
+            if (m_points < amount) return false;
+            m_points -= amount;
+            return true;
+        }
+
     private:
         int m_points = 100;
         s8  m_uiFont = -1;
