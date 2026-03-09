@@ -1,16 +1,27 @@
 #include "Tower.h"
 #include "Utility.h"
+#include "Enemy.h"
 #include <cmath>
+#include <algorithm>
 
 namespace TowerHandler {
-    void Tower::TowerInit(float xPos, float yPos, float xSize, float ySize, Color c, int seg_count) {
+
+    static AEGfxTexture* g_TowerSheet = nullptr;
+    int nextTowerID = 0;
+
+    void LoadTowerAssets()
+    {
+        if (!g_TowerSheet)
+            g_TowerSheet = AEGfxTextureLoad("Assets/spritesheet.png");
+    }
+
+    void Tower::TowerInit(float xPos, float yPos, float xSize, float ySize, ShopTower shop, int seg_count) {
         //gameobj data
         x = xPos;
         y = yPos;
         _sizeX = xSize;
         _sizeY = ySize;
         segments = seg_count;
-        color = c;
         mesh = nullptr; // don't build here
 
         //base tower data
@@ -21,13 +32,52 @@ namespace TowerHandler {
 
         details.level = 1;
         details.ID = nextTowerID++;
-        details.range = 200.f;
-        details.towerType = BASIC_TOWER;
+        details.towerType = shop.GetTowerType();
+        details.fireTimer = 0.f;
+
+        ApplyLevelStats();
+
+        //base color, range, damage
+        switch (details.towerType)
+        {
+        case TowerHandler::BASIC_TOWER:
+            color = { 0.0f, 0.0f, 1.0f, 1.0f }; //blue
+            break;
+        case TowerHandler::SNIPER_TOWER:
+            color = { 0.0f, 1.0f, 0.0f, 1.0f }; //green
+            break;
+        case TowerHandler::SLOW_TOWER:
+            color = { 1.0f, 0.0f, 0.0f, 1.0f }; //red
+            break;
+        case TowerHandler::RAPID_TOWER:
+            color = { 1.0f, 0.0f, 1.0f, 1.0f }; //purple
+            break;
+        default:
+			// something went wrong, default to white and very weak stats
+            color = { 1.0f, 1.0f, 1.0f, 1.0f }; //white
+            details.range = 100.f;
+            details.fireCooldown = 10.f;        //bad rof
+            details.projectile.damage = 0.f;    //no damage
+            details.projectile.speed = 100.f;    //bad projectile
+            break;
+        }
+
+        int col = (int)details.towerType;
+        int row = details.level - 1; // level 1 -> row 0
+        UVRect uv = GetSpriteUV(col, row, 13, 10);
+
+        // Store the Graphics shape ID on the tower
+        spriteId = Graphics::DrawSprite(g_TowerSheet,
+            x, y, _sizeX, _sizeY,      // position & size
+            1.f, 1.f, 1.f, 1.f,        // tint white
+            uv.u0, uv.v0, uv.u1, uv.v1);
 
     }
 
 
     void Tower::Draw() {
+
+        Graphics::SetPosition(spriteId, x, y);
 
         // drawing range
         if (isDragging || isSelected) {
@@ -55,15 +105,67 @@ namespace TowerHandler {
 
     }
 
-    void ShopTower::ShopTowerInit(float xPos, float yPos, float xSize, float ySize, Color c, int seg_count) {
+    bool Tower::LevelUp()
+    {
+        if (details.level >= 3)
+            return false; // already max level
+
+        details.level++;
+        ApplyLevelStats();
+
+        int col = (int)details.towerType;   // column = tower type, stays fixed
+        int row = details.level - 1;        // row 0=lvl1, 1=lvl2, 2=lvl3
+        UVRect uv = GetSpriteUV(col, row, 13, 10);
+        Graphics::SetUV(spriteId, uv.u0, uv.v0, uv.u1, uv.v1);
+
+        return true; // successfully levelled up
+    }
+
+    void Tower::ApplyLevelStats()
+    {
+        int typeIndex = (int)details.towerType;  // 0..3
+        int levelIndex = details.level - 1;      // level 1 -> index 0, etc.
+
+        // Clamp just in case
+        if (levelIndex < 0) levelIndex = 0;
+        if (levelIndex > 2) levelIndex = 2;
+
+        const LevelStats& ls = TOWER_LEVEL_STATS[typeIndex][levelIndex];
+        details.range = ls.range;
+        details.fireCooldown = ls.fireCooldown;
+        details.projectile.damage = ls.damage;
+        details.projectile.speed = ls.speed;
+    }
+
+    void ShopTower::ShopTowerInit(float xPos, float yPos, float xSize, float ySize, TowerType towerType, int seg_count) {
         //gameobj data
         x = xPos;
         y = yPos;
         _sizeX = xSize;
         _sizeY = ySize;
         segments = seg_count;
-        color = c;
+        
         mesh = nullptr; // don't build here
+
+        shopTowerType = towerType;
+        switch (towerType)
+        {
+        case TowerHandler::BASIC_TOWER:
+            color = { 0.0f, 0.0f, 1.0f, 1.0f }; //blue
+            break;
+        case TowerHandler::SNIPER_TOWER:
+            color = { 0.0f, 1.0f, 0.0f, 1.0f }; //red
+            break;
+        case TowerHandler::SLOW_TOWER:
+            color = { 1.0f, 0.0f, 0.0f, 1.0f }; //green
+            break;
+        case TowerHandler::RAPID_TOWER:
+            color = { 1.0f, 0.0f, 1.0f, 1.0f }; //purple
+            break;
+        default:
+            color = { 1.0f, 1.0f, 1.0f, 1.0f }; //white
+            break;
+        }
     }
 
     void UpdateTowerSystem(float mouseX, float mouseY, ShopTower& shop, std::vector<Tower>& activeTowers) {
@@ -92,7 +194,7 @@ namespace TowerHandler {
             }
 
             // Reset and deselect all towers after left click
-            for (auto& t : activeTowers) {
+            for (Tower& t : activeTowers) {
                 t.isSelected = false;
             }
 
@@ -111,7 +213,7 @@ namespace TowerHandler {
                 Tower newTower;
 
                 // Initialize tower at shop position with its own parameters
-                newTower.TowerInit(shop.x, shop.y, 55.0f, 55.0f, { 0.0f, 0.0f, 1.0f, 1.0f });
+                newTower.TowerInit(shop.x, shop.y, 55.0f, 55.0f, shop);
 
                 // Force start dragging immediately
                 newTower.isSelected = true;
@@ -139,8 +241,86 @@ namespace TowerHandler {
         }
     }
 
-    void Tower::TowerShoot() {
+    bool TowerShoot(Tower& tower, Enemy& enemy, std::vector<ActiveBullet>& bullets) {
 
+        if (tower.details.fireTimer > 0.0f) {
+            return false;
+        }
+
+        if (CircleCircleCollision(tower.x, tower.y, tower.details.range, enemy.x, enemy.y, enemy._sizeX)) {
+			ActiveBullet newBullet;
+            newBullet.x = tower.x;
+            newBullet.y = tower.y;
+            // Inside TowerShoot when creating newBullet:
+            newBullet._sizeX = 10.0f;
+            newBullet._sizeY = 10.0f;
+
+            // Copy stats from the tower's projectile template
+            newBullet.damage = tower.details.projectile.damage;
+            newBullet.speed = tower.details.projectile.speed;
+            newBullet.color = tower.color; // Match tower color for visual consistency
+
+            newBullet.segments = 20;
+            newBullet.mesh = nullptr;
+            newBullet.target = &enemy;
+
+            // Calculate Direction Vector
+            float dx = enemy.x - tower.x;
+            float dy = enemy.y - tower.y;
+            float length = sqrtf(dx * dx + dy * dy);
+
+            if (length > 0) {
+                newBullet.dirX = dx / length; // Normalized X
+                newBullet.dirY = dy / length; // Normalized Y
+            }
+            bullets.push_back(newBullet);
+            tower.details.fireTimer = tower.details.fireCooldown;
+
+            return true;
+        }
+        return false;
     }
+
+	// bullet and enemy collision, both treated as circles for simplicity
+    bool CircleCircleCollision(float x1, float y1, float r1, float x2, float y2, float r2) {
+		bool flag = false;
+        float dx = x2 - x1;
+		float dy = y2 - y1;
+		float sqrDistance = dx * dx + dy * dy;
+		float sqrRadiusSum = (r1 + r2) * (r1 + r2);
+
+        if (sqrDistance <= sqrRadiusSum) {
+			flag = true;
+		}
+
+		return flag;
+	}
+
+    void UpdateProjectiles(float dt, std::vector<Enemy*>& enemies,
+        std::vector<ActiveBullet>& activeBullets){
+        for (auto& b : activeBullets) {
+            b.Update(dt);
+
+            for (Enemy* e : enemies) {
+                if (!e || e->health <= 0.0f) continue;
+
+                if (CircleCircleCollision(b.x, b.y, b._sizeX, e->x, e->y, e->_sizeX)) {
+                    e->health -= b.damage;
+                    b.shouldRemove = true;
+                    break;
+                }
+            }
+
+            if (std::fabs(b.x) > 2000.f || std::fabs(b.y) > 2000.f)
+                b.shouldRemove = true;
+        }
+
+        activeBullets.erase(
+            std::remove_if(activeBullets.begin(), activeBullets.end(),
+            [](const ActiveBullet& b) { return b.shouldRemove; }),
+            activeBullets.end());
+    }
+
+
 
 }

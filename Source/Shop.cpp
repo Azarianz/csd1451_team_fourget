@@ -5,12 +5,6 @@
 
 namespace TowerHandler {
 
-    // ----------------------------------------------------------------
-    // Tower definition table
-    // Each row = one distinct tower kind: { color, spriteCol, spriteRow, type }
-    // spriteCol/Row are 0-based into the 13x10 spritesheet.
-    // Edit this table to change which sprite belongs to which color.
-    // ----------------------------------------------------------------
     const TowerDef Shop::TOWER_DEFS[TOWER_DEF_COUNT] = {
         { { 0.1f, 0.9f, 0.2f, 1.0f }, 0, 0, BASIC_TOWER  }, // Green  -> sprite (0,0)
         { { 1.0f, 0.9f, 0.1f, 1.0f }, 1, 0, BASIC_TOWER  }, // Yellow -> sprite (1,0)
@@ -21,10 +15,6 @@ namespace TowerHandler {
         { { 0.5f, 1.0f, 0.0f, 1.0f }, 6, 0, BASIC_TOWER  }, // Lime   -> sprite (6,0)
         { { 0.2f, 0.4f, 1.0f, 1.0f }, 7, 0, SNIPER_TOWER }, // Blue   -> sprite (7,0)
     };
-
-    // ----------------------------------------------------------------
-    // Internal helpers
-    // ----------------------------------------------------------------
 
     static AEGfxVertexList* BuildCircleMesh(int segments)
     {
@@ -121,12 +111,11 @@ namespace TowerHandler {
     }
 
     // ----------------------------------------------------------------
-    // RefreshSlots — picks TOWER_SLOTS unique TowerDefs (shuffle, no repeat)
+    // RefreshSlots
     // ----------------------------------------------------------------
 
     void Shop::RefreshSlots()
     {
-        // Shuffle indices 0..TOWER_DEF_COUNT-1 (Fisher-Yates)
         int idx[TOWER_DEF_COUNT];
         for (int i = 0; i < TOWER_DEF_COUNT; ++i) idx[i] = i;
         for (int i = TOWER_DEF_COUNT - 1; i > 0; --i)
@@ -135,7 +124,6 @@ namespace TowerHandler {
             int tmp = idx[i]; idx[i] = idx[j]; idx[j] = tmp;
         }
 
-        // Assign the first TOWER_SLOTS shuffled defs to the non-refresh slots
         for (int i = 0; i < TOWER_SLOTS; ++i)
             slots[i].defIndex = idx[i];
     }
@@ -154,12 +142,12 @@ namespace TowerHandler {
             for (int i = 0; i < TOTAL_SLOTS; ++i)
             {
                 if (!Utility::IsCircleClicked(slots[i].x, slots[i].y,
-                    slots[i].size / 2.0f,
-                    mouseX, mouseY))
+                    slots[i].size / 2.0f, mouseX, mouseY))
                     continue;
 
                 if (slots[i].isRefreshButton) { RefreshSlots(); return; }
 
+                // CONFLICT RESOLVED: keep HEAD's points system, discard main's typeContained approach
                 if (m_points < TOWER_COST)
                 {
                     PRINT("Not enough points! Need %d\n", TOWER_COST);
@@ -170,12 +158,15 @@ namespace TowerHandler {
 
                 const TowerDef& def = TOWER_DEFS[slots[i].defIndex];
 
+                // Build a ShopTower so TowerInit gets the correct type (fixes TowerInit signature mismatch)
+                ShopTower tempShop;
+                tempShop.ShopTowerInit(mouseX, mouseY, 55.0f, 55.0f, def.type);
+
                 Tower newTower;
-                newTower.TowerInit(mouseX, mouseY, 55.0f, 55.0f, def.color);
-                newTower.details.towerType = def.type;
+                newTower.TowerInit(mouseX, mouseY, 55.0f, 55.0f, tempShop);
                 newTower.isDragging = true;
 
-                // Map tower ID -> def index (color and sprite are both read from the def)
+                // Map tower ID -> def index so DrawTowerSprites can find the right sprite
                 m_towerDefIndex[newTower.details.ID] = slots[i].defIndex;
 
                 activeTowers.push_back(newTower);
@@ -223,9 +214,7 @@ namespace TowerHandler {
             AEGfxSetTransform(transform.m);
 
             if (slots[i].isRefreshButton)
-            {
                 AEGfxSetColorToMultiply(0.4f, 0.4f, 0.4f, 1.0f);
-            }
             else
             {
                 const Color& c = TOWER_DEFS[slots[i].defIndex].color;
@@ -266,8 +255,8 @@ namespace TowerHandler {
     void Shop::Exit()
     {
         if (pCircleMesh) { AEGfxMeshFree(pCircleMesh);       pCircleMesh = nullptr; }
-        if (pSpritesheet) { AEGfxTextureUnload(pSpritesheet); pSpritesheet = nullptr; }
-        if (m_uiFont >= 0) { AEGfxDestroyFont(m_uiFont);       m_uiFont = -1; }
+        if (pSpritesheet) { AEGfxTextureUnload(pSpritesheet);  pSpritesheet = nullptr; }
+        if (m_uiFont >= 0) { AEGfxDestroyFont(m_uiFont);        m_uiFont = -1; }
         m_towerDefIndex.clear();
     }
 

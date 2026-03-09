@@ -1,7 +1,6 @@
 #include <crtdbg.h> // To check for memory leaks
 #include "AEEngine.h"
 #include "AEInput.h"
-
 #include "SceneManager.h"
 #include "SceneID.h"
 
@@ -17,26 +16,34 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, true, NULL);
     AESysSetWindowTitle("Merge Defenders Prototype");
 
-    // Pick which scene to boot (each teammate can change this line on their branch)
-    SceneManager::I().Init(SceneID::ShopTest);   // <-- your editor scene
+    // CONFLICT RESOLVED: kept HEAD (ShopTest). Change this line to boot a different scene.
+    SceneManager::I().Init(SceneID::ShopTest);
 
-     int gGameRunning = 1;
-     while (gGameRunning)
-     {
-         AESysFrameStart();
-         float dt = (float)AEFrameRateControllerGetFrameTime();
+    int gGameRunning = 1;
+    while (gGameRunning)
+    {
+        AESysFrameStart();
+        float dt = (float)AEFrameRateControllerGetFrameTime();
 
-         // Update + Draw current scene
-         SceneManager::I().Update(dt);
-         SceneManager::I().Draw();
+        // --- scene hotkeys ---
+        if (AEInputCheckTriggered(AEVK_1)) SceneManager::I().SwitchTo(SceneID::LevelEditor);
+        if (AEInputCheckTriggered(AEVK_2)) SceneManager::I().SwitchTo(SceneID::LoadLevel);
+        if (AEInputCheckTriggered(AEVK_3)) SceneManager::I().SwitchTo(SceneID::TowerTest);
+        if (AEInputCheckTriggered(AEVK_4)) SceneManager::I().SwitchTo(SceneID::EnemyTest);
+        if (AEInputCheckTriggered(AEVK_5)) SceneManager::I().SwitchTo(SceneID::ShopTest);
+        if (AEInputCheckTriggered(AEVK_9)) SceneManager::I().SwitchTo(SceneID::Prototype);
 
-         AESysFrameEnd();
+        // Update + Draw current scene
+        SceneManager::I().Update(dt);
+        SceneManager::I().Draw();
 
-         if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
-             gGameRunning = 0;
-     }
+        AESysFrameEnd();
 
-	// Cleanup
-     SceneManager::I().Exit();
-	 AESysExit();
+        if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
+            gGameRunning = 0;
+    }
+
+    // Cleanup
+    SceneManager::I().Exit();
+    AESysExit();
 }

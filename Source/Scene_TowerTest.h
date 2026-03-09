@@ -1,12 +1,12 @@
 #pragma once
 #include "Scene.h"
 #include "Tower.h"
+#include "Enemy.h"
 #include <vector>
 
 class Scene_TowerTest : public Scene
 {
 public:
-
     void Init() override;
     void Update(float dt) override;
     void Draw() override;
@@ -16,4 +16,9 @@ private:
     int mouseX{}, mouseY{};
     TowerHandler::ShopTower shopTower;
     std::vector<TowerHandler::Tower> activeTowers{};
+	std::vector<TowerHandler::ActiveBullet> activeBullets;
+
+	//enemy test data
+    std::vector<Enemy*> activeEnemies;
+    std::vector<Point> myPath; // The path points
 };

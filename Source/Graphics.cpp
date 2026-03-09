@@ -298,24 +298,25 @@ namespace Graphics
 
             if (s.type == ShapeType::Sprite)
             {
-                AEGfxVertexList* mesh = GetSpriteMesh();
-                if (!mesh || !s.tex) continue;
+                if (!s.tex) continue;
+
+                // Build a one-off mesh with the correct UVs for this sprite frame
+                AEGfxMeshStart();
+                AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, s.u0, s.v1,
+                            0.5f, -0.5f, 0xFFFFFFFF, s.u1, s.v1,
+                            0.5f, 0.5f, 0xFFFFFFFF, s.u1, s.v0);
+                AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, s.u0, s.v1,
+                             0.5f, 0.5f, 0xFFFFFFFF, s.u1, s.v0,
+                            -0.5f, 0.5f, 0xFFFFFFFF, s.u0, s.v0);
+                AEGfxVertexList* mesh = AEGfxMeshEnd();
 
                 AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
                 AEGfxTextureSet(s.tex, 0, 0);
-
-                // NOTE: AEEngine’s demo uses mesh UVs directly.
-                // If you want sprite-sheet UV subrects, there are two common approaches:
-                // 1) build a unique mesh per sprite with its UVs (more memory), OR
-                // 2) if your AE build supports texture UV offset/scale, use it.
-                //
-                // Since we can't assume UV-offset API exists, we'll do approach (1) later if needed.
-                // For now: u0..u1 are stored but unused unless you want per-sprite UV mesh.
-
                 AEGfxSetTransparency(s.a);
-                AEGfxSetColorToMultiply(s.r * mul, s.g * mul, s.b * mul, 1.0f);
+                AEGfxSetColorToMultiply(s.r, s.g, s.b, 1.0f);
                 AEGfxSetTransform(m.m);
                 AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
+                AEGfxMeshFree(mesh); // free immediately after drawing
             }
             else if (s.type == ShapeType::Rect)
             {
