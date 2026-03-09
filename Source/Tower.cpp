@@ -42,34 +42,18 @@ namespace TowerHandler {
         {
         case TowerHandler::BASIC_TOWER:
             color = { 0.0f, 0.0f, 1.0f, 1.0f }; //blue
-            details.range = 400.f;
-            details.fireCooldown = 1.5f;
-            details.projectile.damage = 15.f;
-            details.projectile.speed = 400.f;
             break;
         case TowerHandler::SNIPER_TOWER:
             color = { 0.0f, 1.0f, 0.0f, 1.0f }; //green
-            details.range = 600.f;
-            details.fireCooldown = 3.f;
-            details.projectile.damage = 50.f;
-            details.projectile.speed = 600.f;
             break;
         case TowerHandler::SLOW_TOWER:
             color = { 1.0f, 0.0f, 0.0f, 1.0f }; //red
-            details.range = 200.f;
-            details.fireCooldown = 2.f;
-            details.projectile.damage = 5.f;
-            details.projectile.speed = 350.f;
             break;
         case TowerHandler::RAPID_TOWER:
             color = { 1.0f, 0.0f, 1.0f, 1.0f }; //purple
-            details.range = 300.f;
-            details.fireCooldown = 1.f;
-            details.projectile.damage = 10.f;
-            details.projectile.speed = 400.f;
             break;
         default:
-            // slow rof and white to show that its bugged if it ever reaches here
+			// something went wrong, default to white and very weak stats
             color = { 1.0f, 1.0f, 1.0f, 1.0f }; //white
             details.range = 100.f;
             details.fireCooldown = 10.f;        //bad rof
@@ -81,15 +65,6 @@ namespace TowerHandler {
         int col = (int)details.towerType;
         int row = details.level - 1; // level 1 -> row 0
         UVRect uv = GetSpriteUV(col, row, 13, 10);
-
-        switch (details.towerType)
-        {
-        case BASIC_TOWER:  uv = GetSpriteUV(1, 0, 13, 10); break;
-        case SNIPER_TOWER: uv = GetSpriteUV(2, 0, 13, 10); break;
-        case SLOW_TOWER:   uv = GetSpriteUV(3, 0, 13, 10); break;
-        case RAPID_TOWER:  uv = GetSpriteUV(4, 0, 13, 10); break;
-        default:           uv = { 0,0,1,1 }; break;
-        }
 
         // Store the Graphics shape ID on the tower
         spriteId = Graphics::DrawSprite(g_TowerSheet,
