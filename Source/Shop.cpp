@@ -78,10 +78,7 @@ namespace TowerHandler {
         AEGfxMeshFree(mesh);
     }
 
-    // ----------------------------------------------------------------
     // Init
-    // ----------------------------------------------------------------
-
     void Shop::Init()
     {
         float windowHeight = (float)AEGfxGetWindowHeight();
@@ -110,10 +107,7 @@ namespace TowerHandler {
         RefreshSlots();
     }
 
-    // ----------------------------------------------------------------
     // RefreshSlots
-    // ----------------------------------------------------------------
-
     void Shop::RefreshSlots()
     {
         int idx[TOWER_DEF_COUNT];
@@ -128,10 +122,7 @@ namespace TowerHandler {
             slots[i].defIndex = idx[i];
     }
 
-    // ----------------------------------------------------------------
     // Update
-    // ----------------------------------------------------------------
-
     void Shop::Update(std::vector<Tower>& activeTowers)
     {
         float mouseX, mouseY;
@@ -147,7 +138,6 @@ namespace TowerHandler {
 
                 if (slots[i].isRefreshButton) { RefreshSlots(); return; }
 
-                // CONFLICT RESOLVED: keep HEAD's points system, discard main's typeContained approach
                 if (m_points < TOWER_COST)
                 {
                     PRINT("Not enough points! Need %d\n", TOWER_COST);
@@ -158,12 +148,21 @@ namespace TowerHandler {
 
                 const TowerDef& def = TOWER_DEFS[slots[i].defIndex];
 
-                // Build a ShopTower so TowerInit gets the correct type (fixes TowerInit signature mismatch)
+                // Build a ShopTower so TowerInit gets the correct type
                 ShopTower tempShop;
                 tempShop.ShopTowerInit(mouseX, mouseY, 55.0f, 55.0f, def.type);
 
                 Tower newTower;
                 newTower.TowerInit(mouseX, mouseY, 55.0f, 55.0f, tempShop);
+
+                // Override color to match the shop slot (TowerInit sets generic type color)
+                newTower.color = def.color;
+
+                // Override the Graphics sprite UV to use the TowerDef's exact spriteCol/spriteRow
+                // TowerInit defaults to col=(int)towerType 
+                UVRect uv = GetSpriteUV(def.spriteCol, def.spriteRow, 13, 10);
+                Graphics::SetUV(newTower.spriteId, uv.u0, uv.v0, uv.u1, uv.v1);
+
                 newTower.isDragging = true;
 
                 // Map tower ID -> def index so DrawTowerSprites can find the right sprite
@@ -175,31 +174,21 @@ namespace TowerHandler {
         }
     }
 
-    // ----------------------------------------------------------------
-    // DrawTowerSprites — call AFTER all towers are drawn each frame
-    // ----------------------------------------------------------------
-
+    // DrawTowerSprites - call AFTER all towers are drawn each frame
     void Shop::DrawTowerSprites(const std::vector<Tower>& activeTowers) const
     {
-        for (const Tower& t : activeTowers)
-        {
-            auto it = m_towerDefIndex.find(t.details.ID);
-            if (it == m_towerDefIndex.end()) continue;
-
-            const TowerDef& def = TOWER_DEFS[it->second];
-            DrawSpriteAt(t.x, t.y, t._sizeX, def.spriteCol, def.spriteRow);
-        }
+        // Tower sprites are now handled via Graphics::RenderAll() in the scene's Draw().
+        // Each tower's spriteId was assigned the correct UV from the TowerDef on spawn,
+        // so no separate draw pass is needed here.
+        (void)activeTowers;
     }
 
-    // ----------------------------------------------------------------
-    // Draw — shop UI only
-    // ----------------------------------------------------------------
-
+    // Draw - shop UI only
     void Shop::Draw()
     {
         if (!pCircleMesh) return;
 
-        // Pass 1: colored circles
+        // 1: colored circles
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
@@ -224,7 +213,7 @@ namespace TowerHandler {
             AEGfxMeshDraw(pCircleMesh, AE_GFX_MDM_TRIANGLES);
         }
 
-        // Pass 2: sprites on top of tower slots
+        // 2: sprites on top of tower slots
         for (int i = 0; i < TOTAL_SLOTS; ++i)
         {
             if (slots[i].isRefreshButton) continue;
@@ -236,10 +225,7 @@ namespace TowerHandler {
         DrawPoints();
     }
 
-    // ----------------------------------------------------------------
     // DrawPoints
-    // ----------------------------------------------------------------
-
     void Shop::DrawPoints() const
     {
         if (m_uiFont < 0) return;
@@ -248,10 +234,7 @@ namespace TowerHandler {
         AEGfxPrint(m_uiFont, buf, 0.6f, 0.9f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f);
     }
 
-    // ----------------------------------------------------------------
     // Exit
-    // ----------------------------------------------------------------
-
     void Shop::Exit()
     {
         if (pCircleMesh) { AEGfxMeshFree(pCircleMesh);       pCircleMesh = nullptr; }
