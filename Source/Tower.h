@@ -10,7 +10,6 @@ extern int nextTowerID;
 namespace TowerHandler {
 
     enum TowerType{ BASIC_TOWER, SNIPER_TOWER, SLOW_TOWER, RAPID_TOWER};
-	enum ProjectileType { BASIC_PROJECTILE, SNIPER_PROJECTILE, SLOW_PROJECTILE, RAPID_PROJECTILE };
     struct ShopTower;
     struct Tower;
     struct ActiveBullet;
@@ -57,7 +56,6 @@ namespace TowerHandler {
     struct Projectile
     {
         AEGfxTexture* sprite = nullptr;
-		ProjectileType projectileType = BASIC_PROJECTILE;
         float damage = 0.0f;
         float speed = 0.0f;
     };
