@@ -106,9 +106,9 @@ namespace TowerHandler {
 
         void TowerInit(float xPos, float yPos, float xSize, float ySize, ShopTower shopType, int segcount = 50);
         void Draw();
+        void DrawHealthBar() const;
         void ApplyLevelStats();
         bool LevelUp(); // returns false if already max level
-
         bool TakeDamage(float dmg);
         bool IsDead() const;
         bool IsBaseTower() const;

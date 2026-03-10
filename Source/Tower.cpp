@@ -104,10 +104,11 @@ namespace TowerHandler {
             color = originalColor;
         }
 
-
         // draw tower itself
         GameObject::Draw();
 
+        // base-only health bar
+        DrawHealthBar();
     }
 
     bool Tower::LevelUp()
@@ -336,5 +337,66 @@ namespace TowerHandler {
             activeBullets.end());
     }
 
+    static AEGfxVertexList* GetHealthBarQuad()
+    {
+        static AEGfxVertexList* quad = nullptr;
+        if (!quad)
+        {
+            AEGfxMeshStart();
+            AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0, 0,
+                0.5f, -0.5f, 0xFFFFFFFF, 1, 0,
+                0.5f, 0.5f, 0xFFFFFFFF, 1, 1);
+            AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0, 0,
+                0.5f, 0.5f, 0xFFFFFFFF, 1, 1,
+                -0.5f, 0.5f, 0xFFFFFFFF, 0, 1);
+            quad = AEGfxMeshEnd();
+        }
+        return quad;
+    }
 
+    void Tower::DrawHealthBar() const
+    {
+        if (!details.isBase)
+            return;
+
+        if (details.maxHealth <= 0.0f)
+            return;
+
+        float percent = details.health / details.maxHealth;
+        if (percent < 0.0f) percent = 0.0f;
+        if (percent > 1.0f) percent = 1.0f;
+
+        float width = _sizeX;
+        float height = 8.0f;
+        float barX = x;
+        float barY = y - (_sizeY * 0.5f) - 10.0f;
+
+        AEGfxVertexList* quad = GetHealthBarQuad();
+
+        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+
+        // Background (red)
+        AEGfxSetColorToMultiply(1.0f, 0.0f, 0.0f, 1.0f);
+        AEMtx33 scaleBg, transBg, transformBg;
+        AEMtx33Scale(&scaleBg, width, height);
+        AEMtx33Trans(&transBg, barX, barY);
+        AEMtx33Concat(&transformBg, &transBg, &scaleBg);
+        AEGfxSetTransform(transformBg.m);
+        AEGfxMeshDraw(quad, AE_GFX_MDM_TRIANGLES);
+
+        // Foreground (green)
+        float currentWidth = width * percent;
+        float currentX = barX - (width * 0.5f) + (currentWidth * 0.5f);
+
+        AEGfxSetColorToMultiply(0.0f, 1.0f, 0.0f, 1.0f);
+        AEMtx33 scaleFg, transFg, transformFg;
+        AEMtx33Scale(&scaleFg, currentWidth, height);
+        AEMtx33Trans(&transFg, currentX, barY);
+        AEMtx33Concat(&transformFg, &transFg, &scaleFg);
+        AEGfxSetTransform(transformFg.m);
+        AEGfxMeshDraw(quad, AE_GFX_MDM_TRIANGLES);
+    }
 }
