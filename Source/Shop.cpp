@@ -34,21 +34,25 @@ namespace TowerHandler {
         return AEGfxMeshEnd();
     }
 
-    SpriteUV Shop::GetUV(int col, int row) const
+    SpriteUV Shop::GetUVFrom(int col, int row, int sheetCols, int sheetRows) const
     {
         SpriteUV uv;
-        uv.u0 = (float)col / (float)SHEET_COLS;
-        uv.u1 = (float)(col + 1) / (float)SHEET_COLS;
-        uv.v0 = (float)row / (float)SHEET_ROWS;
-        uv.v1 = (float)(row + 1) / (float)SHEET_ROWS;
+        uv.u0 = (float)col / (float)sheetCols;
+        uv.u1 = (float)(col + 1) / (float)sheetCols;
+        uv.v0 = (float)row / (float)sheetRows;
+        uv.v1 = (float)(row + 1) / (float)sheetRows;
         return uv;
     }
 
-    void Shop::DrawSpriteAt(float cx, float cy, float size, int col, int row) const
+    // DrawSpriteAtTex  (generic – caller supplies texture + sheet dimensions)
+    void Shop::DrawSpriteAtTex(float cx, float cy, float size,
+        int col, int row,
+        AEGfxTexture* tex,
+        int sheetCols, int sheetRows) const
     {
-        if (!pSpritesheet) return;
+        if (!tex) return;
 
-        SpriteUV uv = GetUV(col, row);
+        SpriteUV uv = GetUVFrom(col, row, sheetCols, sheetRows);
 
         AEGfxMeshStart();
         AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, uv.u0, uv.v1,
@@ -63,7 +67,7 @@ namespace TowerHandler {
         float spriteSize = size * 0.80f;
 
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-        AEGfxTextureSet(pSpritesheet, 0, 0);
+        AEGfxTextureSet(tex, 0, 0);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
@@ -97,9 +101,11 @@ namespace TowerHandler {
 
         pCircleMesh = BuildCircleMesh(64);
         pSpritesheet = AEGfxTextureLoad("Assets/spritesheet.png");
+        pRefreshSheet = AEGfxTextureLoad("Assets/refresh_overlay.png");
 
         if (!pCircleMesh)  PRINT("Shop Init: Failed to create circle mesh!\n");
         if (!pSpritesheet) PRINT("Shop Init: Failed to load Assets/spritesheet.png!\n");
+        if (!pRefreshSheet) PRINT("Refresh Init: Failed to load Assets/refresh_overlay.png!\n");
 
         m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
         m_points = 1000;
@@ -218,8 +224,18 @@ namespace TowerHandler {
         {
             if (slots[i].isRefreshButton) continue;
             const TowerDef& def = TOWER_DEFS[slots[i].defIndex];
-            DrawSpriteAt(slots[i].x, slots[i].y, slots[i].size,
-                def.spriteCol, def.spriteRow);
+            DrawSpriteAtTex(slots[i].x, slots[i].y, slots[i].size,
+                def.spriteCol, def.spriteRow, pSpritesheet, SHEET_COLS, SHEET_ROWS);
+        }
+
+        // 3: refresh icon on top of the refresh button
+        for (int i = 0; i < TOTAL_SLOTS; ++i)
+        {
+            if (!slots[i].isRefreshButton) continue;
+            DrawSpriteAtTex(slots[i].x, slots[i].y, slots[i].size * 1.5f, // enlarge sprite size
+                REFRESH_ICON_COL, REFRESH_ICON_ROW,
+                pRefreshSheet,
+                REFRESH_SHEET_COLS, REFRESH_SHEET_ROWS);
         }
 
         DrawPoints();
@@ -239,6 +255,7 @@ namespace TowerHandler {
     {
         if (pCircleMesh) { AEGfxMeshFree(pCircleMesh);       pCircleMesh = nullptr; }
         if (pSpritesheet) { AEGfxTextureUnload(pSpritesheet);  pSpritesheet = nullptr; }
+        if (pRefreshSheet) { AEGfxTextureUnload(pRefreshSheet);  pRefreshSheet = nullptr; }
         if (m_uiFont >= 0) { AEGfxDestroyFont(m_uiFont);        m_uiFont = -1; }
         m_towerDefIndex.clear();
     }
