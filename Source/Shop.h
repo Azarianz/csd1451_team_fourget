@@ -56,6 +56,12 @@ namespace TowerHandler {
         AEGfxVertexList* pCircleMesh = nullptr;
         AEGfxTexture* pSpritesheet = nullptr;
 
+        AEGfxTexture* pRefreshSheet = nullptr;
+        static const int REFRESH_SHEET_COLS = 11; 
+        static const int REFRESH_SHEET_ROWS = 11; 
+        static const int REFRESH_ICON_COL = 10; 
+        static const int REFRESH_ICON_ROW = 1;
+
         static const int SHEET_COLS = 13;
         static const int SHEET_ROWS = 10;
 
@@ -65,8 +71,11 @@ namespace TowerHandler {
         std::unordered_map<int, int> m_towerDefIndex;
 
         void DrawPoints() const;
-        void DrawSpriteAt(float cx, float cy, float size, int col, int row) const;
-        SpriteUV GetUV(int col, int row) const;
+        void DrawSpriteAtTex(float cx, float cy, float size,
+            int col, int row,
+            AEGfxTexture* tex,
+            int sheetCols, int sheetRows) const;
+        SpriteUV GetUVFrom(int col, int row, int sheetCols, int sheetRows) const;
     };
 
 } // namespace TowerHandler
