@@ -26,6 +26,10 @@ private:
     LevelLoader level;
     GridSystem::Grid* grid = nullptr;
 
+    int baseTowerIndex = -1;
+    bool gameOver = false;
+    s8 gameOverFont = -1;
+
     // --- Enemies ---
     std::vector<Point> path;
     std::vector<Enemy> enemies;
@@ -45,7 +49,6 @@ private:
     bool wasLmbDown = false;
     AEGfxVertexList* xMesh = nullptr;
 
-private:
     // drag helpers
     int  FindDraggedTowerIndex() const;
     bool IsDraggingTower() const;

@@ -8,9 +8,7 @@
 #include <cmath>
 #include <algorithm>
 
-// ----------------------------------------------------
-// Drag helpers
-// ----------------------------------------------------
+#pragma region Drag helpers
 int Scene_Prototype::FindDraggedTowerIndex() const
 {
     for (int i = (int)activeTowers.size() - 1; i >= 0; --i)
@@ -23,10 +21,9 @@ bool Scene_Prototype::IsDraggingTower() const
 {
     return FindDraggedTowerIndex() >= 0;
 }
+#pragma endregion
 
-// ----------------------------------------------------
-// Selection helpers
-// ----------------------------------------------------
+#pragma region Selection helpers
 void Scene_Prototype::ClearTowerSelection()
 {
     for (auto& t : activeTowers)
@@ -74,10 +71,9 @@ void Scene_Prototype::HandleTowerSelection(float worldX, float worldY, bool just
     if (hitIndex >= 0)
         activeTowers[(size_t)hitIndex].isSelected = true;
 }
+#pragma endregion
 
-// ----------------------------------------------------
-// Merge System
-// ----------------------------------------------------
+#pragma region Merge helpers
 void Scene_Prototype::RebuildOccupiedFromTowers()
 {
     const size_t expected = (size_t)level.width * (size_t)level.height;
@@ -141,6 +137,9 @@ bool Scene_Prototype::TryMergeAtCell(int placedX, int placedY)
     int towerLevel = activeTowers[(size_t)centerIndex].details.level;
 
     std::vector<GridSystem::GridCoord> mergeCells;
+
+    if (type == TowerHandler::BASE_TOWER)
+        return false;
 
     // Horizontal: placed tower in middle
     if (TowerMatchesAtCell(placedX - 1, placedY, type, towerLevel) &&
@@ -250,17 +249,16 @@ void Scene_Prototype::RemoveTowerAtIndex(int idx)
     // clear bullets fired before tower got removed/merged
     activeBullets.clear();
 }
+#pragma endregion
 
-// ----------------------------------------------------
-// Level loading
-// ----------------------------------------------------
+#pragma region Level loading
 bool Scene_Prototype::LoadLevel(int idx)
 {
     sprintf_s(levelPath, "Assets/Levels/level_%02d.txt", idx);
 
     if (grid)
     {
-        grid->Destroy();    
+        grid->Destroy();
         delete grid;
         grid = nullptr;
     }
@@ -441,10 +439,9 @@ void Scene_Prototype::PushCellCenterToPath(const GridSystem::GridCoord& cell)
     grid->GetCellWorldCenter(cell, wx, wy, tileSize);
     path.push_back({ wx, wy });
 }
+#pragma endregion
 
-// ----------------------------------------------------
-// Scene lifecycle
-// ----------------------------------------------------
+#pragma region Scene lifecycle
 void Scene_Prototype::Init()
 {
     if (!LoadLevel(levelIndex))
@@ -466,10 +463,33 @@ void Scene_Prototype::Init()
 
     buildMode = false;
     wasLmbDown = false;
+
+    baseTowerIndex = -1;
+    gameOver = false;
+
+    if (!path.empty())
+    {
+        TowerHandler::ShopTower baseShop;
+        baseShop.ShopTowerInit(path.back().x, path.back().y, 80.0f, 80.0f, TowerHandler::BASE_TOWER);
+
+        TowerHandler::Tower baseTower;
+        baseTower.TowerInit(path.back().x, path.back().y, 80.0f, 80.0f, baseShop);
+        baseTower.isDragging = false;
+        baseTower.isSelected = false;
+
+        activeTowers.push_back(baseTower);
+        baseTowerIndex = (int)activeTowers.size() - 1;
+    }
+
+    if (gameOverFont < 0)
+    {
+        gameOverFont = AEGfxCreateFont("Assets/buggy-font.ttf", 64);
+    }
 }
 
 void Scene_Prototype::Update(float dt)
 {
+    if (gameOver) return;
     if (!grid) return;
 
     // --- Mouse: get BOTH screen + world ---
@@ -551,10 +571,31 @@ void Scene_Prototype::Update(float dt)
     for (auto& e : enemies)
         e.Update(dt, path);
 
+    if (baseTowerIndex >= 0 && baseTowerIndex < (int)activeTowers.size())
+    {
+        TowerHandler::Tower& base = activeTowers[(size_t)baseTowerIndex];
+
+        for (auto& e : enemies)
+        {
+            if (e.health <= 0.0f)
+                continue;
+
+            if (TowerHandler::CircleCircleCollision(
+                base.x, base.y, base._sizeX * 0.5f,
+                e.x, e.y, e._sizeX * 0.5f))
+            {
+                e.health = 0.0f;
+
+                if (base.TakeDamage(base.details.contactDamage))
+                    gameOver = true;
+            }
+        }
+    }
+
     // --- Tower shooting (same idea as TowerTest) ---
     for (auto& t : activeTowers)
     {
-        if (t.isDragging)
+        if (t.isDragging || t.IsBaseTower())
             continue;
 
         for (auto& e : enemies)
@@ -629,6 +670,15 @@ void Scene_Prototype::Draw()
     shop.Draw();
 
     Graphics::RenderAll();
+
+    if (gameOver && gameOverFont >= 0)
+    {
+        AEGfxPrint(gameOverFont, "GAME OVER",
+            -0.4f, 0.0f,     // screen position
+            1.2f,             // scale
+            1.0f, 0.1f, 0.1f, // color (red)
+            1.0f);
+    }
 }
 
 void Scene_Prototype::Exit()
@@ -658,56 +708,9 @@ void Scene_Prototype::Exit()
         grid = nullptr;
     }
 }
+#pragma endregion
 
-// ----------------------------------------------------
-// Snap-to-grid on release
-// ----------------------------------------------------
-void Scene_Prototype::SnapDraggedTowerToGrid(int mouseX, int mouseY)
-{
-    int draggedIndex = FindDraggedTowerIndex();
-    if (draggedIndex < 0) return;
-
-    GridSystem::GridCoord c;
-    if (!grid->ScreenToGrid(mouseX, mouseY, c) || !InBounds(c.x, c.y))
-    {
-        // released off-grid -> cancel tower
-        RemoveTowerAtIndex(draggedIndex);
-        RebuildOccupiedFromTowers();
-        return;
-    }
-
-    if (!IsPlaceable(c.x, c.y))
-    {
-        // not placeable -> cancel tower
-        RemoveTowerAtIndex(draggedIndex);
-        RebuildOccupiedFromTowers();
-        return;
-    }
-
-    // snap to cell center
-    float wx, wy, tileSize;
-    grid->GetCellWorldCenter({ c.x, c.y }, wx, wy, tileSize);
-
-    activeTowers[draggedIndex].x = wx;
-    activeTowers[draggedIndex].y = wy;
-    activeTowers[draggedIndex].isDragging = false;
-    activeTowers[draggedIndex].isSelected = false;
-
-    RebuildOccupiedFromTowers();
-
-    // try merge after placement
-    while (TryMergeAtCell(c.x, c.y))
-    {
-        RebuildOccupiedFromTowers();
-    }
-
-
-    RebuildOccupiedFromTowers();
-}
-
-// ----------------------------------------------------
-// Build overlay rendering
-// ----------------------------------------------------
+#pragma region Building
 void Scene_Prototype::BuildXMeshIfNeeded()
 {
     if (xMesh) return;
@@ -793,3 +796,48 @@ void Scene_Prototype::DrawBuildOverlay()
             grid->DrawTileTinted(c, 1.0f, 0.2f, 0.2f, 0.55f);
     }
 }
+
+void Scene_Prototype::SnapDraggedTowerToGrid(int mouseX, int mouseY)
+{
+    int draggedIndex = FindDraggedTowerIndex();
+    if (draggedIndex < 0) return;
+
+    GridSystem::GridCoord c;
+    if (!grid->ScreenToGrid(mouseX, mouseY, c) || !InBounds(c.x, c.y))
+    {
+        // released off-grid -> cancel tower
+        RemoveTowerAtIndex(draggedIndex);
+        RebuildOccupiedFromTowers();
+        return;
+    }
+
+    if (!IsPlaceable(c.x, c.y))
+    {
+        // not placeable -> cancel tower
+        RemoveTowerAtIndex(draggedIndex);
+        RebuildOccupiedFromTowers();
+        return;
+    }
+
+    // snap to cell center
+    float wx, wy, tileSize;
+    grid->GetCellWorldCenter({ c.x, c.y }, wx, wy, tileSize);
+
+    activeTowers[draggedIndex].x = wx;
+    activeTowers[draggedIndex].y = wy;
+    activeTowers[draggedIndex].isDragging = false;
+    activeTowers[draggedIndex].isSelected = false;
+
+    RebuildOccupiedFromTowers();
+
+    // try merge after placement
+    while (TryMergeAtCell(c.x, c.y))
+    {
+        RebuildOccupiedFromTowers();
+    }
+
+
+    RebuildOccupiedFromTowers();
+}
+
+#pragma endregion

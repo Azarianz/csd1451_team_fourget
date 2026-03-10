@@ -35,6 +35,11 @@ namespace TowerHandler {
         details.towerType = shop.GetTowerType();
         details.fireTimer = 0.f;
 
+        details.health = 0.f;
+        details.maxHealth = 0.f;
+        details.contactDamage = 0.f;
+        details.isBase = false;
+
         ApplyLevelStats();
 
         //base color, range, damage
@@ -51,6 +56,13 @@ namespace TowerHandler {
             break;
         case TowerHandler::RAPID_TOWER:
             color = { 1.0f, 0.0f, 1.0f, 1.0f }; //purple
+            break;
+        case TowerHandler::BASE_TOWER:
+            color = { 0.2f, 0.9f, 0.9f, 1.0f };
+            details.maxHealth = 100.f;
+            details.health = 100.f;
+            details.contactDamage = 10.f;
+            details.isBase = true;
             break;
         default:
 			// something went wrong, default to white and very weak stats
@@ -73,7 +85,6 @@ namespace TowerHandler {
             uv.u0, uv.v0, uv.u1, uv.v1);
 
     }
-
 
     void Tower::Draw() {
 
@@ -135,6 +146,28 @@ namespace TowerHandler {
         details.fireCooldown = ls.fireCooldown;
         details.projectile.damage = ls.damage;
         details.projectile.speed = ls.speed;
+    }
+
+    bool Tower::TakeDamage(float dmg)
+    {
+        if (!details.isBase)
+            return false;
+
+        details.health -= dmg;
+        if (details.health < 0.0f)
+            details.health = 0.0f;
+
+        return details.health <= 0.0f;
+    }
+
+    bool Tower::IsDead() const
+    {
+        return details.isBase && details.health <= 0.0f;
+    }
+
+    bool Tower::IsBaseTower() const
+    {
+        return details.isBase;
     }
 
     void ShopTower::ShopTowerInit(float xPos, float yPos, float xSize, float ySize, TowerType towerType, int seg_count) {
@@ -320,7 +353,6 @@ namespace TowerHandler {
             [](const ActiveBullet& b) { return b.shouldRemove; }),
             activeBullets.end());
     }
-
 
 
 }

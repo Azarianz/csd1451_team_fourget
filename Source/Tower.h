@@ -9,7 +9,7 @@ extern int nextTowerID;
 
 namespace TowerHandler {
 
-    enum TowerType{ BASIC_TOWER, SNIPER_TOWER, SLOW_TOWER, RAPID_TOWER};
+    enum TowerType{ BASIC_TOWER, SNIPER_TOWER, SLOW_TOWER, RAPID_TOWER, BASE_TOWER};
     struct ShopTower;
     struct Tower;
     struct ActiveBullet;
@@ -22,7 +22,7 @@ namespace TowerHandler {
     };
 
     // 3 levels for each tower type [level 0..2]
-    const LevelStats TOWER_LEVEL_STATS[4][3] = {
+    const LevelStats TOWER_LEVEL_STATS[5][3] = {
         // BASIC_TOWER
         {
 			// range, cooldown, damage, projectile speed
@@ -51,6 +51,12 @@ namespace TowerHandler {
             { 350.f, 0.7f, 16.f, 450.f },  // Level 2
             { 400.f, 0.5f, 24.f, 500.f },  // Level 3
         },
+        // BASE_TOWER
+        {
+            { 0.f, 999999.f, 0.f, 0.f },
+            { 0.f, 999999.f, 0.f, 0.f },
+            { 0.f, 999999.f, 0.f, 0.f },
+        },
     };
 
     struct Projectile
@@ -68,14 +74,20 @@ namespace TowerHandler {
 		float fireTimer = 0.f;              // seconds until next shot (counts down)
         TowerType towerType = BASIC_TOWER;
         Projectile projectile{};
+
+        // Only for base tower
+        float health = 0.0f;
+        float maxHealth = 0.0f;
+        float contactDamage = 0.0f;
+        bool isBase = false;
     };
 
     struct Tower : public GameObject{
         int tower_count = 0; //amount of towers
-        bool isDragging = false;
+        bool isDragging = false;    
         bool isSelected = false;
         float dragOffsetX = 0.0f;
-        float dragOffsetY = 0.0f;
+        float dragOffsetY = 0.0f;   
         TowerDetails details; 
         Graphics::ShapeId spriteId = 0;
 
@@ -93,6 +105,10 @@ namespace TowerHandler {
         void Draw();
         void ApplyLevelStats();
         bool LevelUp(); // returns false if already max level
+
+        bool TakeDamage(float dmg);
+        bool IsDead() const;
+        bool IsBaseTower() const;
     };
     bool TowerShoot(Tower& tower, Enemy& enemy, std::vector<ActiveBullet>& bullets);
     
@@ -151,7 +167,6 @@ namespace TowerHandler {
         return { col * w, row * h, (col + 1) * w, (row + 1) * h };
     }
     void LoadTowerAssets();
-
 }
 
 

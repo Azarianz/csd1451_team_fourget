@@ -29,7 +29,7 @@ void Scene_ShopTest::Update(float dt)
     // Shop: buy and place towers 
     shop.Update(activeTowers);
 
-    // Tower dragging (dummy shop — shop already handles placement) 
+    // Tower dragging (dummy shop ï¿½ shop already handles placement) 
     TowerHandler::ShopTower dummyShop;
     float mX, mY;
     Utility::GetWorldMousePos(mX, mY);

@@ -44,7 +44,7 @@ namespace TowerHandler {
         return uv;
     }
 
-    // DrawSpriteAtTex  (generic – caller supplies texture + sheet dimensions)
+    // DrawSpriteAtTex  (generic ï¿½ caller supplies texture + sheet dimensions)
     void Shop::DrawSpriteAtTex(float cx, float cy, float size,
         int col, int row,
         AEGfxTexture* tex,
