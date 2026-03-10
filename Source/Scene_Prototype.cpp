@@ -459,7 +459,7 @@ void Scene_Prototype::Init()
     BuildXMeshIfNeeded();
 
     enemies.clear();
-    spawnTimer = 0.0f;
+    //spawnTimer = 0.0f;
 
     buildMode = false;
     wasLmbDown = false;
@@ -484,6 +484,12 @@ void Scene_Prototype::Init()
     if (gameOverFont < 0)
     {
         gameOverFont = AEGfxCreateFont("Assets/buggy-font.ttf", 64);
+    }
+
+    m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
+
+    if (!waveManager.LoadFromFile("Assets/waves.txt")) {
+        PRINT("Failed to load waves.txt!\n");
     }
 }
 
@@ -555,36 +561,31 @@ void Scene_Prototype::Update(float dt)
     }
 
     // --- Enemy spawning ---
-    spawnTimer += dt;
-    if (spawnTimer >= spawnInterval && !path.empty())
-    {
-        spawnTimer = 0.0f;
-
-        Enemy e;
-        e.Init(35.0f, 35.0f, Color{ 1,0,0,1 }, 50.0f, 5.0f, 120.0f);
-        e.x = path[0].x;
-        e.y = path[0].y;
-        enemies.push_back(e);
+    Enemy* spawnedEnemy = waveManager.UpdateAndSpawn(dt, path);
+    if (spawnedEnemy) {
+        enemies.push_back(spawnedEnemy);
     }
 
     // --- Enemy movement ---
-    for (auto& e : enemies)
-        e.Update(dt, path);
+    for (Enemy* e : enemies) {
+        if (e)
+            e->Update(dt, path);
+    }
 
     if (baseTowerIndex >= 0 && baseTowerIndex < (int)activeTowers.size())
     {
         TowerHandler::Tower& base = activeTowers[(size_t)baseTowerIndex];
 
-        for (auto& e : enemies)
+        for (Enemy* e : enemies)
         {
-            if (e.health <= 0.0f)
+            if (!e || e->health <= 0.0f)
                 continue;
 
             if (TowerHandler::CircleCircleCollision(
                 base.x, base.y, base._sizeX * 0.5f,
-                e.x, e.y, e._sizeX * 0.5f))
+                e->x, e->y, e->_sizeX * 0.5f))
             {
-                e.health = 0.0f;
+                e->health = 0.0f;
 
                 if (base.TakeDamage(base.details.contactDamage))
                     gameOver = true;
@@ -598,47 +599,68 @@ void Scene_Prototype::Update(float dt)
         if (t.isDragging || t.IsBaseTower())
             continue;
 
-        for (auto& e : enemies)
+        for (Enemy* e : enemies)
         {
-            if (e.health <= 0.0f)
+            if (!e || e->health <= 0.0f)
                 continue;
 
-            if (TowerHandler::TowerShoot(t, e, activeBullets))
+            if (TowerHandler::TowerShoot(t, *e, activeBullets))
                 break;
         }
     }
 
     // --- Bullet updates ---
-    std::vector<Enemy*> enemyPtrs;
-    enemyPtrs.reserve(enemies.size());
-    for (auto& e : enemies)
-        enemyPtrs.push_back(&e);
-
-    TowerHandler::UpdateProjectiles(dt, enemyPtrs, activeBullets);
+    TowerHandler::UpdateProjectiles(dt, enemies, activeBullets);
 
     // --- Cleanup dead enemies (copied from TowerTest idea) ---
-    for (auto& e : enemies)
+    for (Enemy* e : enemies)
     {
-        if (e.health <= 0.0f)
+        if (!e || e->health <= 0.0f)
         {
-            // Null out bullets targeting dead enemies
             for (auto& b : activeBullets)
             {
-                if (b.target == &e)
+                if (b.target == e)
                     b.target = nullptr;
             }
         }
     }
 
-    enemies.erase(
-        std::remove_if(enemies.begin(), enemies.end(),
-            [](const Enemy& e)
-            {
-                return e.health <= 0.0f;
-            }),
-        enemies.end());
+    for (int i = (int)enemies.size() - 1; i >= 0; --i)
+    {
+        Enemy* e = enemies[(size_t)i];
+        if (!e || e->health <= 0.0f)
+        {
+            delete e;
+            enemies.erase(enemies.begin() + i);
+        }
+    }
 
     wasLmbDown = lmbDown;
+}
+
+void Scene_Prototype::DrawUI()
+{
+    if (m_uiFont < 0) return;
+
+    char buf[64];
+
+    if (waveManager.waveComplete) {
+        sprintf_s(buf, "WAVES COMPLETE!");
+    }
+    else {
+        sprintf_s(buf, "WAVE: %d / %d",
+            waveManager.GetCurrentWaveNumber(),
+            waveManager.GetTotalWaves());
+    }
+
+    AEGfxPrint(m_uiFont, buf, -0.95f, 0.90f,
+        1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f);
+
+    sprintf_s(buf, "ENEMIES: %d", (int)enemies.size());
+    AEGfxPrint(m_uiFont, buf, -0.95f, 0.80f,
+        1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f);
 }
 
 void Scene_Prototype::Draw()
@@ -659,8 +681,11 @@ void Scene_Prototype::Draw()
         b.Draw();
 
     // enemies
-    for (auto& e : enemies)
-        e.Draw();
+    for (Enemy* e : enemies)
+    {
+        if (e)
+            e->Draw();
+    }
 
     // build overlay
     if (buildMode)
@@ -668,6 +693,8 @@ void Scene_Prototype::Draw()
 
     // shop UI always on top
     shop.Draw();
+
+    DrawUI();
 
     Graphics::RenderAll();
 
@@ -686,10 +713,20 @@ void Scene_Prototype::Exit()
     shop.Exit();
 
     for (int i = (int)activeTowers.size() - 1; i >= 0; --i)
-        RemoveTowerAtIndex(i); activeTowers.clear();
+    {
+        RemoveTowerAtIndex(i);
+    }
+    activeTowers.clear();
 
-    activeBullets.clear();
+    for (Enemy* e : enemies) {
+        delete e;
+    }
     enemies.clear();
+
+    if (m_uiFont >= 0) {
+        AEGfxDestroyFont(m_uiFont);
+        m_uiFont = -1;
+    }
 
     if (xMesh)
     {
@@ -698,7 +735,6 @@ void Scene_Prototype::Exit()
     }
 
     Graphics::Shutdown();
-
     level.Shutdown();
 
     if (grid)

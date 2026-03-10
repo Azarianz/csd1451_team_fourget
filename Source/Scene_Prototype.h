@@ -31,10 +31,12 @@ private:
     s8 gameOverFont = -1;
 
     // --- Enemies ---
+    WaveManager waveManager;
+    s8 m_uiFont = -1;
+    void DrawUI();
+
     std::vector<Point> path;
-    std::vector<Enemy> enemies;
-    float spawnTimer = 0.0f;
-    float spawnInterval = 1.0f;
+    std::vector<Enemy*> enemies;
 
     // --- Shop + Towers ---
     TowerHandler::Shop shop;
