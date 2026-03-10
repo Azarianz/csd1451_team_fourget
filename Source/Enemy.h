@@ -3,6 +3,7 @@
 #include "AEEngine.h"
 #include "GameObject.h"
 #include <vector>
+#include <string>
 
 struct Point { float x, y; };
 
@@ -31,6 +32,9 @@ struct Enemy : public GameObject
 
     // Override base GameObject draw
     void Draw();
+
+    // Health Bar
+    void DrawHealthBar() const;
 };
 
 // Specific Types
@@ -39,3 +43,27 @@ struct Skeleton : public Enemy { void Init(); };
 struct Troll : public Enemy { void Init(); };
 struct Golem : public Enemy { void Init(); };
 struct Titan : public Enemy { void Init(); };
+
+// --- Wave System ---
+struct WaveData {
+    int enemyType; // 0:Zombie, 1:Skeleton, 2:Troll, 3:Golem, 4:Titan
+    int count;
+    float spawnDelay;
+};
+
+struct WaveManager {
+    std::vector<WaveData> waves;
+    int currentWaveIndex = 0;
+    int spawnedInCurrentWave = 0;
+    float spawnTimer = 0.0f;
+    bool waveComplete = true;
+
+    bool LoadFromFile(const std::string& filename);
+    Enemy* UpdateAndSpawn(float dt, const std::vector<Point>& path);
+    int GetCurrentWaveNumber() const { return currentWaveIndex + 1; }
+    int GetTotalWaves() const { return (int)waves.size(); }
+    int GetTotalEnemiesInCurrentWave() const {
+        if (currentWaveIndex < (int)waves.size()) return waves[currentWaveIndex].count;
+        return 0;
+    }
+};

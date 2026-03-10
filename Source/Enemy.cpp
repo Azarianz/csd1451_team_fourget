@@ -3,6 +3,7 @@
 #include "AEInput.h"
 #include "AEMath.h"
 #include <cmath> // For sqrtf
+#include <fstream>
 
 // --- Sprite Sheet Cache ---
 static AEGfxTexture* g_EnemySpriteSheet = nullptr;
@@ -39,6 +40,19 @@ static AEGfxVertexList* GetEnemyFrameMesh(int col, int row)
 
     g_FrameMeshes[row][col] = AEGfxMeshEnd();
     return g_FrameMeshes[row][col];
+}
+
+// Helper for Health Bar quad
+static AEGfxVertexList* GetQuadMesh()
+{
+    static AEGfxVertexList* quad = nullptr;
+    if (!quad) {
+        AEGfxMeshStart();
+        AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0, 0, 0.5f, -0.5f, 0xFFFFFFFF, 1, 0, 0.5f, 0.5f, 0xFFFFFFFF, 1, 1);
+        AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0, 0, 0.5f, 0.5f, 0xFFFFFFFF, 1, 1, -0.5f, 0.5f, 0xFFFFFFFF, 0, 1);
+        quad = AEGfxMeshEnd();
+    }
+    return quad;
 }
 
 void Enemy::Init(float sizeX, float sizeY, Color c, float _hp, float _damage, float _speed)
@@ -86,6 +100,46 @@ void Enemy::Update(float dt, const std::vector<Point>& path)
     }
 }
 
+void Enemy::DrawHealthBar() const
+{
+    if (health <= 0) return;
+
+    float percent = health / maxhealth;
+    if (percent < 0.0f) percent = 0.0f;
+    if (percent > 1.0f) percent = 1.0f;
+
+    float width = _sizeX;
+    float height = 6.0f;
+    float barX = x;
+    float barY = y - (_sizeY * 0.5f) - 8.0f;
+
+    AEGfxVertexList* quad = GetQuadMesh();
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+
+    // Red Background
+    AEGfxSetColorToMultiply(1.0f, 0.0f, 0.0f, 1.0f);
+    AEMtx33 scaleBg, transBg, transformBg;
+    AEMtx33Scale(&scaleBg, width, height);
+    AEMtx33Trans(&transBg, barX, barY);
+    AEMtx33Concat(&transformBg, &transBg, &scaleBg);
+    AEGfxSetTransform(transformBg.m);
+    AEGfxMeshDraw(quad, AE_GFX_MDM_TRIANGLES);
+
+    // Green Foreground
+    float currentWidth = width * percent;
+    float currentX = barX - (width * 0.5f) + (currentWidth * 0.5f);
+
+    AEGfxSetColorToMultiply(0.0f, 1.0f, 0.0f, 1.0f);
+    AEMtx33 scaleFg, transFg, transformFg;
+    AEMtx33Scale(&scaleFg, currentWidth, height);
+    AEMtx33Trans(&transFg, currentX, barY);
+    AEMtx33Concat(&transformFg, &transFg, &scaleFg);
+    AEGfxSetTransform(transformFg.m);
+    AEGfxMeshDraw(quad, AE_GFX_MDM_TRIANGLES);
+}
+
 void Enemy::Draw()
 {
     AEGfxVertexList* mesh = GetEnemyFrameMesh(spriteCol, spriteRow);
@@ -107,6 +161,8 @@ void Enemy::Draw()
 
     AEGfxSetTransform(transform.m);
     AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
+
+    DrawHealthBar();
 }
 
 // --- Specific Enemies ---
@@ -139,4 +195,64 @@ void Titan::Init()
 {
     Enemy::Init(50.0f, 50.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 250.0f, 30.0f, 75.0f);
     SetSprite(1, 7);
+}
+
+// --- Wave System Implementation ---
+
+bool WaveManager::LoadFromFile(const std::string& filename)
+{
+    std::ifstream file(filename);
+    if (!file.is_open()) return false;
+
+    waves.clear();
+    WaveData wd;
+
+    // File format expectation: [EnemyType] [Count] [SpawnDelay]
+    while (file >> wd.enemyType >> wd.count >> wd.spawnDelay) {
+        waves.push_back(wd);
+    }
+
+    currentWaveIndex = 0;
+    spawnedInCurrentWave = 0;
+    spawnTimer = 0.0f;
+    waveComplete = waves.empty();
+
+    return true;
+}
+
+Enemy* WaveManager::UpdateAndSpawn(float dt, const std::vector<Point>& path)
+{
+    if (waveComplete || path.empty()) return nullptr;
+
+    spawnTimer += dt;
+    WaveData& currentWave = waves[currentWaveIndex];
+
+    if (spawnTimer >= currentWave.spawnDelay) {
+        spawnTimer = 0.0f;
+        spawnedInCurrentWave++;
+
+        Enemy* e = nullptr;
+        switch (currentWave.enemyType) {
+        case 0: e = new Zombie();   static_cast<Zombie*>(e)->Init(); break;
+        case 1: e = new Skeleton(); static_cast<Skeleton*>(e)->Init(); break;
+        case 2: e = new Troll();    static_cast<Troll*>(e)->Init(); break;
+        case 3: e = new Golem();    static_cast<Golem*>(e)->Init(); break;
+        case 4: e = new Titan();    static_cast<Titan*>(e)->Init(); break;
+        default: e = new Zombie();  static_cast<Zombie*>(e)->Init(); break;
+        }
+
+        e->x = path[0].x;
+        e->y = path[0].y;
+
+        if (spawnedInCurrentWave >= currentWave.count) {
+            currentWaveIndex++;
+            spawnedInCurrentWave = 0;
+            if (currentWaveIndex >= (int)waves.size()) {
+                waveComplete = true;
+            }
+        }
+
+        return e;
+    }
+    return nullptr;
 }

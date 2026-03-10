@@ -14,4 +14,9 @@ public:
 private:
     std::vector<Enemy*> activeEnemies;
     std::vector<Point> myPath; // The path points
+
+
+    WaveManager waveManager;
+    s8 m_uiFont = -1;
+    void DrawUI();
 };
