@@ -80,6 +80,9 @@ namespace TowerHandler {
         float maxHealth = 0.0f;
         float contactDamage = 0.0f;
         bool isBase = false;
+
+        int spriteCol = 0;
+        int spriteBaseRow = 0;
     };
 
     struct Tower : public GameObject{

@@ -46,16 +46,10 @@ namespace TowerHandler {
         switch (details.towerType)
         {
         case TowerHandler::BASIC_TOWER:
-            color = { 0.0f, 0.0f, 1.0f, 1.0f }; //blue
-            break;
         case TowerHandler::SNIPER_TOWER:
-            color = { 0.0f, 1.0f, 0.0f, 1.0f }; //green
-            break;
         case TowerHandler::SLOW_TOWER:
-            color = { 1.0f, 0.0f, 0.0f, 1.0f }; //red
-            break;
         case TowerHandler::RAPID_TOWER:
-            color = { 1.0f, 0.0f, 1.0f, 1.0f }; //purple
+            color = { 1.0f, 1.0f, 1.0f, 1.0f }; // actual color comes from Shop.cpp
             break;
         case TowerHandler::BASE_TOWER:
             color = { 0.2f, 0.9f, 0.9f, 1.0f };
@@ -74,8 +68,8 @@ namespace TowerHandler {
             break;
         }
 
-        int col = (int)details.towerType;
-        int row = details.level - 1; // level 1 -> row 0
+        int col = details.spriteCol;
+        int row = details.spriteBaseRow + (details.level - 1); // grey -> green -> blue
         UVRect uv = GetSpriteUV(col, row, 13, 10);
 
         // Store the Graphics shape ID on the tower
@@ -124,8 +118,8 @@ namespace TowerHandler {
         details.level++;
         ApplyLevelStats();
 
-        int col = (int)details.towerType;   // column = tower type, stays fixed
-        int row = details.level - 1;        // row 0=lvl1, 1=lvl2, 2=lvl3
+        int col = details.spriteCol;
+        int row = details.spriteBaseRow + (details.level - 1);
         UVRect uv = GetSpriteUV(col, row, 13, 10);
         Graphics::SetUV(spriteId, uv.u0, uv.v0, uv.u1, uv.v1);
 
@@ -181,24 +175,12 @@ namespace TowerHandler {
         mesh = nullptr; // don't build here
 
         shopTowerType = towerType;
-        switch (towerType)
-        {
-        case TowerHandler::BASIC_TOWER:
-            color = { 0.0f, 0.0f, 1.0f, 1.0f }; //blue
-            break;
-        case TowerHandler::SNIPER_TOWER:
-            color = { 0.0f, 1.0f, 0.0f, 1.0f }; //red
-            break;
-        case TowerHandler::SLOW_TOWER:
-            color = { 1.0f, 0.0f, 0.0f, 1.0f }; //green
-            break;
-        case TowerHandler::RAPID_TOWER:
-            color = { 1.0f, 0.0f, 1.0f, 1.0f }; //purple
-            break;
-        default:
-            color = { 1.0f, 1.0f, 1.0f, 1.0f }; //white
-            break;
-        }
+        color = { 1.0f, 1.0f, 1.0f, 1.0f }; // neutral placeholder
+
+        if (towerType == TowerHandler::BASE_TOWER)
+            color = { 0.2f, 0.9f, 0.9f, 1.0f };
+        else
+            color = { 1.0f, 1.0f, 1.0f, 1.0f };
     }
 
     void UpdateTowerSystem(float mouseX, float mouseY, ShopTower& shop, std::vector<Tower>& activeTowers) {

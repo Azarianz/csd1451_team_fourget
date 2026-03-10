@@ -45,8 +45,8 @@ namespace TowerHandler {
         s8  m_uiFont = -1;
         const int TOWER_COST = 25;
 
-        static const int TOTAL_SLOTS = 6;
-        static const int TOWER_SLOTS = 5;
+        static const int TOTAL_SLOTS = 5;
+        static const int TOWER_SLOTS = 4;
 
         ShopSlot slots[TOTAL_SLOTS] = {};
 
@@ -65,7 +65,7 @@ namespace TowerHandler {
         static const int SHEET_COLS = 13;
         static const int SHEET_ROWS = 10;
 
-        static const int TOWER_DEF_COUNT = 8;
+        static const int TOWER_DEF_COUNT = 4;
         static const TowerDef TOWER_DEFS[TOWER_DEF_COUNT];
 
         std::unordered_map<int, int> m_towerDefIndex;

@@ -6,14 +6,10 @@
 namespace TowerHandler {
 
     const TowerDef Shop::TOWER_DEFS[TOWER_DEF_COUNT] = {
-        { { 0.1f, 0.9f, 0.2f, 1.0f }, 0, 0, BASIC_TOWER  }, // Green  -> sprite (0,0)
-        { { 1.0f, 0.9f, 0.1f, 1.0f }, 1, 0, BASIC_TOWER  }, // Yellow -> sprite (1,0)
-        { { 0.7f, 0.2f, 0.9f, 1.0f }, 2, 0, SNIPER_TOWER }, // Purple -> sprite (2,0)
-        { { 1.0f, 0.5f, 0.1f, 1.0f }, 3, 0, SNIPER_TOWER }, // Orange -> sprite (3,0)
-        { { 0.1f, 0.8f, 0.9f, 1.0f }, 4, 0, BASIC_TOWER  }, // Cyan   -> sprite (4,0)
-        { { 0.9f, 0.1f, 0.5f, 1.0f }, 5, 0, SNIPER_TOWER }, // Pink   -> sprite (5,0)
-        { { 0.5f, 1.0f, 0.0f, 1.0f }, 6, 0, BASIC_TOWER  }, // Lime   -> sprite (6,0)
-        { { 0.2f, 0.4f, 1.0f, 1.0f }, 7, 0, SNIPER_TOWER }, // Blue   -> sprite (7,0)
+        { { 0.1f, 0.9f, 0.2f, 1.0f }, 0, 0, BASIC_TOWER },  // Green  = BASIC
+        { { 0.7f, 0.2f, 0.9f, 1.0f }, 2, 0, SNIPER_TOWER }, // Purple = SNIPER
+        { { 0.1f, 0.8f, 0.9f, 1.0f }, 4, 0, SLOW_TOWER },   // Cyan   = SLOW
+        { { 1.0f, 0.5f, 0.1f, 1.0f }, 6, 0, RAPID_TOWER },  // Orange = RAPID
     };
 
     static AEGfxVertexList* BuildCircleMesh(int segments)
@@ -160,6 +156,8 @@ namespace TowerHandler {
 
                 Tower newTower;
                 newTower.TowerInit(mouseX, mouseY, 55.0f, 55.0f, tempShop);
+                newTower.details.spriteCol = def.spriteCol;
+                newTower.details.spriteBaseRow = def.spriteRow;
 
                 // Override color to match the shop slot (TowerInit sets generic type color)
                 newTower.color = def.color;
