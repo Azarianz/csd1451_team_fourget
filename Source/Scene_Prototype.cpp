@@ -25,6 +25,57 @@ bool Scene_Prototype::IsDraggingTower() const
 }
 
 // ----------------------------------------------------
+// Selection helpers
+// ----------------------------------------------------
+void Scene_Prototype::ClearTowerSelection()
+{
+    for (auto& t : activeTowers)
+        t.isSelected = false;
+}
+
+int Scene_Prototype::FindPlacedTowerAtMouse(float worldX, float worldY) const
+{
+    // check from top-most drawn tower backwards
+    for (int i = (int)activeTowers.size() - 1; i >= 0; --i)
+    {
+        const auto& t = activeTowers[(size_t)i];
+
+        // only selectable once placed
+        if (t.isDragging)
+            continue;
+
+        // simple box hit test around tower center
+        const float halfW = t._sizeX * 0.5f;
+        const float halfH = t._sizeY * 0.5f;
+
+        if (worldX >= t.x - halfW && worldX <= t.x + halfW &&
+            worldY >= t.y - halfH && worldY <= t.y + halfH)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+void Scene_Prototype::HandleTowerSelection(float worldX, float worldY, bool justPressedLmb)
+{
+    if (!justPressedLmb)
+        return;
+
+    // don't select placed towers while we are currently placing a new one
+    if (IsDraggingTower())
+        return;
+
+    int hitIndex = FindPlacedTowerAtMouse(worldX, worldY);
+
+    ClearTowerSelection();
+
+    if (hitIndex >= 0)
+        activeTowers[(size_t)hitIndex].isSelected = true;
+}
+
+// ----------------------------------------------------
 // Merge System
 // ----------------------------------------------------
 void Scene_Prototype::RebuildOccupiedFromTowers()
@@ -67,56 +118,17 @@ int Scene_Prototype::FindTowerIndexAtCell(int x, int y) const
     return -1;
 }
 
-void Scene_Prototype::CollectConnectedMergeGroup(
-    int startX,
-    int startY,
-    TowerHandler::TowerType type,
-    int towerLevel,
-    std::vector<GridSystem::GridCoord>& outGroup) const
+bool Scene_Prototype::TowerMatchesAtCell(int x, int y, TowerHandler::TowerType type, int towerLevel) const
 {
-    outGroup.clear();
+    if (!InBounds(x, y))
+        return false;
 
-    if (!InBounds(startX, startY))
-        return;
+    int idx = FindTowerIndexAtCell(x, y);
+    if (idx < 0)
+        return false;
 
-    const int total = this->level.width * this->level.height;
-    if (total <= 0)
-        return;
-
-    std::vector<uint8_t> visited((size_t)total, 0);
-    std::vector<GridSystem::GridCoord> open;
-
-    open.push_back({ startX, startY });
-
-    while (!open.empty())
-    {
-        GridSystem::GridCoord cur = open.back();
-        open.pop_back();
-
-        if (!InBounds(cur.x, cur.y))
-            continue;
-
-        int idx = Idx(cur.x, cur.y);
-        if (visited[(size_t)idx])
-            continue;
-
-        visited[(size_t)idx] = 1;
-
-        int towerIndex = FindTowerIndexAtCell(cur.x, cur.y);
-        if (towerIndex < 0)
-            continue;
-
-        const TowerHandler::Tower& t = activeTowers[(size_t)towerIndex];
-        if (t.details.towerType != type || t.details.level != towerLevel)
-            continue;
-
-        outGroup.push_back(cur);
-
-        open.push_back({ cur.x + 1, cur.y });
-        open.push_back({ cur.x - 1, cur.y });
-        open.push_back({ cur.x, cur.y + 1 });
-        open.push_back({ cur.x, cur.y - 1 });
-    }
+    const TowerHandler::Tower& t = activeTowers[(size_t)idx];
+    return t.details.towerType == type && t.details.level == towerLevel;
 }
 
 bool Scene_Prototype::TryMergeAtCell(int placedX, int placedY)
@@ -125,20 +137,70 @@ bool Scene_Prototype::TryMergeAtCell(int placedX, int placedY)
     if (centerIndex < 0)
         return false;
 
-    TowerHandler::Tower& placedTower = activeTowers[(size_t)centerIndex];
-    TowerHandler::TowerType type = placedTower.details.towerType;
-    int level = placedTower.details.level;
+    TowerHandler::TowerType type = activeTowers[(size_t)centerIndex].details.towerType;
+    int towerLevel = activeTowers[(size_t)centerIndex].details.level;
 
-    std::vector<GridSystem::GridCoord> group;
-    CollectConnectedMergeGroup(placedX, placedY, type, level, group);
+    std::vector<GridSystem::GridCoord> mergeCells;
 
-    // merge rule: at least 3 connected matching towers
-    if (group.size() < 3)
+    // Horizontal: placed tower in middle
+    if (TowerMatchesAtCell(placedX - 1, placedY, type, towerLevel) &&
+        TowerMatchesAtCell(placedX + 1, placedY, type, towerLevel))
+    {
+        mergeCells.push_back({ placedX - 1, placedY });
+        mergeCells.push_back({ placedX,     placedY });
+        mergeCells.push_back({ placedX + 1, placedY });
+    }
+    // Horizontal: placed tower at right end
+    else if (TowerMatchesAtCell(placedX - 2, placedY, type, towerLevel) &&
+        TowerMatchesAtCell(placedX - 1, placedY, type, towerLevel))
+    {
+        mergeCells.push_back({ placedX - 2, placedY });
+        mergeCells.push_back({ placedX - 1, placedY });
+        mergeCells.push_back({ placedX,     placedY });
+    }
+    // Horizontal: placed tower at left end
+    else if (TowerMatchesAtCell(placedX + 1, placedY, type, towerLevel) &&
+        TowerMatchesAtCell(placedX + 2, placedY, type, towerLevel))
+    {
+        mergeCells.push_back({ placedX,     placedY });
+        mergeCells.push_back({ placedX + 1, placedY });
+        mergeCells.push_back({ placedX + 2, placedY });
+    }
+
+    // Vertical only if no horizontal merge found
+    if (mergeCells.empty())
+    {
+        // Vertical: placed tower in middle
+        if (TowerMatchesAtCell(placedX, placedY - 1, type, towerLevel) &&
+            TowerMatchesAtCell(placedX, placedY + 1, type, towerLevel))
+        {
+            mergeCells.push_back({ placedX, placedY - 1 });
+            mergeCells.push_back({ placedX, placedY });
+            mergeCells.push_back({ placedX, placedY + 1 });
+        }
+        // Vertical: placed tower at bottom end
+        else if (TowerMatchesAtCell(placedX, placedY - 2, type, towerLevel) &&
+            TowerMatchesAtCell(placedX, placedY - 1, type, towerLevel))
+        {
+            mergeCells.push_back({ placedX, placedY - 2 });
+            mergeCells.push_back({ placedX, placedY - 1 });
+            mergeCells.push_back({ placedX, placedY });
+        }
+        // Vertical: placed tower at top end
+        else if (TowerMatchesAtCell(placedX, placedY + 1, type, towerLevel) &&
+            TowerMatchesAtCell(placedX, placedY + 2, type, towerLevel))
+        {
+            mergeCells.push_back({ placedX, placedY });
+            mergeCells.push_back({ placedX, placedY + 1 });
+            mergeCells.push_back({ placedX, placedY + 2 });
+        }
+    }
+
+    if (mergeCells.size() != 3)
         return false;
 
-    // keep the newly placed tower, remove the others
     std::vector<int> toRemove;
-    for (const auto& cell : group)
+    for (const auto& cell : mergeCells)
     {
         if (cell.x == placedX && cell.y == placedY)
             continue;
@@ -148,10 +210,8 @@ bool Scene_Prototype::TryMergeAtCell(int placedX, int placedY)
             toRemove.push_back(idx);
     }
 
-    // level up the placed tower first
     activeTowers[(size_t)centerIndex].LevelUp();
 
-    // erase from back to front
     std::sort(toRemove.begin(), toRemove.end());
     toRemove.erase(std::unique(toRemove.begin(), toRemove.end()), toRemove.end());
 
@@ -159,14 +219,36 @@ bool Scene_Prototype::TryMergeAtCell(int placedX, int placedY)
     {
         int idx = toRemove[(size_t)i];
 
-        // if a removed index is before centerIndex, centerIndex shifts left
         if (idx < centerIndex)
             --centerIndex;
 
-        activeTowers.erase(activeTowers.begin() + idx);
+        RemoveTowerAtIndex(idx);
     }
 
     return true;
+}
+
+void Scene_Prototype::RemoveTowerAtIndex(int idx)
+{
+    if (idx < 0 || idx >= (int)activeTowers.size())
+        return;
+
+    TowerHandler::Tower& t = activeTowers[(size_t)idx];
+
+    // Remove retained sprite from Graphics scene graph
+    if (t.spriteId != 0)
+    {
+        Graphics::Destroy(t.spriteId);
+        t.spriteId = 0;
+    }
+
+    // Cleanup any mesh owned by the tower itself
+    t.Destroy();
+
+    activeTowers.erase(activeTowers.begin() + idx);
+
+    // clear bullets fired before tower got removed/merged
+    activeBullets.clear();
 }
 
 // ----------------------------------------------------
@@ -371,8 +453,11 @@ void Scene_Prototype::Init()
         return;
     }
 
+    TowerHandler::LoadTowerAssets();
+
     shop.Init();
     activeTowers.clear();
+    activeBullets.clear();
 
     BuildXMeshIfNeeded();
 
@@ -394,30 +479,60 @@ void Scene_Prototype::Update(float dt)
     float worldX = 0.0f, worldY = 0.0f;
     Utility::GetWorldMousePos(worldX, worldY);
 
-    // 1) shop may spawn tower and set isDragging
+    bool lmbDown = AEInputCheckCurr(AEVK_LBUTTON);
+    bool justPressedLmb = (!wasLmbDown && lmbDown);
+    bool justReleasedLmb = (wasLmbDown && !lmbDown);
+
+    // 1) shop may spawn a new tower and set it to dragging
     shop.Update(activeTowers);
 
-    // 2) build mode based on tower flags BEFORE moving anything
+    // 2) build mode depends on whether a new tower is being dragged
     buildMode = IsDraggingTower();
 
-    // 3) release-to-place first (if released this frame, we place immediately)
-    bool lmbDown = AEInputCheckCurr(AEVK_LBUTTON);
-    bool justReleased = (wasLmbDown && !lmbDown);
-
-    if (buildMode && justReleased)
+    // 3) if dragging, release places tower
+    if (buildMode && justReleasedLmb)
     {
         SnapDraggedTowerToGrid(mouseX, mouseY);
     }
 
-    // 4) Only run drag system if we are STILL holding (still dragging)
-    buildMode = IsDraggingTower(); // refresh after snap
+    // 4) only update drag movement while actively dragging a new tower
+    buildMode = IsDraggingTower();
     if (buildMode && lmbDown)
     {
-        TowerHandler::ShopTower dummyShop;
-        TowerHandler::UpdateTowerSystem(worldX, worldY, dummyShop, activeTowers);
+        int draggedIndex = FindDraggedTowerIndex();
+        if (draggedIndex >= 0)
+        {
+            activeTowers[(size_t)draggedIndex].x = worldX;
+            activeTowers[(size_t)draggedIndex].y = worldY;
+        }
     }
 
-    wasLmbDown = lmbDown;
+    // 5) selection for already placed towers
+    HandleTowerSelection(worldX, worldY, justPressedLmb);
+
+    // 6) manual upgrade of selected placed tower
+    if (AEInputCheckTriggered(AEVK_U))
+    {
+        for (auto& t : activeTowers)
+        {
+            if (t.isSelected && !t.isDragging)
+            {
+                t.LevelUp();
+                break;
+            }
+        }
+    }
+
+    // 7) tower cooldowns
+    for (auto& t : activeTowers)
+    {
+        if (t.details.fireTimer > 0.f)
+        {
+            t.details.fireTimer -= dt;
+            if (t.details.fireTimer < 0.f)
+                t.details.fireTimer = 0.f;
+        }
+    }
 
     // --- Enemy spawning ---
     spawnTimer += dt;
@@ -427,15 +542,62 @@ void Scene_Prototype::Update(float dt)
 
         Enemy e;
         e.Init(35.0f, 35.0f, Color{ 1,0,0,1 }, 50.0f, 5.0f, 120.0f);
-
         e.x = path[0].x;
         e.y = path[0].y;
-
         enemies.push_back(e);
     }
 
+    // --- Enemy movement ---
     for (auto& e : enemies)
         e.Update(dt, path);
+
+    // --- Tower shooting (same idea as TowerTest) ---
+    for (auto& t : activeTowers)
+    {
+        if (t.isDragging)
+            continue;
+
+        for (auto& e : enemies)
+        {
+            if (e.health <= 0.0f)
+                continue;
+
+            if (TowerHandler::TowerShoot(t, e, activeBullets))
+                break;
+        }
+    }
+
+    // --- Bullet updates ---
+    std::vector<Enemy*> enemyPtrs;
+    enemyPtrs.reserve(enemies.size());
+    for (auto& e : enemies)
+        enemyPtrs.push_back(&e);
+
+    TowerHandler::UpdateProjectiles(dt, enemyPtrs, activeBullets);
+
+    // --- Cleanup dead enemies (copied from TowerTest idea) ---
+    for (auto& e : enemies)
+    {
+        if (e.health <= 0.0f)
+        {
+            // Null out bullets targeting dead enemies
+            for (auto& b : activeBullets)
+            {
+                if (b.target == &e)
+                    b.target = nullptr;
+            }
+        }
+    }
+
+    enemies.erase(
+        std::remove_if(enemies.begin(), enemies.end(),
+            [](const Enemy& e)
+            {
+                return e.health <= 0.0f;
+            }),
+        enemies.end());
+
+    wasLmbDown = lmbDown;
 }
 
 void Scene_Prototype::Draw()
@@ -451,6 +613,10 @@ void Scene_Prototype::Draw()
     for (auto& t : activeTowers)
         t.Draw();
 
+    // bullets
+    for (auto& b : activeBullets)
+        b.Draw();
+
     // enemies
     for (auto& e : enemies)
         e.Draw();
@@ -459,20 +625,29 @@ void Scene_Prototype::Draw()
     if (buildMode)
         DrawBuildOverlay();
 
-    // shop UI always on top (like ShopTest)
+    // shop UI always on top
     shop.Draw();
+
+    Graphics::RenderAll();
 }
 
 void Scene_Prototype::Exit()
 {
     shop.Exit();
-    activeTowers.clear();
+
+    for (int i = (int)activeTowers.size() - 1; i >= 0; --i)
+        RemoveTowerAtIndex(i); activeTowers.clear();
+
+    activeBullets.clear();
+    enemies.clear();
 
     if (xMesh)
     {
         AEGfxMeshFree(xMesh);
         xMesh = nullptr;
     }
+
+    Graphics::Shutdown();
 
     level.Shutdown();
 
@@ -496,7 +671,7 @@ void Scene_Prototype::SnapDraggedTowerToGrid(int mouseX, int mouseY)
     if (!grid->ScreenToGrid(mouseX, mouseY, c) || !InBounds(c.x, c.y))
     {
         // released off-grid -> cancel tower
-        activeTowers.erase(activeTowers.begin() + draggedIndex);
+        RemoveTowerAtIndex(draggedIndex);
         RebuildOccupiedFromTowers();
         return;
     }
@@ -504,7 +679,7 @@ void Scene_Prototype::SnapDraggedTowerToGrid(int mouseX, int mouseY)
     if (!IsPlaceable(c.x, c.y))
     {
         // not placeable -> cancel tower
-        activeTowers.erase(activeTowers.begin() + draggedIndex);
+        RemoveTowerAtIndex(draggedIndex);
         RebuildOccupiedFromTowers();
         return;
     }
@@ -521,7 +696,11 @@ void Scene_Prototype::SnapDraggedTowerToGrid(int mouseX, int mouseY)
     RebuildOccupiedFromTowers();
 
     // try merge after placement
-    TryMergeAtCell(c.x, c.y);
+    while (TryMergeAtCell(c.x, c.y))
+    {
+        RebuildOccupiedFromTowers();
+    }
+
 
     RebuildOccupiedFromTowers();
 }

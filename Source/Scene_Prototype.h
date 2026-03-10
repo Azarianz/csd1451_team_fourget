@@ -35,6 +35,7 @@ private:
     // --- Shop + Towers ---
     TowerHandler::Shop shop;
     std::vector<TowerHandler::Tower> activeTowers;
+    std::vector<TowerHandler::ActiveBullet> activeBullets;
 
     // runtime occupancy (for build placement)
     std::vector<uint8_t> occupied; // 0/1
@@ -49,17 +50,18 @@ private:
     int  FindDraggedTowerIndex() const;
     bool IsDraggingTower() const;
 
+    // selection helpers
+    void ClearTowerSelection();
+    int  FindPlacedTowerAtMouse(float worldX, float worldY) const;
+    void HandleTowerSelection(float worldX, float worldY, bool justPressedLmb);
+
     // merge helpers
     void RebuildOccupiedFromTowers();
     bool GetTowerCell(const TowerHandler::Tower& t, GridSystem::GridCoord& outCell) const;
-    int FindTowerIndexAtCell(int x, int y) const;
-    void CollectConnectedMergeGroup(
-        int startX,
-        int startY,
-        TowerHandler::TowerType type,
-        int towerLevel,
-        std::vector<GridSystem::GridCoord>& outGroup) const;
+    int  FindTowerIndexAtCell(int x, int y) const;
+    bool TowerMatchesAtCell(int x, int y, TowerHandler::TowerType type, int towerLevel) const;
     bool TryMergeAtCell(int placedX, int placedY);
+    void RemoveTowerAtIndex(int idx);
 
     // level helpers
     bool LoadLevel(int idx);
@@ -88,7 +90,6 @@ private:
         if ((size_t)i >= level.region.size()) return false;
         return level.region[i] == 1; // 1 buildable
     }
-
     bool IsOccupied(int x, int y) const
     {
         int i = Idx(x, y);
@@ -96,7 +97,6 @@ private:
         if ((size_t)i >= occupied.size()) return false;
         return occupied[i] != 0;
     }
-
     bool IsPlaceable(int x, int y) const
     {
         return IsBuildable(x, y) && !IsOccupied(x, y);
