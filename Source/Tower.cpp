@@ -389,7 +389,7 @@ namespace TowerHandler {
             if (!AEInputCheckCurr(AEVK_LBUTTON))
             {
                 t.isDragging = false;
-                t.isPlaced = true; // locked - cannot be dragged again via DragAndDropOnce
+                t.isPlaced = true; // locked, not allowed to be dragged again
             }
         }
     }
