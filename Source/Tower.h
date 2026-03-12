@@ -97,6 +97,7 @@ namespace TowerHandler {
         bool  isReturning = false;
         float returnTargetX = 0.0f;
         float returnTargetY = 0.0f;
+        float pulseTimer = 0.0f;
 
         Tower()
             : GameObject()

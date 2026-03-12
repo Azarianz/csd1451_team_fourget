@@ -72,6 +72,9 @@ namespace TowerHandler {
         float slotSize = 60.0f;
         float padding = 60.0f;
 
+        float m_pulseTimer = 0.0f;
+        int   m_draggedSlot = -1;
+
         AEGfxVertexList* pCircleMesh = nullptr;
         AEGfxTexture* pSpritesheet = nullptr;
 

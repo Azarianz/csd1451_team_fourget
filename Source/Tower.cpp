@@ -81,6 +81,18 @@ namespace TowerHandler {
     }
 
     void Tower::Draw() {
+        // Pulse the sprite size while dragging
+        if (isDragging)
+        {
+            pulseTimer += (float)AEFrameRateControllerGetFrameTime();
+            float pulse = 1.0f + 0.12f * sinf(pulseTimer * 6.0f);
+            Graphics::SetScale(spriteId, _sizeX * pulse, _sizeY * pulse);
+        }
+        else
+        {
+            pulseTimer = 0.0f;
+            Graphics::SetScale(spriteId, _sizeX, _sizeY);
+        }
 
         Graphics::SetPosition(spriteId, x, y);
 

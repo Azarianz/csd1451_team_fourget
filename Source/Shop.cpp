@@ -132,6 +132,20 @@ namespace TowerHandler {
         float mouseX, mouseY;
         Utility::GetWorldMousePos(mouseX, mouseY);
 
+        // Advance pulse timer
+        m_pulseTimer += (float)AEFrameRateControllerGetFrameTime();
+
+        // Find which slot (if any) has its tower currently being dragged
+        m_draggedSlot = -1;
+        for (const TowerHandler::Tower& t : activeTowers)
+        {
+            if (t.isDragging && t.sourceSlotIndex >= 0 && t.sourceSlotIndex < TOWER_SLOTS)
+            {
+                m_draggedSlot = t.sourceSlotIndex;
+                break;
+            }
+        }
+
         if (!AEInputCheckCurr(AEVK_LBUTTON))
         {
             for (int i = (int)activeTowers.size() - 1; i >= 0; --i)
@@ -244,6 +258,11 @@ namespace TowerHandler {
 
         for (int i = 0; i < TOTAL_SLOTS; ++i)
         {
+            // Pulse the slot when its tower is being dragged out
+            float drawSize = slots[i].size;
+            if (i == m_draggedSlot)
+                drawSize *= 1.0f + 0.12f * sinf(m_pulseTimer * 6.0f);
+
             AEMtx33 scale, trans, transform;
             AEMtx33Scale(&scale, slots[i].size, slots[i].size);
             AEMtx33Trans(&trans, slots[i].x, slots[i].y);
@@ -253,7 +272,7 @@ namespace TowerHandler {
             if (slots[i].isRefreshButton)
                 AEGfxSetColorToMultiply(0.4f, 0.4f, 0.4f, 1.0f);
             else if (slots[i].isEmpty)
-                AEGfxSetColorToMultiply(0.15f, 0.15f, 0.15f, 0.15f); // Dark grey = empty
+                AEGfxSetColorToMultiply(0.15f, 0.15f, 0.15f, 0.15f);
             else
             {
                 const Color& c = TOWER_DEFS[slots[i].defIndex].color;
