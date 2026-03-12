@@ -67,7 +67,11 @@ void Scene_TowerTest::Update(float dt)
     // --------------------------------------------------------
     TowerHandler::UpdateProjectiles(dt, activeEnemies, activeBullets);
 
-    // INPUT: SPAWN ENEMIES
+    
+    // --------------------------------------------------------
+	//  Input to spawn enemies (C=Zombie, V=Skeleton, B=Troll, 
+    //  N=Golem, M=Titan)
+    // --------------------------------------------------------
     // Press c for Zombie
     if (AEInputCheckTriggered(AEVK_C))
     {
