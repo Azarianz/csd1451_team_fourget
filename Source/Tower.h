@@ -7,13 +7,37 @@
 
 extern int nextTowerID;
 
+// ============================================================
+//  TowerHandler
+//  Manages tower creation, shooting, projectiles, and the
+//  shop tower used to spawn new towers.
+// ============================================================
 namespace TowerHandler {
 
-    enum TowerType{ BASIC_TOWER, SNIPER_TOWER, SLOW_TOWER, RAPID_TOWER, BASE_TOWER};
+    // --------------------------------------------------------
+    //  Enums
+    // --------------------------------------------------------
+    enum TowerType
+    {
+        BASIC_TOWER = 0,
+        SNIPER_TOWER = 1,
+        SLOW_TOWER = 2,
+        RAPID_TOWER = 3,
+        BASE_TOWER = 4,
+    };
+
+    // --------------------------------------------------------
+    //  Forward declarations
+    // --------------------------------------------------------
     struct ShopTower;
     struct Tower;
     struct ActiveBullet;
 
+    // --------------------------------------------------------
+    //  Level stats table
+    //  Indexed by [TowerType][level - 1]  (3 levels per type)
+    //  Fields: range | fireCooldown | damage | projectileSpeed
+    // --------------------------------------------------------
     struct LevelStats {
         float range;
         float fireCooldown;
@@ -21,7 +45,7 @@ namespace TowerHandler {
         float speed;
     };
 
-    // 3 levels for each tower type [level 0..2]
+    // 3 levels for each tower type (except base)
     const LevelStats TOWER_LEVEL_STATS[5][3] = {
         // BASIC_TOWER
         {
@@ -59,101 +83,139 @@ namespace TowerHandler {
         },
     };
 
-    struct Projectile
-    {
-        AEGfxTexture* sprite = nullptr;
+    // --------------------------------------------------------
+    //  Projectile  (template stored on a tower)
+    // --------------------------------------------------------
+    struct Projectile{
         float damage = 0.0f;
         float speed = 0.0f;
     };
 
-    struct TowerDetails {
-        int level = 0;
-        int ID = -1;
-        float range = 0.0f;
-		float fireCooldown = 0.0f;          // seconds between shots (constant for each tower type)
-		float fireTimer = 0.f;              // seconds until next shot (counts down)
-        TowerType towerType = BASIC_TOWER;
-        Projectile projectile{};
-
-        // Only for base tower
-        float health = 0.0f;
-        float maxHealth = 0.0f;
+    // --------------------------------------------------------
+    //  TowerDetails  (stats + state for one tower)
+    // --------------------------------------------------------
+    struct TowerDetails{
+        int       level        = 0;
+        int       ID           = -1;
+        float     range        = 0.0f;
+        float     fireCooldown = 0.0f;  // seconds between shots (constant per type)
+        float     fireTimer    = 0.0f;  // counts down to 0 before next shot
+        TowerType towerType    = BASIC_TOWER;
+        Projectile projectile  {};
+ 
+        // Base-tower only
+        float health        = 0.0f;
+        float maxHealth     = 0.0f;
         float contactDamage = 0.0f;
-        bool isBase = false;
-
-        int spriteCol = 0;
+        bool  isBase        = false;
+ 
+        // Spritesheet position
+        int spriteCol     = 0;
         int spriteBaseRow = 0;
     };
 
-    struct Tower : public GameObject{
-        int tower_count = 0; //amount of towers
-        bool isDragging = false;    
-        bool isSelected = false;
-        float dragOffsetX = 0.0f;
-        float dragOffsetY = 0.0f;   
-        TowerDetails details; 
-        Graphics::ShapeId spriteId = 0;
-        int sourceSlotIndex = -1;
-        bool  isReturning = false;
-        float returnTargetX = 0.0f;
-        float returnTargetY = 0.0f;
-        float pulseTimer = 0.0f;
 
+    // --------------------------------------------------------
+    //  Tower
+    // --------------------------------------------------------
+    struct Tower : public GameObject{
+        // Placement state
+        bool  isDragging   = false;
+        bool  isSelected   = false;
+        float dragOffsetX  = 0.0f;
+        float dragOffsetY  = 0.0f;
+ 
+        // Misc
+        int   tower_count    = 0;
+        int   sourceSlotIndex = -1;
+        bool  isReturning    = false;
+        float returnTargetX  = 0.0f;
+        float returnTargetY  = 0.0f;
+        float pulseTimer     = 0.0f;
+ 
+        TowerDetails      details  {};
+        Graphics::ShapeId spriteId = 0;
+ 
         Tower()
             : GameObject()
-            , tower_count(0)
             , isDragging(false)
             , isSelected(false)
             , dragOffsetX(0.0f)
             , dragOffsetY(0.0f)
+            , tower_count(0)
             , details()
         {}
-
-        void TowerInit(float xPos, float yPos, float xSize, float ySize, ShopTower shopType, int segcount = 50);
+ 
+        // Core
+        void TowerInit(float xPos, float yPos, float xSize, float ySize,
+                       ShopTower shopType, int segcount = 50);
+        void ApplyLevelStats();
+        bool LevelUp();         // returns false if already at max level
+ 
+        // Rendering
         void Draw();
         void DrawHealthBar() const;
-        void ApplyLevelStats();
-        bool LevelUp(); // returns false if already max level
-        bool TakeDamage(float dmg);
-        bool IsDead() const;
-        bool IsBaseTower() const;
+ 
+        // Base-tower health
+        bool TakeDamage(float dmg); // returns true if tower dies
+        bool IsDead()       const;
+        bool IsBaseTower()  const;
     };
+
     bool TowerShoot(Tower& tower, Enemy& enemy, std::vector<ActiveBullet>& bullets);
     
-    // SHOP TOWER STUFF
-    struct ShopTower : public GameObject {
+    // --------------------------------------------------------
+    //  ShopTower  (the palette icon the player clicks to spawn)
+    // --------------------------------------------------------
+    struct ShopTower : public GameObject{
+        Graphics::ShapeId spriteId = 0;
+ 
+        void      ShopTowerInit(float startX, float startY, float sizeX,
+                                float sizeY, TowerType towerType, int segcount = 50);
+        void      SetType(TowerType newType);
+        TowerType GetTowerType() const { return shopTowerType; }
+ 
     private:
         TowerType shopTowerType = BASIC_TOWER;
-
-    public:
-        Graphics::ShapeId spriteId = 0;
-        void ShopTowerInit(float startX, float startY, float sizeX, 
-            float sizeY, TowerType towerType, int segcount = 50);
-        void SetType(TowerType newType);
-        TowerType const GetTowerType() { return shopTowerType; }
     };
-    void UpdateTowerSystem(float mouseX, float mouseY, ShopTower& shop, std::vector<Tower>& activeTowers);
-    bool CircleCircleCollision(float x1, float y1, float r1, float x2, float y2, float r2);
 
-	// ACTIVE BULLET STUFF
-    struct ActiveBullet : public GameObject {
-        float damage = 0;
-        float speed = 0;
+    // --------------------------------------------------------
+    //  System functions
+    // --------------------------------------------------------
+    void UpdateTowerSystem(float mouseX, float mouseY,
+        ShopTower& shop, std::vector<Tower>& activeTowers);
 
-        // Current movement direction (normalized)
-        float dirX = 0, dirY = 0;
+    void UpdateProjectiles(float dt, std::vector<Enemy*>& enemies,
+        std::vector<ActiveBullet>& activeBullets);
 
-        // Homing target (OK in your scene because enemies are only deleted in Scene::Exit)
-        Enemy* target = nullptr;
+    bool CircleCircleCollision(float x1, float y1, float r1,
+        float x2, float y2, float r2);
 
-        bool shouldRemove = false;
+    void LoadTowerAssets();
 
-        void Update(float dt) {
-            if (target && target->health > 0.0f) {
+    // --------------------------------------------------------
+    //  ActiveBullet  (homing projectile in flight)
+    // --------------------------------------------------------
+    struct ActiveBullet : public GameObject{
+        float damage = 0.0f;
+        float speed = 0.0f;
+
+        float dirX = 0.0f;  // normalized movement direction
+        float dirY = 0.0f;
+
+        Enemy* target = nullptr; // homing target (nulled when enemy dies)
+        bool   shouldRemove = false;
+
+        void Update(float dt)
+        {
+            // Re-aim toward target if still alive
+            if (target && target->health > 0.0f)
+            {
                 float dx = target->x - x;
                 float dy = target->y - y;
                 float len = sqrtf(dx * dx + dy * dy);
-                if (len > 0.0001f) {
+                if (len > 0.0001f)
+                {
                     dirX = dx / len;
                     dirY = dy / len;
                 }
@@ -163,20 +225,16 @@ namespace TowerHandler {
         }
     };
 
-    void UpdateProjectiles(float dt, std::vector<Enemy*>& enemies,
-        std::vector<ActiveBullet>& activeBullets);
-
-
-	// SPRITE UV CALCULATION
+    // --------------------------------------------------------
+    //  Sprite UV helpers
+    // --------------------------------------------------------
     struct UVRect { float u0, v0, u1, v1; };
 
-    inline UVRect GetSpriteUV(int col, int row, int totalCols, int totalRows)
-    {
+    inline UVRect GetSpriteUV(int col, int row, int totalCols, int totalRows){
         float w = 1.0f / totalCols;
         float h = 1.0f / totalRows;
         return { col * w, row * h, (col + 1) * w, (row + 1) * h };
     }
-    void LoadTowerAssets();
 }
 
 

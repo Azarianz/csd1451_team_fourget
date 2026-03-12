@@ -2,45 +2,61 @@
 #include "AEEngine.h"
 #include "math.h"
 
+// ============================================================
+//  Init
+// ============================================================
 void Scene_TowerTest::Init()
 {
     TowerHandler::LoadTowerAssets();
 
-	// Just for testing, set shop as basic tower by default
+    // Default shop tower type (swap with H/J/K/L at runtime)
     shopTower.ShopTowerInit(0, 0, 50, 50, TowerHandler::BASIC_TOWER);
 
-
-    // 1. Define the Path (A -> B -> C -> D)
-    // Adjust these numbers to fit your screen resolution (1600x900)
-    myPath.push_back({ -600.0f,  300.0f }); // Top Left
-    myPath.push_back({ 600.0f,  300.0f }); // Top Right
-    myPath.push_back({ 600.0f, -300.0f }); // Bottom Right
-    myPath.push_back({ -600.0f, -300.0f }); // Bottom Left
-    
+    // Enemy path: Top-Left -> Top-Right -> Bottom-Right -> Bottom-Left
+    myPath.push_back({ -600.0f,  300.0f });
+    myPath.push_back({ 600.0f,  300.0f });
+    myPath.push_back({ 600.0f, -300.0f });
+    myPath.push_back({ -600.0f, -300.0f });
 }
 
 void Scene_TowerTest::Update(float dt)
 {
-    for (auto& t : activeTowers) {
-        if (t.details.fireTimer > 0.f) {
+    // --------------------------------------------------------
+    //  Tower fire-timer countdown
+    // --------------------------------------------------------
+    for (auto& t : activeTowers)
+    {
+        if (t.details.fireTimer > 0.f)
+        {
             t.details.fireTimer -= dt;
-            if (t.details.fireTimer < 0.f) t.details.fireTimer = 0.f;
+            if (t.details.fireTimer < 0.f)
+                t.details.fireTimer = 0.f;
         }
     }
 
+    // --------------------------------------------------------
+    //  Tower placement & dragging
+    // --------------------------------------------------------
     AEInputGetCursorPosition(&mouseX, &mouseY);
     TowerHandler::UpdateTowerSystem((float)mouseX, (float)mouseY, shopTower, activeTowers);
-    // Each tower shoots at most ONE enemy per frame
-    for (auto& t : activeTowers) {
-        for (auto* e : activeEnemies) {
+
+    // --------------------------------------------------------
+    //  Tower shooting (one target per tower per frame)
+    // --------------------------------------------------------
+    for (auto& t : activeTowers)
+    {
+        for (auto* e : activeEnemies)
+        {
             if (!e || e->health <= 0.0f) continue;
             if (TowerHandler::TowerShoot(t, *e, activeBullets))
-                break; // found & shot a valid target
+                break; // shot fired — move to next tower
         }
     }
 
+    // --------------------------------------------------------
+    //  Projectile movement & hit detection
+    // --------------------------------------------------------
     TowerHandler::UpdateProjectiles(dt, activeEnemies, activeBullets);
-    
 
     // INPUT: SPAWN ENEMIES
     // Press c for Zombie
@@ -110,11 +126,17 @@ void Scene_TowerTest::Update(float dt)
     }
 
 
-    for (auto* e : activeEnemies) {
-        if (e && e->health <= 0.0f) {
-            // Null out bullet targets pointing to this enemy
+    // --------------------------------------------------------
+    //  Dead enemy cleanup
+    // --------------------------------------------------------
+    for (auto* e : activeEnemies)
+    {
+        if (e && e->health <= 0.0f)
+        {
+            // Prevent dangling bullet targets
             for (auto& b : activeBullets)
                 if (b.target == e) b.target = nullptr;
+
             e->Destroy();
             delete e;
         }
@@ -125,30 +147,28 @@ void Scene_TowerTest::Update(float dt)
         activeEnemies.end());
 
 
-	// test input for leveling up towers, only applies to selected tower(s)
+   // --------------------------------------------------------
+   //  Tower level up  (U = level up selected tower)
+   // --------------------------------------------------------
     if (AEInputCheckTriggered(AEVK_U))
     {
         for (auto& t : activeTowers)
         {
             if (t.isSelected)
             {
-                if (!t.LevelUp())
-                {
-                    // Designed to be empty
-                }
+                t.LevelUp(); // returns false if already max — no action needed
                 break;
             }
         }
     }
 
-    if (AEInputCheckTriggered(AEVK_H))
-        shopTower.SetType(TowerHandler::BASIC_TOWER);
-    if (AEInputCheckTriggered(AEVK_J))
-        shopTower.SetType(TowerHandler::SNIPER_TOWER);
-    if (AEInputCheckTriggered(AEVK_K))
-        shopTower.SetType(TowerHandler::SLOW_TOWER);
-    if (AEInputCheckTriggered(AEVK_L))
-        shopTower.SetType(TowerHandler::RAPID_TOWER);
+    // --------------------------------------------------------
+    //  Shop tower type swap  (H/J/K/L)
+    // --------------------------------------------------------
+    if (AEInputCheckTriggered(AEVK_H)) shopTower.SetType(TowerHandler::BASIC_TOWER);
+    if (AEInputCheckTriggered(AEVK_J)) shopTower.SetType(TowerHandler::SNIPER_TOWER);
+    if (AEInputCheckTriggered(AEVK_K)) shopTower.SetType(TowerHandler::SLOW_TOWER);
+    if (AEInputCheckTriggered(AEVK_L)) shopTower.SetType(TowerHandler::RAPID_TOWER);
 	
 }
 
