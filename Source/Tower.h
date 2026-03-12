@@ -122,6 +122,7 @@ namespace TowerHandler {
         // Placement state
         bool  isDragging   = false;
         bool  isSelected   = false;
+        bool  isPlaced     = false;
         float dragOffsetX  = 0.0f;
         float dragOffsetY  = 0.0f;
  
@@ -184,6 +185,14 @@ namespace TowerHandler {
     // --------------------------------------------------------
     void UpdateTowerSystem(float mouseX, float mouseY,
         ShopTower& shop, std::vector<Tower>& activeTowers);
+
+    // Tower subsystems
+    void SelectTopmostTower(float mouseX, float mouseY, 
+        std::vector<Tower>& activeTowers);
+    bool SpawnFromShop(float mouseX, float mouseY, ShopTower& shop, 
+        std::vector<Tower>& activeTowers);
+    void DragAndDropOnce(float mouseX, float mouseY, 
+        std::vector<Tower>& activeTowers);
 
     void UpdateProjectiles(float dt, std::vector<Enemy*>& enemies,
         std::vector<ActiveBullet>& activeBullets);

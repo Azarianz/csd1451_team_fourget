@@ -284,70 +284,135 @@ namespace TowerHandler {
     }
  
     // ============================================================
-    //  UpdateTowerSystem  (placement & dragging)
+    //  SelectTopmostTower
+    //  Finds highest-ID tower under cursor and marks it selected
+    //  so its range ring shows. Does NOT enable dragging.
+    //  Call on AEVK_LBUTTON triggered.
+    // ============================================================
+    void SelectTopmostTower(float mouseX, float mouseY, std::vector<Tower>& activeTowers)
+    {
+        Tower* topMostTower = nullptr;
+        int    highestID = -1;
+
+        for (Tower& t : activeTowers)
+        {
+            if (Utility::IsCircleClicked(t.x, t.y, t._sizeX, mouseX, mouseY))
+            {
+                if (t.details.ID > highestID)
+                {
+                    highestID = t.details.ID;
+                    topMostTower = &t;
+                }
+            }
+        }
+
+        for (Tower& t : activeTowers)
+            t.isSelected = false;
+
+        if (topMostTower)
+            topMostTower->isSelected = true;
+        // Note: isDragging intentionally NOT set here
+    }
+
+    // ============================================================
+    //  TrySpawnFromShop
+    //  Spawns a tower from the shop if no placed tower was clicked.
+    //  Newly spawned tower starts dragging immediately (not yet placed).
+    //  Returns true if a tower was spawned.
+    //  Call on AEVK_LBUTTON triggered, after SelectTopmostTower.
+    // ============================================================
+    bool SpawnFromShop(float mouseX, float mouseY,
+        ShopTower& shop, std::vector<Tower>& activeTowers)
+    {
+        // Don't spawn if a tower is already being dragged
+        for (const Tower& t : activeTowers)
+            if (t.isDragging) return false;
+
+        if (!Utility::IsCircleClicked(shop.x, shop.y, shop._sizeX, mouseX, mouseY))
+            return false;
+
+        Tower newTower;
+        newTower.TowerInit(shop.x, shop.y, 55.0f, 55.0f, shop);
+        newTower.isSelected = true;
+        newTower.isDragging = true;  // starts dragging
+        newTower.isPlaced = false; // not placed yet
+        newTower.dragOffsetX = 0;
+        newTower.dragOffsetY = 0;
+        activeTowers.push_back(newTower);
+        return true;
+    }
+
+    // ============================================================
+    //  DragAndDropOnce
+    //  Moves any tower currently being dragged.
+    //  On mouse release, marks tower as isPlaced = true.
+    //  A placed tower cannot be dragged again by this function,
+    //  only UpdateTowerSystem can re-enable dragging.
+    //  Call every frame regardless of input.
+    // ============================================================
+    void DragAndDropOnce(float mouseX, float mouseY, std::vector<Tower>& activeTowers)
+    {
+        for (Tower& t : activeTowers)
+        {
+            if (!t.isDragging) continue;
+
+            t.x = mouseX + t.dragOffsetX;
+            t.y = mouseY + t.dragOffsetY;
+
+            if (!AEInputCheckCurr(AEVK_LBUTTON))
+            {
+                t.isDragging = false;
+                t.isPlaced = true; // locked - cannot be dragged again via DragAndDropOnce
+            }
+        }
+    }
+
+    // ============================================================
+    //  UpdateTowerSystem  (full wrapper - used in Scene_TowerTest)
+    //  Identical behaviour to before, including re-dragging placed
+    //  towers. This is the only place isPlaced towers can be moved.
+    //  (mostly just used to test tower attacks on enemies)
     // ============================================================
     void UpdateTowerSystem(float mouseX, float mouseY,
-                           ShopTower& shop, std::vector<Tower>& activeTowers)
+        ShopTower& shop, std::vector<Tower>& activeTowers)
     {
         Utility::GetWorldMousePos(mouseX, mouseY);
- 
+
         if (AEInputCheckTriggered(AEVK_LBUTTON))
         {
-            // -- Find the topmost (highest ID) tower under the cursor --
+            // Find topmost tower and enable dragging (even if already placed)
             Tower* topMostTower = nullptr;
-            int    highestID    = -1;
- 
+            int    highestID = -1;
+
             for (Tower& t : activeTowers)
             {
                 if (Utility::IsCircleClicked(t.x, t.y, t._sizeX, mouseX, mouseY))
                 {
                     if (t.details.ID > highestID)
                     {
-                        highestID    = t.details.ID;
+                        highestID = t.details.ID;
                         topMostTower = &t;
                     }
                 }
             }
- 
-            // Deselect everything first
+
             for (Tower& t : activeTowers)
                 t.isSelected = false;
- 
-            // Drag the topmost hit tower
+
             if (topMostTower)
             {
-                topMostTower->isSelected   = true;
-                topMostTower->isDragging   = true;
-                topMostTower->dragOffsetX  = topMostTower->x - mouseX;
-                topMostTower->dragOffsetY  = topMostTower->y - mouseY;
+                topMostTower->isSelected = true;
+                topMostTower->isDragging = true;  // re-drag allowed here
+                topMostTower->isPlaced = false; // reset so DragAndDropOnce can also move it again
+                topMostTower->dragOffsetX = topMostTower->x - mouseX;
+                topMostTower->dragOffsetY = topMostTower->y - mouseY;
                 return;
             }
- 
-            // Otherwise spawn from shop if shop is clicked
-            if (Utility::IsCircleClicked(shop.x, shop.y, shop._sizeX, mouseX, mouseY))
-            {
-                Tower newTower;
-                newTower.TowerInit(shop.x, shop.y, 55.0f, 55.0f, shop);
-                newTower.isSelected  = true;
-                newTower.isDragging  = true;
-                newTower.dragOffsetX = 0; // center on cursor
-                newTower.dragOffsetY = 0;
-                activeTowers.push_back(newTower);
-                return;
-            }
+
+            SpawnFromShop(mouseX, mouseY, shop, activeTowers);
         }
- 
-        // -- Drag selected tower --
-        for (Tower& t : activeTowers)
-        {
-            if (!t.isDragging) continue;
- 
-            t.x = mouseX + t.dragOffsetX;
-            t.y = mouseY + t.dragOffsetY;
- 
-            if (!AEInputCheckCurr(AEVK_LBUTTON))
-                t.isDragging = false;
-        }
+
+        DragAndDropOnce(mouseX, mouseY, activeTowers);
     }
  
     // ============================================================
