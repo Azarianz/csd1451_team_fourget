@@ -493,6 +493,23 @@ void Scene_Prototype::Init()
     }
 }
 
+bool Scene_Prototype::IsPauseButtonClicked(int mouseX, int mouseY) const
+{
+    float screenW = (float)AEGfxGetWindowWidth();
+    float screenH = (float)AEGfxGetWindowHeight();
+
+    float textX = (0.78f + 1.0f) / 2.0f * screenW; 
+    float textY = (1.0f - 0.80f) / 2.0f * screenH;  
+
+    float left = textX - 10.0f;
+    float right = textX + 120.0f;
+    float top = textY - 25.0f;
+    float bottom = textY + 10.0f;
+
+    return ((float)mouseX >= left && (float)mouseX <= right &&
+        (float)mouseY >= top && (float)mouseY <= bottom);
+}
+
 void Scene_Prototype::Update(float dt)
 {
     if (gameOver) return;
@@ -504,6 +521,18 @@ void Scene_Prototype::Update(float dt)
 
     float worldX = 0.0f, worldY = 0.0f;
     Utility::GetWorldMousePos(worldX, worldY);
+
+    // --- Pause toggle ---
+    if (AEInputCheckTriggered(AEVK_P))
+        m_paused = !m_paused;
+
+    if (AEInputCheckTriggered(AEVK_LBUTTON) && IsPauseButtonClicked(mouseX, mouseY))
+    {
+        m_paused = !m_paused;
+        return;
+    }
+
+    if (m_paused) return; // skip all gameplay
 
     bool lmbDown = AEInputCheckCurr(AEVK_LBUTTON);
     bool justPressedLmb = (!wasLmbDown && lmbDown);
@@ -682,6 +711,14 @@ void Scene_Prototype::DrawUI()
     AEGfxPrint(m_uiFont, buf, -0.95f, 0.80f,
         1.0f, 1.0f,
         1.0f, 1.0f, 1.0f);
+
+    // Pause button top right
+    const char* pauseLabel = m_paused ? "RESUME" : "PAUSE";
+    AEGfxPrint(m_uiFont, pauseLabel, 0.78f, 0.80f, 1.0f, 1.0f, 1.0f, 0.2f, 1.0f);
+
+    // Big paused overlay
+    if (m_paused)
+        AEGfxPrint(m_uiFont, "PAUSED", -0.12f, 0.05f, 2.0f, 1.0f, 1.0f, 0.2f, 1.0f);
 }
 
 void Scene_Prototype::Draw()

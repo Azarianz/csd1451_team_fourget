@@ -49,6 +49,8 @@ private:
     // ----- Build Overlay -----
     bool buildMode = false;
     bool wasLmbDown = false;
+    bool m_paused = false;
+    bool IsPauseButtonClicked(int worldX, int worldY) const;
     AEGfxVertexList* xMesh = nullptr;
 
     // drag helpers
