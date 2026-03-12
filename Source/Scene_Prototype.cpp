@@ -715,10 +715,6 @@ void Scene_Prototype::DrawUI()
     // Pause button top right
     const char* pauseLabel = m_paused ? "RESUME" : "PAUSE";
     AEGfxPrint(m_uiFont, pauseLabel, 0.78f, 0.80f, 1.0f, 1.0f, 1.0f, 0.2f, 1.0f);
-
-    // Big paused overlay
-    if (m_paused)
-        AEGfxPrint(m_uiFont, "PAUSED", -0.12f, 0.05f, 2.0f, 1.0f, 1.0f, 0.2f, 1.0f);
 }
 
 void Scene_Prototype::Draw()
