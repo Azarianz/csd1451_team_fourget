@@ -64,9 +64,9 @@ namespace TowerHandler {
         // SLOW_TOWER
         {
             // range, cooldown, damage, projectile speed
-            { 200.f, 2.0f,  5.f, 350.f },  // Level 1
-            { 250.f, 1.7f, 10.f, 380.f },  // Level 2
-            { 300.f, 1.4f, 18.f, 420.f },  // Level 3
+            { 200.f, 1.5f,  5.f, 350.f },  // Level 1
+            { 250.f, 1.3f, 10.f, 380.f },  // Level 2
+            { 300.f, 0.8f, 18.f, 420.f },  // Level 3
         },
         // RAPID_TOWER
         {
@@ -136,6 +136,13 @@ namespace TowerHandler {
  
         TowerDetails      details  {};
         Graphics::ShapeId spriteId = 0;
+
+        // --------------------------------------------------------
+        //  Slow tower AOE attack (expanding ring, exclusive to 
+        //  slow towers)
+        // --------------------------------------------------------
+        bool  aoeRingActive = false;
+        std::vector<Enemy*> aoeHitList{};  // tracks enemies already hit this pulse
  
         Tower()
             : GameObject()
@@ -164,7 +171,8 @@ namespace TowerHandler {
     };
 
     bool TowerShoot(Tower& tower, Enemy& enemy, std::vector<ActiveBullet>& bullets);
-    
+    void SlowTowerAttack(Tower& tower, std::vector<Enemy*>& enemies);
+
     // --------------------------------------------------------
     //  ShopTower  (the palette icon the player clicks to spawn)
     // --------------------------------------------------------

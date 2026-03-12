@@ -42,14 +42,23 @@ void Scene_TowerTest::Update(float dt)
 
     // --------------------------------------------------------
     //  Tower shooting (one target per tower per frame)
+	//  Except for slow towers, which damage all enemies in 
+    //  range with an AoE attack
     // --------------------------------------------------------
     for (auto& t : activeTowers)
     {
-        for (auto* e : activeEnemies)
+        if (t.details.towerType == TowerHandler::SLOW_TOWER)
         {
-            if (!e || e->health <= 0.0f) continue;
-            if (TowerHandler::TowerShoot(t, *e, activeBullets))
-                break; // shot fired — move to next tower
+            TowerHandler::SlowTowerAttack(t, activeEnemies);
+        }
+        else
+        {
+            for (auto* e : activeEnemies)
+            {
+                if (!e || e->health <= 0.0f) continue;
+                if (TowerHandler::TowerShoot(t, *e, activeBullets))
+                    break;
+            }
         }
     }
 

@@ -74,6 +74,17 @@ void Enemy::SetSprite(int row, int col)
 
 void Enemy::Update(float dt, const std::vector<Point>& path)
 {
+    // Tick slow timer
+    if (slowTimer > 0.0f)
+    {
+        slowTimer -= dt;
+        if (slowTimer <= 0.0f)
+        {
+            slowTimer = 0.0f;
+            slowMultiplier = 1.0f; // slow expired
+        }
+    }
+
     if (path.empty() || reachedEnd) return;
     if (pathIndex >= (int)path.size()) {
         reachedEnd = true;
@@ -88,8 +99,9 @@ void Enemy::Update(float dt, const std::vector<Point>& path)
     if (distSq > 25.0f)
     {
         float dist = sqrtf(distSq);
-        x += (dx / dist) * speed * dt;
-        y += (dy / dist) * speed * dt;
+        float effectiveSpeed = speed * slowMultiplier; // slow applied
+        x += (dx / dist) * effectiveSpeed * dt;
+        y += (dy / dist) * effectiveSpeed * dt;
     }
     else
     {
@@ -149,7 +161,12 @@ void Enemy::Draw()
     AEGfxTextureSet(g_EnemySpriteSheet, 0, 0);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(color.a);
-    AEGfxSetColorToMultiply(color.r, color.g, color.b, 1.0f);
+
+    // Tint blue if slowed
+    if (slowTimer > 0.0f)
+        AEGfxSetColorToMultiply(0.5f, 0.7f, 1.0f, 1.0f);
+    else
+        AEGfxSetColorToMultiply(color.r, color.g, color.b, 1.0f);
 
     AEMtx33 scaleM, rotM, transM, transform;
     AEMtx33Scale(&scaleM, _sizeX, _sizeY);

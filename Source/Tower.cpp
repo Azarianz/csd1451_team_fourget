@@ -161,8 +161,9 @@ namespace TowerHandler {
         if (isSelected)
         {
             pulseTimer += (float)AEFrameRateControllerGetFrameTime();
+            // baseline + amplitude of 12% * sinf(timer * frequency) of 1 pulse / second
             float pulse = 1.0f + 0.12f * sinf(pulseTimer * 6.0f);
-            Graphics::SetScale(spriteId, _sizeX * pulse, _sizeY * pulse);
+			Graphics::SetScale(spriteId, _sizeX * pulse, _sizeY * pulse);
         }
         else
         {
@@ -188,7 +189,32 @@ namespace TowerHandler {
             color  = savedColor;
         }
  
-        DrawHealthBar(); // no-op for non-base towers
+        // Expanding AoE ring (slow tower only)
+        if (details.towerType == SLOW_TOWER && aoeRingActive)
+        {
+            // fireTimer counts down from fireCooldown to 0
+            // ring grows from 0 to size of range as fireCooldown goes to 0
+            float progress = 1.0f - (details.fireTimer / details.fireCooldown);
+            float ringRadius = progress * details.range;
+
+            // Deactivate once the ring has fully expanded
+            if (details.fireTimer <= 0.0f)
+                aoeRingActive = false;
+
+            float savedSX = _sizeX;
+            float savedSY = _sizeY;
+            Color savedColor = color;
+
+            _sizeX = _sizeY = ringRadius;
+            color = { 0.4f, 0.8f, 1.0f, 0.35f }; // translucent light blue
+            GameObject::Draw();
+
+            _sizeX = savedSX;
+            _sizeY = savedSY;
+            color = savedColor;
+        }
+
+        DrawHealthBar(); // only for base tower
     }
  
     // ============================================================
@@ -240,10 +266,10 @@ namespace TowerHandler {
             AEGfxMeshDraw(quad, AE_GFX_MDM_TRIANGLES);
         };
  
-        // Background (red) — full width
+        // Background (red) - full width
         DrawQuad(barX, barWidth, 1.0f, 0.0f, 0.0f);
  
-        // Foreground (green) — scaled by health percent, left-anchored
+        // Foreground (green) - scaled by health percent, left-anchored
         float fillWidth = barWidth * percent;
         float fillX     = barX - (barWidth * 0.5f) + (fillWidth * 0.5f);
         DrawQuad(fillX, fillWidth, 0.0f, 1.0f, 0.0f);
@@ -403,8 +429,8 @@ namespace TowerHandler {
             if (topMostTower)
             {
                 topMostTower->isSelected = true;
-                topMostTower->isDragging = true;  // re-drag allowed here
-                topMostTower->isPlaced = false; // reset so DragAndDropOnce can also move it again
+                topMostTower->isDragging = true;    // re-drag is allowed here
+                topMostTower->isPlaced = false;     // reset so DragAndDropOnce can also move it again
                 topMostTower->dragOffsetX = topMostTower->x - mouseX;
                 topMostTower->dragOffsetY = topMostTower->y - mouseY;
                 return;
@@ -453,6 +479,72 @@ namespace TowerHandler {
         bullets.push_back(b);
         tower.details.fireTimer = tower.details.fireCooldown;
         return true;
+    }
+
+    // ============================================================
+    //  SlowTowerAttack
+    //  Called every frame for slow towers.
+    //  - Only starts a new pulse if enemies are in range
+    //  - Hits enemies as the expanding ring reaches them
+    //  - Each enemy is only hit once per pulse
+    // ============================================================
+    void SlowTowerAttack(Tower& tower, std::vector<Enemy*>& enemies)
+    {
+        if (tower.details.towerType != SLOW_TOWER) return;
+
+        // Timer at 0, check if any enemy in range
+        if (tower.details.fireTimer <= 0.0f)
+        {
+            bool findEnemyInRange = false;
+            for (Enemy* e : enemies)
+            {
+                if (!e || e->health <= 0.0f) continue;
+                if (CircleCircleCollision(tower.x, tower.y, tower.details.range,
+                    e->x, e->y, e->_sizeX))
+                {
+                    findEnemyInRange = true;
+                    break;
+                }
+            }
+
+            if (!findEnemyInRange) return; // no enemies in range, don't start pulse
+
+			// Start new pulse, reset timer and hit list
+            tower.details.fireTimer = tower.details.fireCooldown;
+            tower.aoeRingActive = true;
+            tower.aoeHitList.clear();
+            return;
+        }
+
+		// Ring is expanding, check if it hits any unhit enemies
+        if (!tower.aoeRingActive) return;
+
+		float progress = 1.0f - (tower.details.fireTimer / tower.details.fireCooldown); // inversed so 0 at start of pulse, 1 at end
+        float ringRadius = progress * tower.details.range;
+
+        for (Enemy* e : enemies)
+        {
+            if (!e || e->health <= 0.0f) continue;
+
+            // Skip enemies already hit this pulse
+            bool alreadyHit = false;
+            for (Enemy* hit : tower.aoeHitList)
+                if (hit == e) { alreadyHit = true; break; }
+            if (alreadyHit) continue;
+
+            // Ring hits enemy when ringRadius reaches the enemy's near edge
+            float dx = e->x - tower.x;
+            float dy = e->y - tower.y;
+            float dist = sqrtf(dx * dx + dy * dy) - e->_sizeX;
+
+            if (ringRadius >= dist)
+            {
+                e->health -= tower.details.projectile.damage;
+                e->slowMultiplier = 0.7f;   // 30% slow
+                e->slowTimer = 2.0f;        // refresh duration
+                tower.aoeHitList.push_back(e);
+            }
+        }
     }
  
     // ============================================================
