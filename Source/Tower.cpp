@@ -316,7 +316,7 @@ namespace TowerHandler {
     }
 
     // ============================================================
-    //  TrySpawnFromShop
+    //  SpawnFromShop
     //  Spawns a tower from the shop if no placed tower was clicked.
     //  Newly spawned tower starts dragging immediately (not yet placed).
     //  Returns true if a tower was spawned.
