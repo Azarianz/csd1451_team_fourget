@@ -83,7 +83,7 @@ void Scene_ShopTest::Update(float dt)
         if (e && e->health <= 0.0f) {
             for (auto& b : activeBullets)
                 if (b.target == e) b.target = nullptr;
-            shop.AddPoints(5);
+            shop.AddPoints(e->GetPoints());
             e->Destroy();
             delete e;
             e = nullptr;

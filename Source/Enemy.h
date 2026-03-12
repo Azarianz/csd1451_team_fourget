@@ -35,14 +35,16 @@ struct Enemy : public GameObject
 
     // Health Bar
     void DrawHealthBar() const;
+
+    virtual int GetPoints() const { return 5; }
 };
 
 // Specific Types
-struct Zombie : public Enemy { void Init(); };
-struct Skeleton : public Enemy { void Init(); };
-struct Troll : public Enemy { void Init(); };
-struct Golem : public Enemy { void Init(); };
-struct Titan : public Enemy { void Init(); };
+struct Zombie : public Enemy { void Init(); int GetPoints() const override { return 5; } };
+struct Skeleton : public Enemy { void Init(); int GetPoints() const override { return 10; } };
+struct Troll : public Enemy { void Init(); int GetPoints() const override { return 15; } };
+struct Golem : public Enemy { void Init(); int GetPoints() const override { return 25; } };
+struct Titan : public Enemy { void Init(); int GetPoints() const override { return 20; } };
 
 // --- Wave System ---
 struct WaveData {

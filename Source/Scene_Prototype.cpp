@@ -630,6 +630,7 @@ void Scene_Prototype::Update(float dt)
         Enemy* e = enemies[(size_t)i];
         if (!e || e->health <= 0.0f)
         {
+            if (e) shop.AddPoints(e->GetPoints());
             delete e;
             enemies.erase(enemies.begin() + i);
         }
