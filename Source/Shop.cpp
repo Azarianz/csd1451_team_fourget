@@ -132,6 +132,34 @@ namespace TowerHandler {
         float mouseX, mouseY;
         Utility::GetWorldMousePos(mouseX, mouseY);
 
+        if (!AEInputCheckCurr(AEVK_LBUTTON))
+        {
+            for (int i = (int)activeTowers.size() - 1; i >= 0; --i)
+            {
+                TowerHandler::Tower& t = activeTowers[(size_t)i];
+                if (!t.isDragging) continue;
+
+                int slotIdx = t.sourceSlotIndex;
+                if (slotIdx < 0 || slotIdx >= TOWER_SLOTS) continue;
+
+                // Check if mouse is over the source slot
+                if (Utility::IsCircleClicked(slots[slotIdx].x, slots[slotIdx].y,
+                    slots[slotIdx].size / 2.0f, mouseX, mouseY))
+                {
+                    // Refund points and restore slot
+                    m_points += TOWER_COST;
+                    slots[slotIdx].isEmpty = false;
+
+                    // Remove the tower's Graphics sprite
+                    if (t.spriteId != 0)
+                        Graphics::Destroy(t.spriteId);
+                    t.Destroy();
+
+                    activeTowers.erase(activeTowers.begin() + i);
+                }
+            }
+        }
+
         if (AEInputCheckTriggered(AEVK_LBUTTON))
         {
             for (int i = 0; i < TOTAL_SLOTS; ++i)
@@ -182,6 +210,7 @@ namespace TowerHandler {
                 Graphics::SetUV(newTower.spriteId, uv.u0, uv.v0, uv.u1, uv.v1);
 
                 newTower.isDragging = true;
+                newTower.sourceSlotIndex = i;
 
                 // Map tower ID -> def index so DrawTowerSprites can find the right sprite
                 m_towerDefIndex[newTower.details.ID] = slots[i].defIndex;

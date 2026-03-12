@@ -41,6 +41,23 @@ namespace TowerHandler {
             return true;
         }
 
+        bool GetSlotCenter(int slotIdx, float& outX, float& outY) const
+        {
+            if (slotIdx < 0 || slotIdx >= TOWER_SLOTS) return false;
+            outX = slots[slotIdx].x;
+            outY = slots[slotIdx].y;
+            return true;
+        }
+
+        void RestoreSlot(int slotIdx)
+        {
+            if (slotIdx >= 0 && slotIdx < TOWER_SLOTS)
+                slots[slotIdx].isEmpty = false;
+        }
+
+        int GetTowerSlotCount() const { return TOWER_SLOTS; }
+        int GetTowerCost()      const { return TOWER_COST; }
+
     private:
         int m_points = 100;
         s8  m_uiFont = -1;

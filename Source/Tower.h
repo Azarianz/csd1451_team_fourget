@@ -93,6 +93,10 @@ namespace TowerHandler {
         float dragOffsetY = 0.0f;   
         TowerDetails details; 
         Graphics::ShapeId spriteId = 0;
+        int sourceSlotIndex = -1;
+        bool  isReturning = false;
+        float returnTargetX = 0.0f;
+        float returnTargetY = 0.0f;
 
         Tower()
             : GameObject()

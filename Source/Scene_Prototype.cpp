@@ -636,6 +636,26 @@ void Scene_Prototype::Update(float dt)
         }
     }
 
+    for (int i = (int)activeTowers.size() - 1; i >= 0; --i)
+    {
+        TowerHandler::Tower& t = activeTowers[(size_t)i];
+        if (!t.isReturning) continue;
+
+        const float lerpSpeed = 8.0f;
+        t.x += (t.returnTargetX - t.x) * lerpSpeed * dt;
+        t.y += (t.returnTargetY - t.y) * lerpSpeed * dt;
+
+        float dx = t.returnTargetX - t.x;
+        float dy = t.returnTargetY - t.y;
+        if (dx * dx + dy * dy < 4.0f)
+        {
+            shop.AddPoints(shop.GetTowerCost());
+            shop.RestoreSlot(t.sourceSlotIndex);
+            RemoveTowerAtIndex(i);
+            RebuildOccupiedFromTowers();
+        }
+    }
+
     wasLmbDown = lmbDown;
 }
 
@@ -842,17 +862,39 @@ void Scene_Prototype::SnapDraggedTowerToGrid(int mouseX, int mouseY)
     GridSystem::GridCoord c;
     if (!grid->ScreenToGrid(mouseX, mouseY, c) || !InBounds(c.x, c.y))
     {
-        // released off-grid -> cancel tower
-        RemoveTowerAtIndex(draggedIndex);
-        RebuildOccupiedFromTowers();
+        float slotX = 0.f, slotY = 0.f;
+        int slotIdx = activeTowers[draggedIndex].sourceSlotIndex;
+        if (shop.GetSlotCenter(slotIdx, slotX, slotY))
+        {
+            activeTowers[draggedIndex].isDragging = false;
+            activeTowers[draggedIndex].isReturning = true;
+            activeTowers[draggedIndex].returnTargetX = slotX;
+            activeTowers[draggedIndex].returnTargetY = slotY;
+        }
+        else
+        {
+            RemoveTowerAtIndex(draggedIndex);
+            RebuildOccupiedFromTowers();
+        }
         return;
     }
 
     if (!IsPlaceable(c.x, c.y))
     {
-        // not placeable -> cancel tower
-        RemoveTowerAtIndex(draggedIndex);
-        RebuildOccupiedFromTowers();
+        float slotX = 0.f, slotY = 0.f;
+        int slotIdx = activeTowers[draggedIndex].sourceSlotIndex;
+        if (shop.GetSlotCenter(slotIdx, slotX, slotY))
+        {
+            activeTowers[draggedIndex].isDragging = false;
+            activeTowers[draggedIndex].isReturning = true;
+            activeTowers[draggedIndex].returnTargetX = slotX;
+            activeTowers[draggedIndex].returnTargetY = slotY;
+        }
+        else
+        {
+            RemoveTowerAtIndex(draggedIndex);
+            RebuildOccupiedFromTowers();
+        }
         return;
     }
 
