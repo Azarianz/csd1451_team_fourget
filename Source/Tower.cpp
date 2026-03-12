@@ -7,6 +7,8 @@
 namespace TowerHandler {
 
     static AEGfxTexture* g_TowerSheet = nullptr;
+    static const int TOWER_SPRITE_COLS[] = { 1, 5, 4, 2, 0 }; // matches TowerType enum order
+
     int nextTowerID = 0;
 
     void LoadTowerAssets()
@@ -67,22 +69,41 @@ namespace TowerHandler {
             details.projectile.speed = 100.f;    //bad projectile
             break;
         }
+        // Spritesheet column per tower type
+        const int SPRITE_COLS[] = {
+            1,  // BASIC_TOWER
+            5,  // SNIPER_TOWER
+            4,  // SLOW_TOWER
+            2,  // RAPID_TOWER
+            0,  // BASE_TOWER
+        };
+
+        // Base row per tower type (all start at row 0)
+        const int SPRITE_BASE_ROWS[] = {
+            0,  // BASIC_TOWER
+            0,  // SNIPER_TOWER
+            0,  // SLOW_TOWER
+            0,  // RAPID_TOWER
+            0,  // BASE_TOWER
+        };
+
+        details.spriteCol = SPRITE_COLS[(int)details.towerType];
+        details.spriteBaseRow = SPRITE_BASE_ROWS[(int)details.towerType];
 
         int col = details.spriteCol;
-        int row = details.spriteBaseRow + (details.level - 1); // grey -> green -> blue
+        int row = details.spriteBaseRow + (details.level - 1);
         UVRect uv = GetSpriteUV(col, row, 13, 10);
 
-        // Store the Graphics shape ID on the tower
         spriteId = Graphics::DrawSprite(g_TowerSheet,
-            x, y, _sizeX, _sizeY,      // position & size
-            1.f, 1.f, 1.f, 1.f,        // tint white
+            x, y, _sizeX, _sizeY,
+            1.f, 1.f, 1.f, 1.f,
             uv.u0, uv.v0, uv.u1, uv.v1);
 
     }
 
     void Tower::Draw() {
         // Pulse the sprite size while dragging
-        if (isDragging)
+        if (isSelected)
         {
             pulseTimer += (float)AEFrameRateControllerGetFrameTime();
             float pulse = 1.0f + 0.12f * sinf(pulseTimer * 6.0f);
@@ -115,9 +136,6 @@ namespace TowerHandler {
             _sizeY = originalTowerSizeY;
             color = originalColor;
         }
-
-        // draw tower itself
-        GameObject::Draw();
 
         // base-only health bar
         DrawHealthBar();
@@ -194,6 +212,22 @@ namespace TowerHandler {
             color = { 0.2f, 0.9f, 0.9f, 1.0f };
         else
             color = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+        // Draw sprite on the shop tower using col 0 row 0 of that type
+        int col = TOWER_SPRITE_COLS[(int)towerType];
+        UVRect uv = GetSpriteUV(col, 0, 13, 10);
+        spriteId = Graphics::DrawSprite(g_TowerSheet,
+            x, y, xSize, ySize,
+            1.f, 1.f, 1.f, 1.f,
+            uv.u0, uv.v0, uv.u1, uv.v1);
+    }
+
+    void ShopTower::SetType(TowerType newType)
+    {
+        shopTowerType = newType;
+        int col = TOWER_SPRITE_COLS[(int)newType];
+        UVRect uv = GetSpriteUV(col, 0, 13, 10);
+        Graphics::SetUV(spriteId, uv.u0, uv.v0, uv.u1, uv.v1);
     }
 
     void UpdateTowerSystem(float mouseX, float mouseY, ShopTower& shop, std::vector<Tower>& activeTowers) {

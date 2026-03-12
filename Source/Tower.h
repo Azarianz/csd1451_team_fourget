@@ -126,8 +126,10 @@ namespace TowerHandler {
         TowerType shopTowerType = BASIC_TOWER;
 
     public:
+        Graphics::ShapeId spriteId = 0;
         void ShopTowerInit(float startX, float startY, float sizeX, 
             float sizeY, TowerType towerType, int segcount = 50);
+        void SetType(TowerType newType);
         TowerType const GetTowerType() { return shopTowerType; }
     };
     void UpdateTowerSystem(float mouseX, float mouseY, ShopTower& shop, std::vector<Tower>& activeTowers);

@@ -6,12 +6,8 @@ void Scene_TowerTest::Init()
 {
     TowerHandler::LoadTowerAssets();
 
-	// Just for testing, randomly assign the shop tower type each time we enter the scene
-    TowerHandler::TowerType tTypes[] = {TowerHandler::BASIC_TOWER, TowerHandler::SNIPER_TOWER, TowerHandler::SLOW_TOWER, TowerHandler::RAPID_TOWER};
-    int numOfTowerTypes = sizeof(tTypes) / sizeof(tTypes[0]);
-
-    int rndIndex = rand() % numOfTowerTypes;
-    shopTower.ShopTowerInit(0, 0, 50, 50, tTypes[rndIndex]);
+	// Just for testing, set shop as basic tower by default
+    shopTower.ShopTowerInit(0, 0, 50, 50, TowerHandler::BASIC_TOWER);
 
 
     // 1. Define the Path (A -> B -> C -> D)
@@ -144,6 +140,15 @@ void Scene_TowerTest::Update(float dt)
             }
         }
     }
+
+    if (AEInputCheckTriggered(AEVK_H))
+        shopTower.SetType(TowerHandler::BASIC_TOWER);
+    if (AEInputCheckTriggered(AEVK_J))
+        shopTower.SetType(TowerHandler::SNIPER_TOWER);
+    if (AEInputCheckTriggered(AEVK_K))
+        shopTower.SetType(TowerHandler::SLOW_TOWER);
+    if (AEInputCheckTriggered(AEVK_L))
+        shopTower.SetType(TowerHandler::RAPID_TOWER);
 	
 }
 
