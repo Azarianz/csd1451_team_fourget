@@ -287,7 +287,8 @@ namespace TowerHandler {
     //  SelectTopmostTower
     //  Finds highest-ID tower under cursor and marks it selected
     //  so its range ring shows. Does NOT enable dragging.
-    //  Call on AEVK_LBUTTON triggered.
+    //  Call on AEVK_LBUTTON triggered. (Also used for selecting
+    //  a single tower.)
     // ============================================================
     void SelectTopmostTower(float mouseX, float mouseY, std::vector<Tower>& activeTowers)
     {
