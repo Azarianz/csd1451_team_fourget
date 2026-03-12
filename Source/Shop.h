@@ -44,6 +44,7 @@ namespace TowerHandler {
         int m_points = 100;
         s8  m_uiFont = -1;
         const int TOWER_COST = 25;
+        const int REFRESH_COST = 25;
 
         static const int TOTAL_SLOTS = 5;
         static const int TOWER_SLOTS = 4;

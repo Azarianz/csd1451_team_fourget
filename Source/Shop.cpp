@@ -40,7 +40,7 @@ namespace TowerHandler {
         return uv;
     }
 
-    // DrawSpriteAtTex  (generic � caller supplies texture + sheet dimensions)
+    // DrawSpriteAtTex  (generic caller supplies texture + sheet dimensions)
     void Shop::DrawSpriteAtTex(float cx, float cy, float size,
         int col, int row,
         AEGfxTexture* tex,
@@ -138,7 +138,15 @@ namespace TowerHandler {
                     slots[i].size / 2.0f, mouseX, mouseY))
                     continue;
 
-                if (slots[i].isRefreshButton) { RefreshSlots(); return; }
+                if (slots[i].isRefreshButton) { 
+                    if (m_points < REFRESH_COST) {
+                        PRINT("Not enough points to refresh! Need %d\n", REFRESH_COST);
+                        return;
+                    }
+                    m_points -= REFRESH_COST;
+                    RefreshSlots(); 
+                    return; 
+                }
 
                 if (m_points < TOWER_COST)
                 {
