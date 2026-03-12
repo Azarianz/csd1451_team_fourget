@@ -231,9 +231,23 @@ namespace TowerHandler {
     struct UVRect { float u0, v0, u1, v1; };
 
     inline UVRect GetSpriteUV(int col, int row, int totalCols, int totalRows){
+        // Spritesheet dimensions
+        const float sheetW = 208.0f;
+        const float sheetH = 160.0f;
+
+        // Half-texel inset to prevent bleeding into adjacent sprites
+        const float insetX = 0.5f / sheetW;  // 0.002404f
+        const float insetY = 0.5f / sheetH;  // 0.003125f
+
         float w = 1.0f / totalCols;
         float h = 1.0f / totalRows;
-        return { col * w, row * h, (col + 1) * w, (row + 1) * h };
+
+        return {
+            col       * w + insetX,   // u0
+            row       * h + insetY,   // v0
+            (col + 1) * w - insetX,   // u1
+            (row + 1) * h - insetY,   // v1
+        };
     }
 }
 
