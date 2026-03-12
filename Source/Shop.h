@@ -22,6 +22,7 @@ namespace TowerHandler {
         float size;
         bool isRefreshButton;
         int defIndex = 0;
+        bool isEmpty = false;
     };
 
     class Shop {

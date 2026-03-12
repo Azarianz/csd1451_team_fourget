@@ -120,8 +120,10 @@ namespace TowerHandler {
             int tmp = idx[i]; idx[i] = idx[j]; idx[j] = tmp;
         }
 
-        for (int i = 0; i < TOWER_SLOTS; ++i)
+        for (int i = 0; i < TOWER_SLOTS; ++i) {
             slots[i].defIndex = idx[i];
+            slots[i].isEmpty = false;
+        }
     }
 
     // Update
@@ -146,6 +148,10 @@ namespace TowerHandler {
                     m_points -= REFRESH_COST;
                     RefreshSlots(); 
                     return; 
+                }
+
+                if (slots[i].isEmpty) {
+                    return;
                 }
 
                 if (m_points < TOWER_COST)
@@ -181,6 +187,7 @@ namespace TowerHandler {
                 m_towerDefIndex[newTower.details.ID] = slots[i].defIndex;
 
                 activeTowers.push_back(newTower);
+                slots[i].isEmpty = true;
                 break;
             }
         }
@@ -216,6 +223,8 @@ namespace TowerHandler {
 
             if (slots[i].isRefreshButton)
                 AEGfxSetColorToMultiply(0.4f, 0.4f, 0.4f, 1.0f);
+            else if (slots[i].isEmpty)
+                AEGfxSetColorToMultiply(0.15f, 0.15f, 0.15f, 0.15f); // Dark grey = empty
             else
             {
                 const Color& c = TOWER_DEFS[slots[i].defIndex].color;
@@ -229,6 +238,7 @@ namespace TowerHandler {
         for (int i = 0; i < TOTAL_SLOTS; ++i)
         {
             if (slots[i].isRefreshButton) continue;
+            if (slots[i].isEmpty) continue;
             const TowerDef& def = TOWER_DEFS[slots[i].defIndex];
             DrawSpriteAtTex(slots[i].x, slots[i].y, slots[i].size,
                 def.spriteCol, def.spriteRow, pSpritesheet, SHEET_COLS, SHEET_ROWS);
