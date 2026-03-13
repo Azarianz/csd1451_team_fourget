@@ -212,6 +212,13 @@ namespace TowerHandler {
 
                 Tower newTower;
                 newTower.TowerInit(mouseX, mouseY, 55.0f, 55.0f, tempShop);
+                // Destroy the temporary sprite
+                if (tempShop.spriteId != 0)
+                {
+                    Graphics::Destroy(tempShop.spriteId);
+                    tempShop.spriteId = 0;
+                }
+
                 newTower.details.spriteCol = def.spriteCol;
                 newTower.details.spriteBaseRow = def.spriteRow;
 
