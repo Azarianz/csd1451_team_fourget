@@ -10,6 +10,7 @@
 #include "Scene_LoadLevel.h"
 #include "Scene_Prototype.h"
 #include "Scene_MainMenu.h"
+#include "Scene_Settings.h"
 
 SceneManager& SceneManager::I()
 {
@@ -68,6 +69,7 @@ Scene* SceneManager::CreateScene(SceneID id)
     switch (id)
     {
         case SceneID::MainMenu:     return new Scene_MainMenu();
+        case SceneID::Settings:    return new Scene_Settings();
         case SceneID::LevelEditor:  return new Scene_LevelEditor();
 	    case SceneID::LoadLevel:    return new Scene_LoadLevel();
         case SceneID::Level1:       return new Scene_Level1();

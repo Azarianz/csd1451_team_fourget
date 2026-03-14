@@ -98,6 +98,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine\lib\fmod.dll" "$(OutDir)" /s /r /y /q</C
   <ItemGroup>
     <ClCompile Include="..\Source\Enemy.cpp" />
     <ClCompile Include="..\Source\GameObject.cpp" />
+    <ClCompile Include="..\Source\GameSettings.cpp" />
     <ClCompile Include="..\Source\Graphics.cpp" />
     <ClCompile Include="..\Source\GridSystem.cpp" />
     <ClCompile Include="..\Source\HealthBar.cpp" />
@@ -112,6 +113,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine\lib\fmod.dll" "$(OutDir)" /s /r /y /q</C
     <ClCompile Include="..\Source\Scene_LevelEditor.cpp" />
     <ClCompile Include="..\Source\Scene_MainMenu.cpp" />
     <ClCompile Include="..\Source\Scene_Prototype.cpp" />
+    <ClCompile Include="..\Source\Scene_Settings.cpp" />
     <ClCompile Include="..\Source\Scene_ShopTest.cpp" />
     <ClCompile Include="..\Source\Scene_LoadLevel.cpp" />
     <ClCompile Include="..\Source\Scene_TowerTest.cpp" />
@@ -122,6 +124,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine\lib\fmod.dll" "$(OutDir)" /s /r /y /q</C
   <ItemGroup>
     <ClInclude Include="..\Source\Enemy.h" />
     <ClInclude Include="..\Source\GameObject.h" />
+    <ClInclude Include="..\Source\GameSettings.h" />
     <ClInclude Include="..\Source\Graphics.h" />
     <ClInclude Include="..\Source\GridSystem.h" />
     <ClInclude Include="..\Source\HealthBar.h" />
@@ -136,6 +139,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine\lib\fmod.dll" "$(OutDir)" /s /r /y /q</C
     <ClInclude Include="..\Source\Scene_LevelEditor.h" />
     <ClInclude Include="..\Source\Scene_MainMenu.h" />
     <ClInclude Include="..\Source\Scene_Prototype.h" />
+    <ClInclude Include="..\Source\Scene_Settings.h" />
     <ClInclude Include="..\Source\Scene_ShopTest.h" />
     <ClInclude Include="..\Source\Scene_LoadLevel.h" />
     <ClInclude Include="..\Source\Scene_TowerTest.h" />

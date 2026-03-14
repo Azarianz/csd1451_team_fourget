@@ -12,4 +12,5 @@ enum class SceneID
     EnemyTest,
 	LoadLevel,
     Prototype,
+    Settings,
 };

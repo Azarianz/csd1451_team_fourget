@@ -453,6 +453,17 @@ void Scene_Prototype::Init()
     TowerHandler::LoadTowerAssets();
 
     shop.Init();
+
+    // Load and play BGM
+    m_bgm = AEAudioLoadMusic("Assets/bouken.mp3");
+    m_bgmGroup = AEAudioCreateGroup();
+    m_bgmLoaded = true;
+    AEAudioPlay(m_bgm, m_bgmGroup, 1.0f, 1.0f, -1); // -1 = loop forever
+
+    // Apply whatever volume the player set in Settings
+    float vol = GameSettings::masterVolume / 100.0f;
+    AEAudioSetGroupVolume(m_bgmGroup, vol);
+
     activeTowers.clear();
     activeBullets.clear();
 
@@ -498,15 +509,16 @@ bool Scene_Prototype::IsPauseButtonClicked(int mouseX, int mouseY) const
     float screenW = (float)AEGfxGetWindowWidth();
     float screenH = (float)AEGfxGetWindowHeight();
 
-    float textX = (0.78f + 1.0f) / 2.0f * screenW; 
-    float textY = (1.0f - 0.80f) / 2.0f * screenH;  
+    float textX = screenW * 0.88f;
+    float textY = screenH * 0.08f;
 
-    float left = textX - 10.0f;
-    float right = textX + 120.0f;
-    float top = textY - 25.0f;
-    float bottom = textY + 10.0f;
+    float hitW = screenW * 0.10f;
+    float hitH = screenH * 0.06f;
 
-    return ((float)mouseX >= left && (float)mouseX <= right &&
+    float top = textY - hitH;
+    float bottom = textY;
+
+    return ((float)mouseX >= textX && (float)mouseX <= textX + hitW &&
         (float)mouseY >= top && (float)mouseY <= bottom);
 }
 
@@ -524,11 +536,23 @@ void Scene_Prototype::Update(float dt)
 
     // --- Pause toggle ---
     if (AEInputCheckTriggered(AEVK_P))
+    {
         m_paused = !m_paused;
+        if (m_bgmLoaded)
+        {
+            if (m_paused) AEAudioPauseGroup(m_bgmGroup);
+            else          AEAudioResumeGroup(m_bgmGroup);
+        }
+    }
 
     if (AEInputCheckTriggered(AEVK_LBUTTON) && IsPauseButtonClicked(mouseX, mouseY))
     {
         m_paused = !m_paused;
+        if (m_bgmLoaded)
+        {
+            if (m_paused) AEAudioPauseGroup(m_bgmGroup);
+            else          AEAudioResumeGroup(m_bgmGroup);
+        }
         return;
     }
 
@@ -714,7 +738,14 @@ void Scene_Prototype::DrawUI()
 
     // Pause button top right
     const char* pauseLabel = m_paused ? "RESUME" : "PAUSE";
-    AEGfxPrint(m_uiFont, pauseLabel, 0.78f, 0.80f, 1.0f, 1.0f, 1.0f, 0.2f, 1.0f);
+    float screenW = (float)AEGfxGetWindowWidth();
+    float screenH = (float)AEGfxGetWindowHeight();
+    float pauseScreenX = screenW * 0.88f;
+    float pauseScreenY = screenH * 0.08f;
+    AEGfxPrint(m_uiFont, pauseLabel,
+        (pauseScreenX / screenW) * 2.0f - 1.0f,   // to normX
+        1.0f - (pauseScreenY / screenH) * 2.0f,   // to normY
+        1.0f, 1.0f, 1.0f, 0.2f, 1.0f);
 }
 
 void Scene_Prototype::Draw()
@@ -796,6 +827,12 @@ void Scene_Prototype::Exit()
         grid->Destroy();
         delete grid;
         grid = nullptr;
+    }
+
+    if (m_bgmLoaded)
+    {
+        AEAudioStopGroup(m_bgmGroup);
+        m_bgmLoaded = false;
     }
 }
 #pragma endregion

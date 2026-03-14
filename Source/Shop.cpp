@@ -318,7 +318,18 @@ namespace TowerHandler {
         if (m_uiFont < 0) return;
         char buf[32];
         sprintf_s(buf, "POINTS: %d", m_points);
-        AEGfxPrint(m_uiFont, buf, 0.6f, 0.9f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f);
+
+        float screenW = (float)AEGfxGetWindowWidth();
+        float screenH = (float)AEGfxGetWindowHeight();
+
+        // Scale position based on resolution so it never gets cut off
+        float px = screenW * 0.78f;
+        float py = screenH * 0.04f;
+
+        float normX = (px / screenW) * 2.0f - 1.0f;
+        float normY = 1.0f - (py / screenH) * 2.0f;
+
+        AEGfxPrint(m_uiFont, buf, normX, normY, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f);
     }
 
     // Exit

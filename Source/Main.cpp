@@ -3,6 +3,7 @@
 #include "AEInput.h"
 #include "SceneManager.h"
 #include "SceneID.h"
+#include "GameSettings.h"
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -13,7 +14,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, true, NULL);
+    GameSettings::Load();
+    GameSettings::pendingRestart = false; // fresh launch, no pending restart
+
+    const GameSettings::Resolution& res = GameSettings::RESOLUTIONS[GameSettings::resolutionIndex];
+
+    AESysInit(hInstance, nCmdShow, res.width, res.height, 1, 60, true, NULL);
     AESysSetWindowTitle("Merge Defenders Prototype");
 
     // Pick which scene to boot (each teammate can change this line on their branch)
@@ -33,13 +39,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         if (AEInputCheckTriggered(AEVK_5)) SceneManager::I().SwitchTo(SceneID::ShopTest);
         if (AEInputCheckTriggered(AEVK_9)) SceneManager::I().SwitchTo(SceneID::Prototype);
 
-        // Update + Draw current scene
+        SceneID sceneThisFrame = SceneManager::I().Current();
+
         SceneManager::I().Update(dt);
         SceneManager::I().Draw();
 
         AESysFrameEnd();
 
-        if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
+        bool escapeHandledByScene = (sceneThisFrame == SceneID::Settings);
+        if (GameSettings::quitGame ||
+            (!escapeHandledByScene && AEInputCheckTriggered(AEVK_ESCAPE)) ||
+            0 == AESysDoesWindowExist())
             gGameRunning = 0;
     }
 

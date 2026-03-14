@@ -3,6 +3,7 @@
 #include "SceneID.h"
 #include "AEEngine.h"
 #include "AEInput.h"
+#include "GameSettings.h"
 #include <cstring>
 
 float Scene_MainMenu::ScreenToNormX(float px) const
@@ -48,6 +49,7 @@ void Scene_MainMenu::UpdateMouseInput()
     AEInputGetCursorPosition(&mouseX, &mouseY);
 
     ButtonRect play = GetPlayButtonRect();
+    ButtonRect settings = GetSettingsButtonRect();
     ButtonRect quit = GetQuitButtonRect();
 
     if (IsPointInRect((float)mouseX, (float)mouseY, play.x, play.y, play.w, play.h))
@@ -56,6 +58,11 @@ void Scene_MainMenu::UpdateMouseInput()
 
         if (AEInputCheckTriggered(AEVK_LBUTTON))
             HandlePlay();
+    }
+    else if (IsPointInRect((float)mouseX, (float)mouseY, settings.x, settings.y, settings.w, settings.h))
+    {
+        selectedOption = MenuOption::Settings;
+        if (AEInputCheckTriggered(AEVK_LBUTTON)) HandleSettings();
     }
     else if (IsPointInRect((float)mouseX, (float)mouseY, quit.x, quit.y, quit.w, quit.h))
     {
@@ -83,18 +90,22 @@ void Scene_MainMenu::Exit()
 
 void Scene_MainMenu::MoveUp()
 {
-    if (selectedOption == MenuOption::Play)
-        selectedOption = MenuOption::Quit;
-    else
-        selectedOption = MenuOption::Play;
+    switch (selectedOption)
+    {
+        case MenuOption::Play:     selectedOption = MenuOption::Quit;     break;
+        case MenuOption::Settings: selectedOption = MenuOption::Play;     break;
+        case MenuOption::Quit:     selectedOption = MenuOption::Settings; break;
+    }
 }
 
 void Scene_MainMenu::MoveDown()
 {
-    if (selectedOption == MenuOption::Play)
-        selectedOption = MenuOption::Quit;
-    else
-        selectedOption = MenuOption::Play;
+    switch (selectedOption)
+    {
+        case MenuOption::Play:     selectedOption = MenuOption::Settings; break;
+        case MenuOption::Settings: selectedOption = MenuOption::Quit;     break;
+        case MenuOption::Quit:     selectedOption = MenuOption::Play;     break;
+    }
 }
 
 void Scene_MainMenu::ConfirmSelection()
@@ -104,7 +115,9 @@ void Scene_MainMenu::ConfirmSelection()
     case MenuOption::Play:
         HandlePlay();
         break;
-
+    case MenuOption::Settings:
+        HandleSettings();
+        break;
     case MenuOption::Quit:
         HandleQuit();
         break;
@@ -119,9 +132,14 @@ void Scene_MainMenu::HandlePlay()
     SceneManager::I().SwitchTo(SceneID::Prototype);
 }
 
+void Scene_MainMenu::HandleSettings()
+{
+    SceneManager::I().SwitchTo(SceneID::Settings);
+}
+
 void Scene_MainMenu::HandleQuit()
 {
-    AESysExit();
+    GameSettings::quitGame = true;
 }
 
 float Scene_MainMenu::GetCenteredX(const char* text, float scale) const
@@ -156,16 +174,20 @@ Scene_MainMenu::ButtonRect Scene_MainMenu::GetPlayButtonRect() const
     return r;
 }
 
+Scene_MainMenu::ButtonRect Scene_MainMenu::GetSettingsButtonRect() const
+{
+    ButtonRect play = GetPlayButtonRect();
+    ButtonRect r{ 0, 0, 220.0f, 42.0f };
+    r.x = play.x;
+    r.y = play.y + 50.0f;   // one row below Play
+    return r;
+}
+
 Scene_MainMenu::ButtonRect Scene_MainMenu::GetQuitButtonRect() const
 {
-    const float screenW = (float)AEGfxGetWindowWidth();
-    const float screenH = (float)AEGfxGetWindowHeight();
-
-    ButtonRect r;
-    r.w = 220.0f;
-    r.h = 42.0f;
-    r.x = screenW * 0.5f - r.w * 0.5f;
-    r.y = screenH * 0.42f + 45.0f - r.h * 0.5f;
+    ButtonRect settings = GetSettingsButtonRect();
+    ButtonRect r = settings;
+    r.y = settings.y + 50.0f;
     return r;
 }
 
@@ -179,7 +201,8 @@ void Scene_MainMenu::DrawUI() const
 
     const float titleY = screenH * 0.28f;
     const float playY = screenH * 0.42f;
-    const float quitY = playY + 45.0f;
+    const float settingsY = playY + 50.0f;
+    const float quitY = settingsY + 50.0f;
     const float controlsY = screenH * 0.60f;
 
     const float bright = 1.0f;
@@ -204,13 +227,18 @@ void Scene_MainMenu::DrawUI() const
 
     // Buttons
     const char* playText = "PLAY";
+    const char* settingsText = "SETTINGS";
     const char* quitText = "QUIT";
 
     float playX = GetCenteredX(playText, 1.0f);
+    float settingsX = GetCenteredX(settingsText, 1.0f);
     float quitX = GetCenteredX(quitText, 1.0f);
 
     Print(playText, playX, playY,
         selectedOption == MenuOption::Play ? bright : dim, 1.0f);
+
+    Print(settingsText, settingsX, settingsY,
+        selectedOption == MenuOption::Settings ? bright : dim, 1.0f);
 
     Print(quitText, quitX, quitY,
         selectedOption == MenuOption::Quit ? bright : dim, 1.0f);
@@ -219,6 +247,8 @@ void Scene_MainMenu::DrawUI() const
     const float arrowOffset = 34.0f;
     if (selectedOption == MenuOption::Play)
         Print(">", playX - arrowOffset, playY, bright, 1.0f);
+    else if (selectedOption == MenuOption::Settings)
+        Print(">", settingsX - arrowOffset, settingsY, bright, 1.0f);
     else
         Print(">", quitX - arrowOffset, quitY, bright, 1.0f);
 

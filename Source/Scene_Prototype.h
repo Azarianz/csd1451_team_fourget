@@ -5,6 +5,7 @@
 #include "Enemy.h"
 #include "Shop.h"
 #include "Tower.h"
+#include "GameSettings.h"
 
 #include <vector>
 #include <cstdint>
@@ -42,6 +43,11 @@ private:
     TowerHandler::Shop shop;
     std::vector<TowerHandler::Tower> activeTowers;
     std::vector<TowerHandler::ActiveBullet> activeBullets;
+
+    // --- Background audio ---
+    AEAudio      m_bgm = AEAudio();
+    AEAudioGroup m_bgmGroup = AEAudioGroup();
+    bool         m_bgmLoaded = false;
 
     // runtime occupancy (for build placement)
     std::vector<uint8_t> occupied; // 0/1
