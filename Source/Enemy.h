@@ -22,6 +22,7 @@ struct Enemy : public GameObject
     // Pathfinding Data
     int pathIndex = 0;
     bool reachedEnd = false;
+    bool escapedBase = false;
 
     // Static Sprite Data
     int spriteRow = 0;

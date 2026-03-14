@@ -636,12 +636,17 @@ void Scene_Prototype::Update(float dt)
 
             if (TowerHandler::CircleCircleCollision(
                 base.x, base.y, base._sizeX * 0.5f,
-                e->x, e->y, e->_sizeX * 0.5f))
+                e->x, e->y, e->_sizeX * 0.5f)
+                || e->reachedEnd)
             {
                 e->health = 0.0f;
-
+                e->escapedBase = true;  // mark as escaped - no points
                 if (base.TakeDamage(base.details.contactDamage))
+                {
                     gameOver = true;
+                    if (m_bgmLoaded)
+                        AEAudioPauseGroup(m_bgmGroup);
+                }
             }
         }
     }
@@ -683,7 +688,8 @@ void Scene_Prototype::Update(float dt)
         Enemy* e = enemies[(size_t)i];
         if (!e || e->health <= 0.0f)
         {
-            if (e) shop.AddPoints(e->GetPoints());
+            if (e && !e->escapedBase)       // only reward if killed by towers
+                shop.AddPoints(e->GetPoints());
             delete e;
             enemies.erase(enemies.begin() + i);
         }
