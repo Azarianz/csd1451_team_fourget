@@ -5,85 +5,23 @@
 #include "Utility.h"
 #include <cstdio>
 
-#pragma region Selection helpers
-void Scene_Prototype::ClearTowerSelection()
-{
-    for (auto& t : activeTowers)
-        t.isSelected = false;
-}
-
-int  Scene_Prototype::FindPlacedTowerAtMouse(float worldX, float worldY) const
-{
-    for (int i = (int)activeTowers.size() - 1; i >= 0; --i)
-    {
-        const auto& t = activeTowers[(size_t)i];
-
-        if (t.isDragging)
-            continue;
-
-        const float halfW = t._sizeX * 0.5f;
-        const float halfH = t._sizeY * 0.5f;
-
-        if (worldX >= t.x - halfW && worldX <= t.x + halfW &&
-            worldY >= t.y - halfH && worldY <= t.y + halfH)
-        {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-void Scene_Prototype::HandleTowerSelection(float worldX, float worldY, bool justPressedLmb)
-{
-    if (!justPressedLmb)
-        return;
-
-    if (buildMergeSystem.IsDraggingTower())
-        return;
-
-    int hitIndex = FindPlacedTowerAtMouse(worldX, worldY);
-
-    ClearTowerSelection();
-
-    if (hitIndex >= 0)
-        activeTowers[(size_t)hitIndex].isSelected = true;
-}
-#pragma endregion
-
 #pragma region Scene lifecycle
 void Scene_Prototype::Init()
 {
-    char levelPath[128] = {};
-    sprintf_s(levelPath, "Assets/Levels/level_%02d.txt", levelIndex);
-
     if (grid)
     {
         grid->Destroy();
         delete grid;
         grid = nullptr;
     }
-    level.Shutdown();
 
-    if (!level.LoadFromText(levelPath))
+    if (!level.Init(levelIndex))
     {
-        PRINT("FAILED to load level: %s\n", levelPath);
         PRINT("Scene_Prototype Init failed to load level.\n");
         return;
     }
 
-    const size_t expected = (size_t)level.width * (size_t)level.height;
-    if (expected == 0 ||
-        level.map.size() != expected ||
-        level.region.size() != expected)
-    {
-        PRINT("LEVEL DATA SIZE MISMATCH! w=%d h=%d expected=%zu map=%zu region=%zu\n",
-            level.width, level.height,
-            expected, level.map.size(), level.region.size());
-        return;
-    }
-
-    occupied.assign(expected, 0);
+    occupied.assign((size_t)level.width * (size_t)level.height, 0);
 
     grid = new GridSystem::Grid(level.width, level.height, 1.0f);
     grid->Init();
@@ -200,7 +138,10 @@ void Scene_Prototype::Update(float dt)
 
     buildMergeSystem.UpdateDragging(worldX, worldY, lmbDown, justReleasedLmb, mouseX, mouseY);
 
-    HandleTowerSelection(worldX, worldY, justPressedLmb);
+    if (justPressedLmb && !buildMergeSystem.IsDraggingTower())
+    {
+        TowerHandler::SelectTopmostTower(worldX, worldY, activeTowers);
+    }
 
     if (AEInputCheckTriggered(AEVK_U))
     {

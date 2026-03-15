@@ -51,8 +51,4 @@ private:
     bool wasLmbDown = false;
     bool m_paused = false;
     bool IsPauseButtonClicked(int worldX, int worldY) const;
-
-    void ClearTowerSelection();
-    int  FindPlacedTowerAtMouse(float worldX, float worldY) const;
-    void HandleTowerSelection(float worldX, float worldY, bool justPressedLmb);
 };

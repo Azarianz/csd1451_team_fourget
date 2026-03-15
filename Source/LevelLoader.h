@@ -20,6 +20,9 @@ public:
     bool InBounds(int x, int y) const { return x >= 0 && y >= 0 && x < width && y < height; }
 
 public:
+    bool Init(int levelIndex);
+    bool IsValid() const;
+
     bool LoadFromText(const char* path);
     bool BuildPath(const GridSystem::Grid& grid, std::vector<Point>& outPath) const;
 

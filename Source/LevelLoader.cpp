@@ -1,6 +1,39 @@
 #include "LevelLoader.h"
 #include <fstream>
 #include <string>
+#include <cstdio>
+
+bool LevelLoader::Init(int levelIndex)
+{
+    char levelPath[128] = {};
+    sprintf_s(levelPath, "Assets/Levels/level_%02d.txt", levelIndex);
+
+    Shutdown();
+
+    if (!LoadFromText(levelPath))
+    {
+        PRINT("FAILED to load level: %s\n", levelPath);
+        return false;
+    }
+
+    if (!IsValid())
+    {
+        const size_t expected = (size_t)width * (size_t)height;
+        PRINT("LEVEL DATA SIZE MISMATCH! w=%d h=%d expected=%zu map=%zu region=%zu\n",
+            width, height, expected, map.size(), region.size());
+        return false;
+    }
+
+    return true;
+}
+
+bool LevelLoader::IsValid() const
+{
+    const size_t expected = (size_t)width * (size_t)height;
+    return expected > 0 &&
+        map.size() == expected &&
+        region.size() == expected;
+}
 
 static bool ReadToken(std::istream& in, std::string& out)
 {
