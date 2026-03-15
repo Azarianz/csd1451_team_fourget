@@ -42,6 +42,9 @@ public:
     bool TryMergeAtCell(int placedX, int placedY);
     void RemoveTowerAtIndex(int idx);
 
+    bool FindConnectedCluster(int startX, int startY,
+        TowerHandler::TowerType type, int towerLevel,
+        std::vector<GridSystem::GridCoord>& outCells);
 private:
     LevelLoader* level = nullptr;
     GridSystem::Grid* grid = nullptr;
