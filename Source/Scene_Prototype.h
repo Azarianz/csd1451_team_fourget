@@ -22,6 +22,21 @@ public:
     void Exit() override;
 
 private:
+    void DestroyGrid();
+
+    bool InitLevelAndGrid();
+    void InitAudio();
+    void ResetRuntimeState();
+    void CreateBaseTower();
+
+    void HandleUserInputs(float worldX, float worldY, int mouseX, int mouseY);
+    void UpdateSelectionAndDragging(float worldX, float worldY, int mouseX, int mouseY);
+    void UpdateEnemies(float dt);
+    void UpdateBaseCollision();
+    void CleanupDeadEnemies();
+    void UpdateReturningTowers(float dt);
+
+private:
     int levelIndex = 1;
     LevelLoader level;
     GridSystem::Grid* grid = nullptr;

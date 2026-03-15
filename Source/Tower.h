@@ -266,6 +266,16 @@ namespace TowerHandler {
             (row + 1) * h - insetY,   // v1
         };
     }
+
+    // --------------------------------------------------------
+    //  Aza Refactor Additions (Below Onwards)
+    // --------------------------------------------------------
+    void UpdateTowerLogic(float dt,
+        std::vector<Tower>& towers,
+        std::vector<Enemy*>& enemies,
+        std::vector<ActiveBullet>& activeBullets);
+
+    int AddBaseTower(std::vector<Tower>& towers, float x, float y, float sizeX, float sizeY);
 }
 
 
