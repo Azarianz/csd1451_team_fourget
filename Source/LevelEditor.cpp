@@ -1,6 +1,7 @@
 #include "LevelEditor.h"
 #include "AEInput.h"
-#include <cstdio> // for sprintf_s
+#include <cstdio>   // for sprintf_s
+#include <cctype>   // for std::tolower
 
 // Helper Functions
 static float ScreenToNormX(float px)
@@ -45,6 +46,11 @@ void LevelEditor::Init(int w, int h)
     m_maxTileId = m_tilesetCols * m_tilesetRows;
 
     m_tileMeshes.assign((size_t)m_maxTileId + 1, nullptr);
+
+    // Default file name shown in editor
+    saveFileName = "level_01";
+    m_isTypingFileName = false;
+    m_fileNameBeforeTyping = saveFileName;
 }
 
 void LevelEditor::Shutdown()
@@ -142,7 +148,6 @@ AEGfxVertexList* LevelEditor::GetTileMesh(int tileId)
     float v0 = (float)ty / (float)m_tilesetRows;
     float v1 = (float)(ty + 1) / (float)m_tilesetRows;
 
-    // If your tiles appear vertically flipped, swap v0 and v1 below.
     AEGfxMeshStart();
 
     AEGfxTriAdd(
@@ -161,8 +166,86 @@ AEGfxVertexList* LevelEditor::GetTileMesh(int tileId)
     return m_tileMeshes[tileId];
 }
 
+void LevelEditor::HandleFileNameTyping()
+{
+    // A-Z -> a-z
+    for (int key = AEVK_A; key <= AEVK_Z; ++key)
+    {
+        if (AEInputCheckTriggered(key))
+        {
+            char ch = (char)('a' + (key - AEVK_A));
+            saveFileName.push_back(ch);
+        }
+    }
+
+    // 0-9
+    for (int key = AEVK_0; key <= AEVK_9; ++key)
+    {
+        if (AEInputCheckTriggered(key))
+        {
+            char ch = (char)('0' + (key - AEVK_0));
+            saveFileName.push_back(ch);
+        }
+    }
+
+    // Numpad 0-9
+    for (int key = AEVK_NUMPAD0; key <= AEVK_NUMPAD9; ++key)
+    {
+        if (AEInputCheckTriggered(key))
+        {
+            char ch = (char)('0' + (key - AEVK_NUMPAD0));
+            saveFileName.push_back(ch);
+        }
+    }
+
+    // underscore using minus key
+    if (AEInputCheckTriggered(AEVK_MINUS))
+        saveFileName.push_back('_');
+
+    // hyphen using slash key alternative is ugly; easiest is use period for dot if wanted
+    // if you prefer actual '-' instead of '_', replace above with '-'
+
+    // Optional dot
+    if (AEInputCheckTriggered(AEVK_PERIOD))
+        saveFileName.push_back('.');
+
+    // Backspace
+    if (AEInputCheckTriggered(AEVK_BACK) && !saveFileName.empty())
+        saveFileName.pop_back();
+
+    // Enter = confirm
+    if (AEInputCheckTriggered(AEVK_RETURN))
+    {
+        if (saveFileName.empty())
+            saveFileName = "untitled";
+
+        m_isTypingFileName = false;
+    }
+
+    // Escape = cancel and restore old name
+    if (AEInputCheckTriggered(AEVK_ESCAPE))
+    {
+        saveFileName = m_fileNameBeforeTyping;
+        m_isTypingFileName = false;
+    }
+}
+
 void LevelEditor::Update(float /*dt*/)
 {
+    // Enter filename typing mode
+    if (AEInputCheckTriggered(AEVK_F5))
+    {
+        m_isTypingFileName = true;
+        m_fileNameBeforeTyping = saveFileName;
+    }
+
+    // If typing file name, ignore normal editor hotkeys
+    if (m_isTypingFileName)
+    {
+        HandleFileNameTyping();
+        return;
+    }
+
     // Paint
     if (AEInputCheckCurr(AEVK_LBUTTON)) PaintAtMouse(false);
     if (AEInputCheckCurr(AEVK_RBUTTON)) PaintAtMouse(true);
@@ -170,10 +253,27 @@ void LevelEditor::Update(float /*dt*/)
     // Layer switch
     if (AEInputCheckTriggered(AEVK_F1)) m_layer = ActiveLayer::MapLayer;
     if (AEInputCheckTriggered(AEVK_F2)) m_layer = ActiveLayer::RegionLayer;
-    
-    // Save / Load
-    if (AEInputCheckTriggered(AEVK_F3)) m_level.Save(m_path);
-    if (AEInputCheckTriggered(AEVK_F4)) m_level.Load(m_path);
+
+    // Save / Load using current typed file name
+    if (AEInputCheckTriggered(AEVK_F3))
+    {
+        std::string fullName = saveFileName;
+        if (fullName.empty())
+            fullName = "untitled";
+
+        fullName += ".txt";
+        m_level.Save("../../Assets/Levels/" + fullName);
+    }
+
+    if (AEInputCheckTriggered(AEVK_F4))
+    {
+        std::string fullName = saveFileName;
+        if (fullName.empty())
+            fullName = "untitled";
+
+        fullName += ".txt";
+        m_level.Load(fullName);
+    }
 
     // Cycle brush
     if (AEInputCheckTriggered(AEVK_Q))
@@ -181,6 +281,7 @@ void LevelEditor::Update(float /*dt*/)
         if (m_layer == ActiveLayer::MapLayer) CycleMapTile(-1);
         else CycleRegion(-1);
     }
+
     if (AEInputCheckTriggered(AEVK_E))
     {
         if (m_layer == ActiveLayer::MapLayer) CycleMapTile(+1);
@@ -190,7 +291,6 @@ void LevelEditor::Update(float /*dt*/)
 
 void LevelEditor::DrawMapOverlay() const
 {
-    // MapLayer: any non-zero tile is "painted" -> highlight it
     for (int y = 0; y < m_level.height; ++y)
     {
         for (int x = 0; x < m_level.width; ++x)
@@ -198,7 +298,6 @@ void LevelEditor::DrawMapOverlay() const
             int id = m_level.map[m_level.Idx(x, y)];
             if (id == 0) continue;
 
-            // Opacity-only highlight
             m_grid->DrawTileTinted({ x, y }, 1.0f, 1.0f, 1.0f, 1.0f);
         }
     }
@@ -206,9 +305,6 @@ void LevelEditor::DrawMapOverlay() const
 
 void LevelEditor::DrawRegionOverlay() const
 {
-    // NONE = nothing
-    // BUILDABLE = green tint
-    // ENEMYPATH = red tint
     for (int y = 0; y < m_level.height; ++y)
     {
         for (int x = 0; x < m_level.width; ++x)
@@ -216,7 +312,6 @@ void LevelEditor::DrawRegionOverlay() const
             RegionFlag f = (RegionFlag)m_level.region[m_level.Idx(x, y)];
             if (f == RegionFlag::NONE) continue;
 
-            // Opacity-only highlight
             m_grid->DrawTileTinted({ x, y }, 1.0f, 1.0f, 1.0f, 1.0f);
         }
     }
@@ -276,7 +371,6 @@ void LevelEditor::DrawMapTiles(float alphaMul) const
             int id = m_level.map[m_level.Idx(x, y)];
             if (id == 0) continue;
 
-            // Build/reuse the UV mesh for this tile id
             AEGfxVertexList* mesh = const_cast<LevelEditor*>(this)->GetTileMesh(id);
             if (!mesh) continue;
 
@@ -309,17 +403,15 @@ void LevelEditor::Draw()
 
     if (m_layer == ActiveLayer::MapLayer)
     {
-        // Layer 1: draw tiles normally
         DrawMapTiles(1.0f);
     }
     else
     {
-        // Layer 2: dim tiles, then show region numbers
         DrawMapTiles(0.25f);
         DrawRegionNumbers();
     }
 
-    // Hover highlight (still ok)
+    // Hover highlight
     int mx = 0, my = 0;
     AEInputGetCursorPosition(&mx, &my);
     GridSystem::GridCoord c;
@@ -343,12 +435,13 @@ void LevelEditor::DrawUI() const
     // Selected vs unselected colors
     const bool mapSelected = (m_layer == ActiveLayer::MapLayer);
 
-    const float sel = 1.0f;     // bright
-    const float dim = 0.35f;    // darker
-    const float info = 0.65f;   // normal info text
+    const float sel = 1.0f;
+    const float dim = 0.35f;
+    const float info = 0.65f;
+    const float typing = 1.0f;
 
-    const float l1 = mapSelected ? sel : dim; // Layer 1 bright if MapLayer
-    const float l2 = mapSelected ? dim : sel; // Layer 2 bright if RegionLayer
+    const float l1 = mapSelected ? sel : dim;
+    const float l2 = mapSelected ? dim : sel;
 
     auto PrintLine = [&](const char* text, float shade)
         {
@@ -366,11 +459,11 @@ void LevelEditor::DrawUI() const
             py += lineGapPx;
         };
 
-    // --- Layers (highlight which one is active) ---
+    // Layers
     PrintLine("(F1)  Layer 1 : Map", l1);
     PrintLine("(F2)  Layer 2 : Region", l2);
 
-    // --- CURRENT TILE BRUSH (NEW) ---
+    // Current tile brush
     if (m_layer == ActiveLayer::MapLayer)
     {
         char buf[64];
@@ -382,12 +475,34 @@ void LevelEditor::DrawUI() const
         PrintLine(buf, info);
     }
 
-    // --- Controls legend ---
+    // File name display
+    {
+        char fileBuf[256];
+        if (m_isTypingFileName)
+            sprintf_s(fileBuf, "File Name: %s_", saveFileName.c_str());
+        else
+            sprintf_s(fileBuf, "File Name: %s", saveFileName.c_str());
+
+        PrintLine(fileBuf, typing);
+    }
+
+    // Controls
     PrintLine("(Q/E) Cycle brush", info);
     PrintLine("(LMB) Paint", info);
     PrintLine("(RMB) Erase", info);
-    PrintLine("(F3)  Save", info);
-    PrintLine("(F4)  Load", info);
+    PrintLine("(F3)  Save current file", info);
+    PrintLine("(F4)  Load current file", info);
+    PrintLine("(F5)  Edit file name", info);
+
+    if (m_isTypingFileName)
+    {
+        PrintLine("Typing Mode:", typing);
+        PrintLine("  A-Z / 0-9 to type", typing);
+        PrintLine("  Backspace = delete", typing);
+        PrintLine("  Enter = confirm", typing);
+        PrintLine("  Esc = cancel", typing);
+    }
+
     py += 8.0f;
     PrintLine("Region Numbers:", info);
     PrintLine("  0 = NONE", info);
@@ -399,4 +514,3 @@ void LevelEditor::DrawUI() const
     PrintLine("  6 = ENEMYPATH_LEFT", info);
     PrintLine("  7 = ENEMYPATH_RIGHT", info);
 }
-

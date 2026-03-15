@@ -36,7 +36,10 @@ private:
     int m_maxTileId = 9; // you clamp brush 0..9
     std::vector<AEGfxVertexList*> m_tileMeshes; // 0..m_maxTileId
 
-    std::string m_path = "level_01.txt";
+    void HandleFileNameTyping();
+    std::string saveFileName = "level_01";
+    bool m_isTypingFileName = false;
+    std::string m_fileNameBeforeTyping;
 
     void PaintAtMouse(bool erase);
     void DrawRegionOverlay() const;
