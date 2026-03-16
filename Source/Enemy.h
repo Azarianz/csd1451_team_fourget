@@ -30,6 +30,7 @@ struct Enemy : public GameObject
 
     // Functions
     void Init(float sizeX, float sizeY, Color c, float _hp, float _damage, float _speed);
+    void Scale(int waveNumber);
     void Update(float dt, const std::vector<Point>& path);
 
     // Helper to set static sprite data
@@ -66,6 +67,7 @@ struct WaveManager {
     bool waveComplete = true;
 
     bool LoadFromFile(const std::string& filename);
+    bool LoadLevel(int levelNumber);
     Enemy* UpdateAndSpawn(float dt, const std::vector<Point>& path);
     int GetCurrentWaveNumber() const { return currentWaveIndex + 1; }
     int GetTotalWaves() const { return (int)waves.size(); }

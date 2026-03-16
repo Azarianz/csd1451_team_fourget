@@ -4,6 +4,7 @@
 #include "AEMath.h"
 #include <cmath> // For sqrtf
 #include <fstream>
+#include <string>
 
 // --- Sprite Sheet Cache ---
 static AEGfxTexture* g_EnemySpriteSheet = nullptr;
@@ -14,14 +15,18 @@ static AEGfxVertexList* g_FrameMeshes[SHEET_ROWS][SHEET_COLS] = { nullptr };
 // Helper to load the sheet and build UV meshes
 static AEGfxVertexList* GetEnemyFrameMesh(int col, int row)
 {
+    // Check if sprite sheet loaded
     if (!g_EnemySpriteSheet) {
         g_EnemySpriteSheet = AEGfxTextureLoad("Assets/spritesheet.png");
     }
 
     if (g_FrameMeshes[row][col]) return g_FrameMeshes[row][col];
 
+    // Invert row index
     int ty = (SHEET_ROWS - 1) - row;
+    // Calculates the left U texture coordinate
     float u0 = (float)col / (float)SHEET_COLS;
+    // Calculates the right U texture coordinate
     float u1 = (float)(col + 1) / (float)SHEET_COLS;
     float v0 = (float)ty / (float)SHEET_ROWS;
     float v1 = (float)(ty + 1) / (float)SHEET_ROWS;
@@ -38,6 +43,7 @@ static AEGfxVertexList* GetEnemyFrameMesh(int col, int row)
         -0.5f, 0.5f, 0xFFFFFFFF, u0, v0
     );
 
+    // Finalise mesh generation
     g_FrameMeshes[row][col] = AEGfxMeshEnd();
     return g_FrameMeshes[row][col];
 }
@@ -72,6 +78,18 @@ void Enemy::SetSprite(int row, int col)
     spriteCol = col;
 }
 
+void Enemy::Scale(int waveNumber)
+{
+    int scaleTier = (waveNumber - 1) / 5;
+
+    float hpMultiplier = 1.0f + (scaleTier * 0.15f);
+    float dmgMultiplier = 1.0f + (scaleTier * 0.05f);
+
+    maxhealth *= hpMultiplier;
+    health = maxhealth;
+    damage *= dmgMultiplier;
+}
+
 void Enemy::Update(float dt, const std::vector<Point>& path)
 {
     // Tick slow timer
@@ -84,18 +102,21 @@ void Enemy::Update(float dt, const std::vector<Point>& path)
             slowMultiplier = 1.0f; // slow expired
         }
     }
-
+    // Check for path
     if (path.empty() || reachedEnd) return;
+    // Check if path is beyond available path points
     if (pathIndex >= (int)path.size()) {
         reachedEnd = true;
         return;
     }
 
+    // Retrieve the coordinates of the current target waypoint
     Point target = path[pathIndex];
     float dx = target.x - x;
     float dy = target.y - y;
     float distSq = dx * dx + dy * dy;
 
+    // Check if the enemy is further than 5 units away from the waypoint
     if (distSq > 25.0f)
     {
         float dist = sqrtf(distSq);
@@ -186,19 +207,19 @@ void Enemy::Draw()
 
 void Zombie::Init()
 {
-    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 100.0f, 10.0f, 150.0f);
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 50.0f, 10.0f, 150.0f);
     SetSprite(1, 11);
 }
 
 void Skeleton::Init()
 {
-    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 60.0f, 5.0f, 250.0f);
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 30.0f, 5.0f, 250.0f);
     SetSprite(1, 5);
 }
 
 void Troll::Init()
 {
-    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 300.0f, 15.0f, 100.0f);
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 150.0f, 15.0f, 100.0f);
     SetSprite(1, 3);
 }
 
@@ -215,6 +236,12 @@ void Titan::Init()
 }
 
 // --- Wave System Implementation ---
+
+bool WaveManager::LoadLevel(int levelNumber)
+{
+    std::string filename = "Assets/wave" + std::to_string(levelNumber) + ".txt";
+    return LoadFromFile(filename);
+}
 
 bool WaveManager::LoadFromFile(const std::string& filename)
 {
@@ -260,6 +287,8 @@ Enemy* WaveManager::UpdateAndSpawn(float dt, const std::vector<Point>& path)
 
         e->x = path[0].x;
         e->y = path[0].y;
+
+        e->Scale(currentWaveIndex + 1);
 
         if (spawnedInCurrentWave >= currentWave.count) {
             currentWaveIndex++;
