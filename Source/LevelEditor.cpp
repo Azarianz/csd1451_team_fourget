@@ -356,6 +356,45 @@ void LevelEditor::DrawRegionNumbers() const
     }
 }
 
+void LevelEditor::DrawBrushPreview(float px, float py, float sizePx) const
+{
+    if (!m_tilesetTex || m_currentTileId <= 0 || !m_grid)
+        return;
+
+    AEGfxVertexList* mesh = const_cast<LevelEditor*>(this)->GetTileMesh(m_currentTileId);
+    if (!mesh)
+        return;
+
+    // Convert screen pixel position (top-left origin) to world position
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    // px, py is top-left of preview box, so move to center
+    float centerX = px + sizePx * 0.5f;
+    float centerY = py + sizePx * 0.5f;
+
+    float worldX = centerX - screenW * 0.5f;
+    float worldY = screenH * 0.5f - centerY;
+
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxTextureSet(m_tilesetTex, 0, 0);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetColorToAdd(0, 0, 0, 0);
+    AEGfxSetColorToMultiply(1, 1, 1, 1);
+    AEGfxSetTransparency(1.0f);
+
+    AEMtx33 scale, trans, m;
+    AEMtx33Scale(&scale, sizePx, sizePx);
+    AEMtx33Trans(&trans, worldX, worldY);
+    AEMtx33Concat(&m, &trans, &scale);
+
+    AEGfxSetTransform(m.m);
+    AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
+
+    // Optional border/backdrop
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+}
+
 void LevelEditor::DrawMapTiles(float alphaMul) const
 {
     if (!m_tilesetTex || !m_grid) return;
@@ -468,6 +507,8 @@ void LevelEditor::DrawUI() const
     // Current tile brush
     if (m_layer == ActiveLayer::MapLayer)
     {
+        float brushLineY = py;
+
         char buf[64];
         if (m_currentTileId == 0)
             sprintf_s(buf, "Brush (Tile): EMPTY");
@@ -475,6 +516,21 @@ void LevelEditor::DrawUI() const
             sprintf_s(buf, "Brush (Tile): %d", m_currentTileId);
 
         PrintLine(buf, info);
+
+        if (m_currentTileId > 0)
+        {
+            const float uiScale = 1.0f;
+            const float charWidthPx = 20.0f * uiScale;
+            const float textWidthPx = (float)std::strlen(buf) * charWidthPx;
+
+            const float previewGap = 10.0f;
+            const float previewSize = 18.0f;
+
+            const float previewX = px + textWidthPx + previewGap;
+            const float previewY = brushLineY + 3.0f;
+
+            DrawBrushPreview(previewX, previewY, previewSize);
+        }
     }
 
     // File name display

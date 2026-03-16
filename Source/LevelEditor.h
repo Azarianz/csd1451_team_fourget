@@ -52,4 +52,5 @@ private:
     AEGfxVertexList* GetTileMesh(int tileId);
     void DrawMapTiles(float alphaMul) const;
     void DrawRegionNumbers() const;
+    void DrawBrushPreview(float px, float py, float sizePx) const;
 };
