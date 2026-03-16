@@ -198,14 +198,11 @@ void LevelEditor::HandleFileNameTyping()
         }
     }
 
-    // underscore using minus key
+    // underscore
     if (AEInputCheckTriggered(AEVK_MINUS))
         saveFileName.push_back('_');
 
-    // hyphen using slash key alternative is ugly; easiest is use period for dot if wanted
-    // if you prefer actual '-' instead of '_', replace above with '-'
-
-    // Optional dot
+    // optional dot
     if (AEInputCheckTriggered(AEVK_PERIOD))
         saveFileName.push_back('.');
 
@@ -255,24 +252,29 @@ void LevelEditor::Update(float /*dt*/)
     if (AEInputCheckTriggered(AEVK_F2)) m_layer = ActiveLayer::RegionLayer;
 
     // Save / Load using current typed file name
+    std::string fullName = saveFileName;
+    if (fullName.empty())
+        fullName = "untitled";
+
+    if (fullName.find(".txt") == std::string::npos)
+        fullName += ".txt";
+
+    std::string fullPath = "../../Assets/Levels/" + fullName;
+
     if (AEInputCheckTriggered(AEVK_F3))
     {
-        std::string fullName = saveFileName;
-        if (fullName.empty())
-            fullName = "untitled";
-
-        fullName += ".txt";
-        m_level.Save("../../Assets/Levels/" + fullName);
+        if (m_level.Save(fullPath))
+            PRINT("Saved level: %s\n", fullPath.c_str());
+        else
+            PRINT("Failed to save level: %s\n", fullPath.c_str());
     }
 
     if (AEInputCheckTriggered(AEVK_F4))
     {
-        std::string fullName = saveFileName;
-        if (fullName.empty())
-            fullName = "untitled";
-
-        fullName += ".txt";
-        m_level.Load("../../Assets/Levels/" + fullName);
+        if (m_level.Load(fullPath))
+            PRINT("Loaded level: %s\n", fullPath.c_str());
+        else
+            PRINT("Failed to load level: %s\n", fullPath.c_str());
     }
 
     // Cycle brush
