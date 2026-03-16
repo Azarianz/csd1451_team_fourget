@@ -20,7 +20,7 @@ public:
     bool InBounds(int x, int y) const { return x >= 0 && y >= 0 && x < width && y < height; }
 
 public:
-    bool Init(int levelIndex);
+    bool Init(const char* levelPath);
     bool IsValid() const;
 
     bool LoadFromText(const char* path);

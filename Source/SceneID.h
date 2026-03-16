@@ -12,4 +12,5 @@ enum class SceneID
 	LoadLevel,
     Prototype,
     Settings,
+    LevelSelect,
 };

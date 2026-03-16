@@ -111,6 +111,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine\lib\fmod.dll" "$(OutDir)" /s /r /y /q</C
     <ClCompile Include="..\Source\SceneManager.cpp" />
     <ClCompile Include="..\Source\Scene_EnemyTest -.cpp" />
     <ClCompile Include="..\Source\Scene_LevelEditor.cpp" />
+    <ClCompile Include="..\Source\Scene_LevelSelect.cpp" />
     <ClCompile Include="..\Source\Scene_MainMenu.cpp" />
     <ClCompile Include="..\Source\Scene_Prototype.cpp" />
     <ClCompile Include="..\Source\Scene_Settings.cpp" />
@@ -137,6 +138,7 @@ xcopy "$(SolutionDir)Extern\AlphaEngine\lib\fmod.dll" "$(OutDir)" /s /r /y /q</C
     <ClInclude Include="..\Source\SceneManager.h" />
     <ClInclude Include="..\Source\Scene_EnemyTest.h" />
     <ClInclude Include="..\Source\Scene_LevelEditor.h" />
+    <ClInclude Include="..\Source\Scene_LevelSelect.h" />
     <ClInclude Include="..\Source\Scene_MainMenu.h" />
     <ClInclude Include="..\Source\Scene_Prototype.h" />
     <ClInclude Include="..\Source\Scene_Settings.h" />

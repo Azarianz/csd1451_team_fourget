@@ -10,7 +10,13 @@ public:
     void Exit()   override;
 
 private:
-    enum class MenuOption { Play = 0, Settings, Quit };
+    enum class MenuOption
+    {
+        Play,
+        LevelSelect,
+        Settings,
+        Quit
+    };
 
     MenuOption selectedOption = MenuOption::Play;
     int        m_uiFont = -1;
@@ -22,6 +28,7 @@ private:
     void HandlePlay();
     void HandleSettings();
     void HandleQuit();
+    void HandleLevelSelect();
 
     void DrawUI() const;
     void UpdateMouseInput();
@@ -35,4 +42,5 @@ private:
     ButtonRect GetPlayButtonRect()     const;
     ButtonRect GetSettingsButtonRect() const;
     ButtonRect GetQuitButtonRect()     const;
+    ButtonRect GetLevelSelectButtonRect() const;
 };

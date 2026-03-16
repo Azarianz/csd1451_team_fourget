@@ -272,7 +272,7 @@ void LevelEditor::Update(float /*dt*/)
             fullName = "untitled";
 
         fullName += ".txt";
-        m_level.Load(fullName);
+        m_level.Load("../../Assets/Levels/" + fullName);
     }
 
     // Cycle brush

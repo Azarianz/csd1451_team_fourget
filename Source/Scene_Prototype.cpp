@@ -26,8 +26,24 @@ void Scene_Prototype::DestroyGrid()
 // --------------------------------------------------------
 bool Scene_Prototype::InitLevelAndGrid()
 {
-    if (!level.Init(levelIndex))
+    //Load Level File
+    levelFile = GameSettings::selectedLevelFile;
+
+    PRINT("Prototype received level file: %s\n", levelFile.c_str());
+
+    if (levelFile.empty())
+    {
+        PRINT("Level file empty, defaulting to ../../Assets/Levels/level_01.txt\n");
+        levelFile = "../../Assets/Levels/level_01.txt";
+    }
+
+    PRINT("Loading level file: %s\n", levelFile.c_str());
+
+    if (!level.Init(levelFile.c_str()))
+    {
+        PRINT("FAILED to load level: %s\n", levelFile.c_str());
         return false;
+    }
 
     occupied.assign((size_t)level.width * (size_t)level.height, 0);
 

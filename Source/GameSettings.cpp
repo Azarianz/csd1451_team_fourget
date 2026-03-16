@@ -9,8 +9,10 @@ namespace GameSettings
     };
     const int RESOLUTION_COUNT = 3;
 
-    int  resolutionIndex = 1;    // default: 1600x900
-    int  masterVolume = 80;   // 0-100
+    int  resolutionIndex = 1;
+    int  masterVolume = 80;
     bool pendingRestart = false;
     bool quitGame = false;
+
+    std::string selectedLevelFile = "";
 }

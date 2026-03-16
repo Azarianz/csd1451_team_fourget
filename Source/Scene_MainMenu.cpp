@@ -49,6 +49,7 @@ void Scene_MainMenu::UpdateMouseInput()
     AEInputGetCursorPosition(&mouseX, &mouseY);
 
     ButtonRect play = GetPlayButtonRect();
+    ButtonRect levelSelect = GetLevelSelectButtonRect();
     ButtonRect settings = GetSettingsButtonRect();
     ButtonRect quit = GetQuitButtonRect();
 
@@ -59,10 +60,19 @@ void Scene_MainMenu::UpdateMouseInput()
         if (AEInputCheckTriggered(AEVK_LBUTTON))
             HandlePlay();
     }
+    else if (IsPointInRect((float)mouseX, (float)mouseY, levelSelect.x, levelSelect.y, levelSelect.w, levelSelect.h))
+    {
+        selectedOption = MenuOption::LevelSelect;
+
+        if (AEInputCheckTriggered(AEVK_LBUTTON))
+            HandleLevelSelect();
+    }
     else if (IsPointInRect((float)mouseX, (float)mouseY, settings.x, settings.y, settings.w, settings.h))
     {
         selectedOption = MenuOption::Settings;
-        if (AEInputCheckTriggered(AEVK_LBUTTON)) HandleSettings();
+
+        if (AEInputCheckTriggered(AEVK_LBUTTON))
+            HandleSettings();
     }
     else if (IsPointInRect((float)mouseX, (float)mouseY, quit.x, quit.y, quit.w, quit.h))
     {
@@ -92,9 +102,10 @@ void Scene_MainMenu::MoveUp()
 {
     switch (selectedOption)
     {
-        case MenuOption::Play:     selectedOption = MenuOption::Quit;     break;
-        case MenuOption::Settings: selectedOption = MenuOption::Play;     break;
-        case MenuOption::Quit:     selectedOption = MenuOption::Settings; break;
+    case MenuOption::Play:        selectedOption = MenuOption::Quit;        break;
+    case MenuOption::LevelSelect: selectedOption = MenuOption::Play;        break;
+    case MenuOption::Settings:    selectedOption = MenuOption::LevelSelect; break;
+    case MenuOption::Quit:        selectedOption = MenuOption::Settings;    break;
     }
 }
 
@@ -102,9 +113,10 @@ void Scene_MainMenu::MoveDown()
 {
     switch (selectedOption)
     {
-        case MenuOption::Play:     selectedOption = MenuOption::Settings; break;
-        case MenuOption::Settings: selectedOption = MenuOption::Quit;     break;
-        case MenuOption::Quit:     selectedOption = MenuOption::Play;     break;
+    case MenuOption::Play:        selectedOption = MenuOption::LevelSelect; break;
+    case MenuOption::LevelSelect: selectedOption = MenuOption::Settings;    break;
+    case MenuOption::Settings:    selectedOption = MenuOption::Quit;        break;
+    case MenuOption::Quit:        selectedOption = MenuOption::Play;        break;
     }
 }
 
@@ -115,13 +127,15 @@ void Scene_MainMenu::ConfirmSelection()
     case MenuOption::Play:
         HandlePlay();
         break;
+    case MenuOption::LevelSelect:
+        HandleLevelSelect();
+        break;
     case MenuOption::Settings:
         HandleSettings();
         break;
     case MenuOption::Quit:
         HandleQuit();
         break;
-
     default:
         break;
     }
@@ -130,6 +144,11 @@ void Scene_MainMenu::ConfirmSelection()
 void Scene_MainMenu::HandlePlay()
 {
     SceneManager::I().SwitchTo(SceneID::Prototype);
+}
+
+void Scene_MainMenu::HandleLevelSelect()
+{
+    SceneManager::I().SwitchTo(SceneID::LevelSelect);
 }
 
 void Scene_MainMenu::HandleSettings()
@@ -174,12 +193,21 @@ Scene_MainMenu::ButtonRect Scene_MainMenu::GetPlayButtonRect() const
     return r;
 }
 
-Scene_MainMenu::ButtonRect Scene_MainMenu::GetSettingsButtonRect() const
+Scene_MainMenu::ButtonRect Scene_MainMenu::GetLevelSelectButtonRect() const
 {
     ButtonRect play = GetPlayButtonRect();
     ButtonRect r{ 0, 0, 220.0f, 42.0f };
     r.x = play.x;
-    r.y = play.y + 50.0f;   // one row below Play
+    r.y = play.y + 50.0f; // one row below Play
+    return r;
+}
+
+Scene_MainMenu::ButtonRect Scene_MainMenu::GetSettingsButtonRect() const
+{
+    ButtonRect levelSelect = GetLevelSelectButtonRect();
+    ButtonRect r{ 0, 0, 220.0f, 42.0f };
+    r.x = levelSelect.x;
+    r.y = levelSelect.y + 50.0f; // one row below Level Select
     return r;
 }
 
@@ -201,9 +229,10 @@ void Scene_MainMenu::DrawUI() const
 
     const float titleY = screenH * 0.28f;
     const float playY = screenH * 0.42f;
-    const float settingsY = playY + 50.0f;
+    const float levelSelectY = playY + 50.0f;
+    const float settingsY = levelSelectY + 50.0f;
     const float quitY = settingsY + 50.0f;
-    const float controlsY = screenH * 0.60f;
+    const float controlsY = screenH * 0.68f;
 
     const float bright = 1.0f;
     const float dim = 0.35f;
@@ -227,15 +256,20 @@ void Scene_MainMenu::DrawUI() const
 
     // Buttons
     const char* playText = "PLAY";
+    const char* levelSelectText = "LEVEL SELECT";
     const char* settingsText = "SETTINGS";
     const char* quitText = "QUIT";
 
     float playX = GetCenteredX(playText, 1.0f);
+    float levelSelectX = GetCenteredX(levelSelectText, 1.0f);
     float settingsX = GetCenteredX(settingsText, 1.0f);
     float quitX = GetCenteredX(quitText, 1.0f);
 
     Print(playText, playX, playY,
         selectedOption == MenuOption::Play ? bright : dim, 1.0f);
+
+    Print(levelSelectText, levelSelectX, levelSelectY,
+        selectedOption == MenuOption::LevelSelect ? bright : dim, 1.0f);
 
     Print(settingsText, settingsX, settingsY,
         selectedOption == MenuOption::Settings ? bright : dim, 1.0f);
@@ -247,6 +281,8 @@ void Scene_MainMenu::DrawUI() const
     const float arrowOffset = 34.0f;
     if (selectedOption == MenuOption::Play)
         Print(">", playX - arrowOffset, playY, bright, 1.0f);
+    else if (selectedOption == MenuOption::LevelSelect)
+        Print(">", levelSelectX - arrowOffset, levelSelectY, bright, 1.0f);
     else if (selectedOption == MenuOption::Settings)
         Print(">", settingsX - arrowOffset, settingsY, bright, 1.0f);
     else
@@ -260,7 +296,6 @@ void Scene_MainMenu::DrawUI() const
     const char* line1 = "W / UP    - Move";
     const char* line2 = "S / DOWN  - Move";
     const char* line3 = "ENTER     - Select";
-    //const char* line4 = "ESC       - Quit";
 
     float y = controlsY + 35.0f;
     Print(line1, GetCenteredX(line1, 0.8f), y, info, 0.8f);
@@ -270,7 +305,4 @@ void Scene_MainMenu::DrawUI() const
 
     y += 28.0f;
     Print(line3, GetCenteredX(line3, 0.8f), y, info, 0.8f);
-
-    //y += 28.0f;
-    //Print(line4, GetCenteredX(line4, 0.8f), y, info, 0.8f);
 }

@@ -10,11 +10,12 @@
 
 #include <vector>
 #include <cstdint>
+#include <string>
 
 class Scene_Prototype : public Scene
 {
 public:
-    void SetLevelIndex(int idx) { levelIndex = idx; }
+    void SetLevelFile(const std::string& file) { levelFile = file; }
 
     void Init() override;
     void Update(float dt) override;
@@ -37,7 +38,7 @@ private:
     void UpdateReturningTowers(float dt);
 
 private:
-    int levelIndex = 1;
+    std::string levelFile;
     LevelLoader level;
     GridSystem::Grid* grid = nullptr;
 

@@ -3,15 +3,13 @@
 #include <string>
 #include <cstdio>
 
-bool LevelLoader::Init(int levelIndex)
+bool LevelLoader::Init(const char* levelPath)
 {
-    char levelPath[128] = {};
-    sprintf_s(levelPath, "Assets/Levels/level_%02d.txt", levelIndex);
-
     Shutdown();
 
     if (!LoadFromText(levelPath))
     {
+        PRINT("Loading level file: %s\n", levelPath);
         PRINT("FAILED to load level: %s\n", levelPath);
         return false;
     }

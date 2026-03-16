@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdio>
+#include <string>
 
 namespace GameSettings
 {
@@ -12,6 +13,8 @@ namespace GameSettings
     extern int  masterVolume;
     extern bool pendingRestart;
     extern bool quitGame;
+
+    extern std::string selectedLevelFile;
 
     inline void Save()
     {
@@ -29,7 +32,7 @@ namespace GameSettings
         if (!f) return;
         fscanf_s(f, "%d\n%d\n", &resolutionIndex, &masterVolume);
         fclose(f);
-        // clamp in case file is corrupt
+
         if (resolutionIndex < 0 || resolutionIndex >= RESOLUTION_COUNT) resolutionIndex = 1;
         if (masterVolume < 0 || masterVolume > 100) masterVolume = 80;
     }
