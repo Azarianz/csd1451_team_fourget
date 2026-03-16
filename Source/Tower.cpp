@@ -593,4 +593,73 @@ namespace TowerHandler {
         float sqrRadius = (r1 + r2) * (r1 + r2);
         return sqrDist <= sqrRadius;
     }
+
+    // ============================================================
+    //  Aza Refactor Additions (Below Onwards)
+    // ============================================================
+    void TowerHandler::UpdateTowerLogic(float dt,
+        std::vector<Tower>& towers,
+        std::vector<Enemy*>& enemies,
+        std::vector<ActiveBullet>& activeBullets)
+    {
+        for (auto& t : towers)
+        {
+            if (t.details.fireTimer > 0.0f)
+            {
+                t.details.fireTimer -= dt;
+                if (t.details.fireTimer < 0.0f)
+                    t.details.fireTimer = 0.0f;
+            }
+        }
+
+        for (auto& t : towers)
+        {
+            if (t.isDragging || t.IsBaseTower())
+                continue;
+
+            if (t.details.towerType == TowerHandler::SLOW_TOWER)
+            {
+                TowerHandler::SlowTowerAttack(t, enemies);
+                continue;
+            }
+
+            for (Enemy* e : enemies)
+            {
+                if (!e || e->health <= 0.0f)
+                    continue;
+
+                if (TowerHandler::TowerShoot(t, *e, activeBullets))
+                    break;
+            }
+        }
+
+        TowerHandler::UpdateProjectiles(dt, enemies, activeBullets);
+
+        for (Enemy* e : enemies)
+        {
+            if (!e || e->health <= 0.0f)
+            {
+                for (auto& b : activeBullets)
+                {
+                    if (b.target == e)
+                        b.target = nullptr;
+                }
+            }
+        }
+    }
+
+    int TowerHandler::AddBaseTower(std::vector<Tower>& towers, float x, float y, float sizeX, float sizeY)
+    {
+        ShopTower baseShop;
+        baseShop.ShopTowerInit(x, y, sizeX, sizeY, BASE_TOWER);
+
+        Tower baseTower;
+        baseTower.TowerInit(x, y, sizeX, sizeY, baseShop);
+        baseTower.isDragging = false;
+        baseTower.isSelected = false;
+        baseTower.isPlaced = true;
+
+        towers.push_back(baseTower);
+        return (int)towers.size() - 1;
+    }
 }

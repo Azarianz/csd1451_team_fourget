@@ -4,7 +4,6 @@
 // Include your scene scripts here:
 #include "Scene_TowerTest.h"
 #include "Scene_LevelEditor.h"
-#include "Scene_Level1.h"
 #include "Scene_ShopTest.h"
 #include "Scene_EnemyTest.h"
 #include "Scene_LoadLevel.h"
@@ -72,7 +71,6 @@ Scene* SceneManager::CreateScene(SceneID id)
         case SceneID::Settings:    return new Scene_Settings();
         case SceneID::LevelEditor:  return new Scene_LevelEditor();
 	    case SceneID::LoadLevel:    return new Scene_LoadLevel();
-        case SceneID::Level1:       return new Scene_Level1();
         case SceneID::ShopTest:     return new Scene_ShopTest();
         case SceneID::TowerTest:    return new Scene_TowerTest();
         case SceneID::EnemyTest:    return new Scene_Enemy();

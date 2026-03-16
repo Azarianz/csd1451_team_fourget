@@ -2,292 +2,40 @@
 
 #include "AEEngine.h"
 #include "AEInput.h"
-#include "Utility.h"   // IMPORTANT (for GetWorldMousePos)
-#include "LevelData.h"
-#include <cstdio>
-#include <cmath>
-#include <algorithm>
+#include "Utility.h"
 
-#pragma region Drag helpers
-int Scene_Prototype::FindDraggedTowerIndex() const
+#pragma region Helper Funcs
+// --------------------------------------------------------
+//  DestroyGrid
+//  Safely destroys the current grid instance and clears pointer.
+// --------------------------------------------------------
+void Scene_Prototype::DestroyGrid()
 {
-    for (int i = (int)activeTowers.size() - 1; i >= 0; --i)
-        if (activeTowers[i].isDragging)
-            return i;
-    return -1;
-}
-
-bool Scene_Prototype::IsDraggingTower() const
-{
-    return FindDraggedTowerIndex() >= 0;
-}
-#pragma endregion
-
-#pragma region Selection helpers
-void Scene_Prototype::ClearTowerSelection()
-{
-    for (auto& t : activeTowers)
-        t.isSelected = false;
-}
-
-int Scene_Prototype::FindPlacedTowerAtMouse(float worldX, float worldY) const
-{
-    // check from top-most drawn tower backwards
-    for (int i = (int)activeTowers.size() - 1; i >= 0; --i)
-    {
-        const auto& t = activeTowers[(size_t)i];
-
-        // only selectable once placed
-        if (t.isDragging)
-            continue;
-
-        // simple box hit test around tower center
-        const float halfW = t._sizeX * 0.5f;
-        const float halfH = t._sizeY * 0.5f;
-
-        if (worldX >= t.x - halfW && worldX <= t.x + halfW &&
-            worldY >= t.y - halfH && worldY <= t.y + halfH)
-        {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-void Scene_Prototype::HandleTowerSelection(float worldX, float worldY, bool justPressedLmb)
-{
-    if (!justPressedLmb)
-        return;
-
-    // don't select placed towers while we are currently placing a new one
-    if (IsDraggingTower())
-        return;
-
-    int hitIndex = FindPlacedTowerAtMouse(worldX, worldY);
-
-    ClearTowerSelection();
-
-    if (hitIndex >= 0)
-        activeTowers[(size_t)hitIndex].isSelected = true;
-}
-#pragma endregion
-
-#pragma region Merge helpers
-void Scene_Prototype::RebuildOccupiedFromTowers()
-{
-    const size_t expected = (size_t)level.width * (size_t)level.height;
-    occupied.assign(expected, 0);
-
-    for (const auto& t : activeTowers)
-    {
-        GridSystem::GridCoord c;
-        if (GetTowerCell(t, c) && InBounds(c.x, c.y))
-        {
-            occupied[Idx(c.x, c.y)] = 1;
-        }
-    }
-}
-
-bool Scene_Prototype::GetTowerCell(const TowerHandler::Tower& t, GridSystem::GridCoord& outCell) const
-{
-    if (!grid) return false;
-
-    const float screenW = (float)AEGfxGetWindowWidth();
-    const float screenH = (float)AEGfxGetWindowHeight();
-
-    // convert tower world position back to screen pixels
-    int mouseX = (int)(t.x + screenW * 0.5f);
-    int mouseY = (int)(screenH * 0.5f - t.y);
-
-    return grid->ScreenToGrid(mouseX, mouseY, outCell);
-}
-
-int Scene_Prototype::FindTowerIndexAtCell(int x, int y) const
-{
-    for (int i = 0; i < (int)activeTowers.size(); ++i)
-    {
-        GridSystem::GridCoord c;
-        if (GetTowerCell(activeTowers[i], c) && c.x == x && c.y == y)
-            return i;
-    }
-    return -1;
-}
-
-bool Scene_Prototype::TowerMatchesAtCell(int x, int y, TowerHandler::TowerType type, int towerLevel) const
-{
-    if (!InBounds(x, y))
-        return false;
-
-    int idx = FindTowerIndexAtCell(x, y);
-    if (idx < 0)
-        return false;
-
-    const TowerHandler::Tower& t = activeTowers[(size_t)idx];
-    return t.details.towerType == type && t.details.level == towerLevel;
-}
-
-bool Scene_Prototype::TryMergeAtCell(int placedX, int placedY)
-{
-    int centerIndex = FindTowerIndexAtCell(placedX, placedY);
-    if (centerIndex < 0)
-        return false;
-
-    TowerHandler::TowerType type = activeTowers[(size_t)centerIndex].details.towerType;
-    int towerLevel = activeTowers[(size_t)centerIndex].details.level;
-
-    std::vector<GridSystem::GridCoord> mergeCells;
-
-    if (type == TowerHandler::BASE_TOWER)
-        return false;
-
-    // Horizontal: placed tower in middle
-    if (TowerMatchesAtCell(placedX - 1, placedY, type, towerLevel) &&
-        TowerMatchesAtCell(placedX + 1, placedY, type, towerLevel))
-    {
-        mergeCells.push_back({ placedX - 1, placedY });
-        mergeCells.push_back({ placedX,     placedY });
-        mergeCells.push_back({ placedX + 1, placedY });
-    }
-    // Horizontal: placed tower at right end
-    else if (TowerMatchesAtCell(placedX - 2, placedY, type, towerLevel) &&
-        TowerMatchesAtCell(placedX - 1, placedY, type, towerLevel))
-    {
-        mergeCells.push_back({ placedX - 2, placedY });
-        mergeCells.push_back({ placedX - 1, placedY });
-        mergeCells.push_back({ placedX,     placedY });
-    }
-    // Horizontal: placed tower at left end
-    else if (TowerMatchesAtCell(placedX + 1, placedY, type, towerLevel) &&
-        TowerMatchesAtCell(placedX + 2, placedY, type, towerLevel))
-    {
-        mergeCells.push_back({ placedX,     placedY });
-        mergeCells.push_back({ placedX + 1, placedY });
-        mergeCells.push_back({ placedX + 2, placedY });
-    }
-
-    // Vertical only if no horizontal merge found
-    if (mergeCells.empty())
-    {
-        // Vertical: placed tower in middle
-        if (TowerMatchesAtCell(placedX, placedY - 1, type, towerLevel) &&
-            TowerMatchesAtCell(placedX, placedY + 1, type, towerLevel))
-        {
-            mergeCells.push_back({ placedX, placedY - 1 });
-            mergeCells.push_back({ placedX, placedY });
-            mergeCells.push_back({ placedX, placedY + 1 });
-        }
-        // Vertical: placed tower at bottom end
-        else if (TowerMatchesAtCell(placedX, placedY - 2, type, towerLevel) &&
-            TowerMatchesAtCell(placedX, placedY - 1, type, towerLevel))
-        {
-            mergeCells.push_back({ placedX, placedY - 2 });
-            mergeCells.push_back({ placedX, placedY - 1 });
-            mergeCells.push_back({ placedX, placedY });
-        }
-        // Vertical: placed tower at top end
-        else if (TowerMatchesAtCell(placedX, placedY + 1, type, towerLevel) &&
-            TowerMatchesAtCell(placedX, placedY + 2, type, towerLevel))
-        {
-            mergeCells.push_back({ placedX, placedY });
-            mergeCells.push_back({ placedX, placedY + 1 });
-            mergeCells.push_back({ placedX, placedY + 2 });
-        }
-    }
-
-    if (mergeCells.size() != 3)
-        return false;
-
-    std::vector<int> toRemove;
-    for (const auto& cell : mergeCells)
-    {
-        if (cell.x == placedX && cell.y == placedY)
-            continue;
-
-        int idx = FindTowerIndexAtCell(cell.x, cell.y);
-        if (idx >= 0)
-            toRemove.push_back(idx);
-    }
-
-    activeTowers[(size_t)centerIndex].LevelUp();
-
-    std::sort(toRemove.begin(), toRemove.end());
-    toRemove.erase(std::unique(toRemove.begin(), toRemove.end()), toRemove.end());
-
-    for (int i = (int)toRemove.size() - 1; i >= 0; --i)
-    {
-        int idx = toRemove[(size_t)i];
-
-        if (idx < centerIndex)
-            --centerIndex;
-
-        RemoveTowerAtIndex(idx);
-    }
-
-    return true;
-}
-
-void Scene_Prototype::RemoveTowerAtIndex(int idx)
-{
-    if (idx < 0 || idx >= (int)activeTowers.size())
-        return;
-
-    TowerHandler::Tower& t = activeTowers[(size_t)idx];
-
-    // Remove retained sprite from Graphics scene graph
-    if (t.spriteId != 0)
-    {
-        Graphics::Destroy(t.spriteId);
-        t.spriteId = 0;
-    }
-
-    // Cleanup any mesh owned by the tower itself
-    t.Destroy();
-
-    activeTowers.erase(activeTowers.begin() + idx);
-
-    // clear bullets fired before tower got removed/merged
-    activeBullets.clear();
-}
-#pragma endregion
-
-#pragma region Level loading
-bool Scene_Prototype::LoadLevel(int idx)
-{
-    sprintf_s(levelPath, "Assets/Levels/level_%02d.txt", idx);
-
     if (grid)
     {
         grid->Destroy();
         delete grid;
         grid = nullptr;
     }
-    level.Shutdown();
+}
 
-    if (!level.LoadFromText(levelPath))
-    {
-        PRINT("FAILED to load level: %s\n", levelPath);
+// --------------------------------------------------------
+//  InitLevelAndGrid
+//  Loads the level data, creates the grid system, and builds
+//  the enemy path used for navigation.
+// --------------------------------------------------------
+bool Scene_Prototype::InitLevelAndGrid()
+{
+    if (!level.Init(levelIndex))
         return false;
-    }
 
-    const size_t expected = (size_t)level.width * (size_t)level.height;
-    if (expected == 0 ||
-        level.map.size() != expected ||
-        level.region.size() != expected)
-    {
-        PRINT("LEVEL DATA SIZE MISMATCH! w=%d h=%d expected=%zu map=%zu region=%zu\n",
-            level.width, level.height,
-            expected, level.map.size(), level.region.size());
-        return false;
-    }
-
-    occupied.assign(expected, 0);
+    occupied.assign((size_t)level.width * (size_t)level.height, 0);
 
     grid = new GridSystem::Grid(level.width, level.height, 1.0f);
     grid->Init();
 
     path.clear();
-    if (!BuildPathFromRegionScan())
+    if (!level.BuildPath(*grid, path))
     {
         PRINT("FAILED to build enemy path from region flags.\n");
         return false;
@@ -296,214 +44,63 @@ bool Scene_Prototype::LoadLevel(int idx)
     return true;
 }
 
-bool Scene_Prototype::BuildPathFromRegionScan()
+// --------------------------------------------------------
+//  InitAudio
+//  Loads and starts background music for the scene.
+// --------------------------------------------------------
+void Scene_Prototype::InitAudio()
 {
-    path.clear();
-
-    if (!grid) return false;
-    if (level.width <= 0 || level.height <= 0) return false;
-
-    GridSystem::GridCoord spawn{};
-    if (!FindSpawnCell(spawn))
-    {
-        PRINT("No ENEMYSPAWN found.\n");
-        return false;
-    }
-
-    // first point = spawn center
-    PushCellCenterToPath(spawn);
-
-    GridSystem::GridCoord current = spawn;
-    GridSystem::GridCoord next{};
-
-    if (!FindNextFromSpawn(spawn, next))
-    {
-        PRINT("Spawn does not connect to any enemy path or goal.\n");
-        return false;
-    }
-
-    // safety against infinite loops
-    const int maxSteps = level.width * level.height + 8;
-
-    for (int step = 0; step < maxSteps; ++step)
-    {
-        current = next;
-        PushCellCenterToPath(current);
-
-        RegionFlag flag = static_cast<RegionFlag>(level.region[Idx(current.x, current.y)]);
-
-        if (flag == RegionFlag::ENEMYGOAL)
-        {
-            PRINT("Enemy path built. Total points: %d\n", (int)path.size());
-            return true;
-        }
-
-        if (!StepFromRegionFlag(current, next))
-        {
-            PRINT("Broken enemy path at cell (%d, %d)\n", current.x, current.y);
-            return false;
-        }
-    }
-
-    PRINT("Enemy path exceeded safety limit. Possible loop.\n");
-    return false;
-}
-
-bool Scene_Prototype::FindSpawnCell(GridSystem::GridCoord& outSpawn) const
-{
-    for (int y = 0; y < level.height; ++y)
-    {
-        for (int x = 0; x < level.width; ++x)
-        {
-            RegionFlag flag = static_cast<RegionFlag>(level.region[Idx(x, y)]);
-            if (flag == RegionFlag::ENEMYSPAWN)
-            {
-                outSpawn = { x, y };
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-bool Scene_Prototype::FindNextFromSpawn(const GridSystem::GridCoord& spawn, GridSystem::GridCoord& outNext) const
-{
-    const GridSystem::GridCoord neighbors[4] =
-    {
-        { spawn.x,     spawn.y - 1 }, // up
-        { spawn.x,     spawn.y + 1 }, // down
-        { spawn.x - 1, spawn.y     }, // left
-        { spawn.x + 1, spawn.y     }  // right
-    };
-
-    for (const auto& n : neighbors)
-    {
-        if (!InBounds(n.x, n.y))
-            continue;
-
-        RegionFlag flag = static_cast<RegionFlag>(level.region[Idx(n.x, n.y)]);
-
-        if (flag == RegionFlag::ENEMYGOAL ||
-            flag == RegionFlag::ENEMYPATH_UP ||
-            flag == RegionFlag::ENEMYPATH_DOWN ||
-            flag == RegionFlag::ENEMYPATH_LEFT ||
-            flag == RegionFlag::ENEMYPATH_RIGHT)
-        {
-            outNext = n;
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool Scene_Prototype::StepFromRegionFlag(const GridSystem::GridCoord& current, GridSystem::GridCoord& outNext) const
-{
-    RegionFlag flag = static_cast<RegionFlag>(level.region[Idx(current.x, current.y)]);
-    outNext = current;
-
-    switch (flag)
-    {
-    case RegionFlag::ENEMYPATH_UP:
-        outNext.y -= 1;
-        break;
-
-    case RegionFlag::ENEMYPATH_DOWN:
-        outNext.y += 1;
-        break;
-
-    case RegionFlag::ENEMYPATH_LEFT:
-        outNext.x -= 1;
-        break;
-
-    case RegionFlag::ENEMYPATH_RIGHT:
-        outNext.x += 1;
-        break;
-
-    default:
-        return false;
-    }
-
-    if (!InBounds(outNext.x, outNext.y))
-        return false;
-
-    return true;
-}
-
-void Scene_Prototype::PushCellCenterToPath(const GridSystem::GridCoord& cell)
-{
-    float wx = 0.0f;
-    float wy = 0.0f;
-    float tileSize = 0.0f;
-    grid->GetCellWorldCenter(cell, wx, wy, tileSize);
-    path.push_back({ wx, wy });
-}
-#pragma endregion
-
-#pragma region Scene lifecycle
-void Scene_Prototype::Init()
-{
-    if (!LoadLevel(levelIndex))
-    {
-        PRINT("Scene_Prototype Init failed to load level.\n");
-        return;
-    }
-
-    TowerHandler::LoadTowerAssets();
-
-    shop.Init();
-
-    // Load and play BGM
     m_bgm = AEAudioLoadMusic("Assets/bouken.mp3");
     m_bgmGroup = AEAudioCreateGroup();
     m_bgmLoaded = true;
-    AEAudioPlay(m_bgm, m_bgmGroup, 1.0f, 1.0f, -1); // -1 = loop forever
+    AEAudioPlay(m_bgm, m_bgmGroup, 1.0f, 1.0f, -1);
 
-    // Apply whatever volume the player set in Settings
     float vol = GameSettings::masterVolume / 100.0f;
     AEAudioSetGroupVolume(m_bgmGroup, vol);
-
-    activeTowers.clear();
-    activeBullets.clear();
-
-    BuildXMeshIfNeeded();
-
-    enemies.clear();
-    //spawnTimer = 0.0f;
-
-    buildMode = false;
-    wasLmbDown = false;
-
-    baseTowerIndex = -1;
-    gameOver = false;
-
-    if (!path.empty())
-    {
-        TowerHandler::ShopTower baseShop;
-        baseShop.ShopTowerInit(path.back().x, path.back().y, 80.0f, 80.0f, TowerHandler::BASE_TOWER);
-
-        TowerHandler::Tower baseTower;
-        baseTower.TowerInit(path.back().x, path.back().y, 80.0f, 80.0f, baseShop);
-        baseTower.isDragging = false;
-        baseTower.isSelected = false;
-
-        activeTowers.push_back(baseTower);
-        baseTowerIndex = (int)activeTowers.size() - 1;
-    }
-
-    if (gameOverFont < 0)
-    {
-        gameOverFont = AEGfxCreateFont("Assets/buggy-font.ttf", 64);
-    }
-
-    m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
-
-    if (!waveManager.LoadFromFile("Assets/waves.txt")) {
-        PRINT("Failed to load waves.txt!\n");
-    }
 }
 
+// --------------------------------------------------------
+//  DrawUI
+//  Renders gameplay UI information.
+//  - Displays current wave progress
+//  - Displays active enemy count
+//  - Draws pause/resume label in the top-right
+// --------------------------------------------------------
+void Scene_Prototype::DrawUI()
+{
+    if (m_uiFont < 0) return;
+
+    char buf[64];
+
+    if (waveManager.waveComplete)
+        sprintf_s(buf, "WAVES COMPLETE!");
+    else
+        sprintf_s(buf, "WAVE: %d / %d", waveManager.GetCurrentWaveNumber(), waveManager.GetTotalWaves());
+
+    AEGfxPrint(m_uiFont, buf, -0.95f, 0.90f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+    sprintf_s(buf, "ENEMIES: %d", (int)enemies.size());
+    AEGfxPrint(m_uiFont, buf, -0.95f, 0.80f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+    const char* pauseLabel = m_paused ? "RESUME" : "PAUSE";
+    float screenW = (float)AEGfxGetWindowWidth();
+    float screenH = (float)AEGfxGetWindowHeight();
+    float pauseScreenX = screenW * 0.88f;
+    float pauseScreenY = screenH * 0.08f;
+
+    AEGfxPrint(m_uiFont, pauseLabel,
+        (pauseScreenX / screenW) * 2.0f - 1.0f,
+        1.0f - (pauseScreenY / screenH) * 2.0f,
+        1.0f, 1.0f, 1.0f, 0.2f, 1.0f);
+}
+
+// --------------------------------------------------------
+//  IsPauseButtonClicked
+//  Checks whether the mouse click is inside the pause button.
+//  - Calculates the UI text position
+//  - Builds a hitbox around the pause label
+//  - Returns true if the cursor is inside the hit area
+// --------------------------------------------------------
 bool Scene_Prototype::IsPauseButtonClicked(int mouseX, int mouseY) const
 {
     float screenW = (float)AEGfxGetWindowWidth();
@@ -522,74 +119,58 @@ bool Scene_Prototype::IsPauseButtonClicked(int mouseX, int mouseY) const
         (float)mouseY >= top && (float)mouseY <= bottom);
 }
 
-void Scene_Prototype::Update(float dt)
+// --------------------------------------------------------
+//  ResetRuntimeState
+//  Clears all gameplay containers and resets runtime flags.
+//  - Clears towers, bullets and enemies
+//  - Resets mouse state
+//  - Clears game over and pause flags
+// --------------------------------------------------------
+void Scene_Prototype::ResetRuntimeState()
 {
-    if (gameOver) return;
-    if (!grid) return;
+    for (Enemy* e : enemies)
+        delete e;
+    enemies.clear();
 
-    // --- Mouse: get BOTH screen + world ---
-    int mouseX = 0, mouseY = 0;
-    AEInputGetCursorPosition(&mouseX, &mouseY);
+    activeTowers.clear();
+    activeBullets.clear();
 
-    float worldX = 0.0f, worldY = 0.0f;
-    Utility::GetWorldMousePos(worldX, worldY);
+    wasLmbDown = false;
+    baseTowerIndex = -1;
+    gameOver = false;
+    m_paused = false;
+}
 
-    // --- Pause toggle ---
+// --------------------------------------------------------
+//  HandleUserInputs
+//  Processes player input for pause, debug upgrade, and
+//  tower selection / dragging interactions.
+// --------------------------------------------------------
+void Scene_Prototype::HandleUserInputs(float worldX, float worldY, int mouseX, int mouseY)
+{
+    bool toggledPause = false;
+
     if (AEInputCheckTriggered(AEVK_P))
-    {
-        m_paused = !m_paused;
-        if (m_bgmLoaded)
-        {
-            if (m_paused) AEAudioPauseGroup(m_bgmGroup);
-            else          AEAudioResumeGroup(m_bgmGroup);
-        }
-    }
+        toggledPause = true;
 
     if (AEInputCheckTriggered(AEVK_LBUTTON) && IsPauseButtonClicked(mouseX, mouseY))
+        toggledPause = true;
+
+    if (toggledPause)
     {
         m_paused = !m_paused;
+
         if (m_bgmLoaded)
         {
             if (m_paused) AEAudioPauseGroup(m_bgmGroup);
             else          AEAudioResumeGroup(m_bgmGroup);
         }
+    }
+
+    if (m_paused)
         return;
-    }
 
-    if (m_paused) return; // skip all gameplay
-
-    bool lmbDown = AEInputCheckCurr(AEVK_LBUTTON);
-    bool justPressedLmb = (!wasLmbDown && lmbDown);
-    bool justReleasedLmb = (wasLmbDown && !lmbDown);
-
-    // 1) shop may spawn a new tower and set it to dragging
-    shop.Update(activeTowers);
-
-    // 2) build mode depends on whether a new tower is being dragged
-    buildMode = IsDraggingTower();
-
-    // 3) if dragging, release places tower
-    if (buildMode && justReleasedLmb)
-    {
-        SnapDraggedTowerToGrid(mouseX, mouseY);
-    }
-
-    // 4) only update drag movement while actively dragging a new tower
-    buildMode = IsDraggingTower();
-    if (buildMode && lmbDown)
-    {
-        int draggedIndex = FindDraggedTowerIndex();
-        if (draggedIndex >= 0)
-        {
-            activeTowers[(size_t)draggedIndex].x = worldX;
-            activeTowers[(size_t)draggedIndex].y = worldY;
-        }
-    }
-
-    // 5) selection for already placed towers
-    HandleTowerSelection(worldX, worldY, justPressedLmb);
-
-    // 6) manual upgrade of selected placed tower
+    // Debug Upgrade tower
     if (AEInputCheckTriggered(AEVK_U))
     {
         for (auto& t : activeTowers)
@@ -602,103 +183,101 @@ void Scene_Prototype::Update(float dt)
         }
     }
 
-    // 7) tower cooldowns
-    for (auto& t : activeTowers)
-    {
-        if (t.details.fireTimer > 0.f)
-        {
-            t.details.fireTimer -= dt;
-            if (t.details.fireTimer < 0.f)
-                t.details.fireTimer = 0.f;
-        }
-    }
+    UpdateSelectionAndDragging(worldX, worldY, mouseX, mouseY);
+}
 
-    // --- Enemy spawning ---
+// --------------------------------------------------------
+//  UpdateSelectionAndDragging
+//  Handles mouse interactions with towers.
+//  - Updates shop UI interactions
+//  - Processes tower dragging and placement
+//  - Selects the topmost tower on click
+// --------------------------------------------------------
+void Scene_Prototype::UpdateSelectionAndDragging(float worldX, float worldY, int mouseX, int mouseY)
+{
+    bool lmbDown = AEInputCheckCurr(AEVK_LBUTTON);
+    bool justPressedLmb = (!wasLmbDown && lmbDown);
+    bool justReleasedLmb = (wasLmbDown && !lmbDown);
+
+    shop.Update(activeTowers);
+
+    buildMergeSystem.UpdateDragging(worldX, worldY, lmbDown, justReleasedLmb, mouseX, mouseY);
+
+    if (justPressedLmb && !buildMergeSystem.IsDraggingTower())
+        TowerHandler::SelectTopmostTower(worldX, worldY, activeTowers);
+
+    wasLmbDown = lmbDown;
+}
+
+// --------------------------------------------------------
+//  UpdateEnemies
+//  Handles enemy spawning from the wave manager and updates
+//  all active enemies along the path.
+// --------------------------------------------------------
+void Scene_Prototype::UpdateEnemies(float dt)
+{
     Enemy* spawnedEnemy = waveManager.UpdateAndSpawn(dt, path);
-    if (spawnedEnemy) {
+    if (spawnedEnemy)
         enemies.push_back(spawnedEnemy);
-    }
 
-    // --- Enemy movement ---
-    for (Enemy* e : enemies) {
+    for (Enemy* e : enemies)
+    {
         if (e)
             e->Update(dt, path);
     }
+}
 
-    if (baseTowerIndex >= 0 && baseTowerIndex < (int)activeTowers.size())
-    {
-        TowerHandler::Tower& base = activeTowers[(size_t)baseTowerIndex];
+// --------------------------------------------------------
+//  UpdateBaseCollision
+//  Handles collisions between enemies and the base tower.
+//  - Enemies reaching the base are marked dead/escaped
+//  - Base takes contact damage
+//  - Triggers game over if base health reaches zero
+// --------------------------------------------------------
+void Scene_Prototype::UpdateBaseCollision()
+{
+    if (baseTowerIndex < 0 || baseTowerIndex >= (int)activeTowers.size())
+        return;
 
-        for (Enemy* e : enemies)
-        {
-            if (!e || e->health <= 0.0f)
-                continue;
+    TowerHandler::Tower& base = activeTowers[(size_t)baseTowerIndex];
 
-            if (TowerHandler::CircleCircleCollision(
-                base.x, base.y, base._sizeX * 0.5f,
-                e->x, e->y, e->_sizeX * 0.5f)
-                || e->reachedEnd)
-            {
-                e->health = 0.0f;
-                e->escapedBase = true;  // mark as escaped - no points
-                if (base.TakeDamage(base.details.contactDamage))
-                {
-                    gameOver = true;
-                    if (m_bgmLoaded)
-                        AEAudioPauseGroup(m_bgmGroup);
-                }
-            }
-        }
-    }
-
-    // --- Tower shooting (same idea as TowerTest) ---
-    for (auto& t : activeTowers)
-    {
-        if (t.isDragging || t.IsBaseTower())
-            continue;
-
-        for (Enemy* e : enemies)
-        {
-            if (!e || e->health <= 0.0f)
-                continue;
-
-            if (TowerHandler::TowerShoot(t, *e, activeBullets))
-                break;
-        }
-    }
-
-    // --- Bullet updates ---
-    TowerHandler::UpdateProjectiles(dt, enemies, activeBullets);
-
-    // --- Cleanup dead enemies (copied from TowerTest idea) ---
     for (Enemy* e : enemies)
     {
         if (!e || e->health <= 0.0f)
+            continue;
+
+        if (TowerHandler::CircleCircleCollision(
+            base.x, base.y, base._sizeX * 0.5f,
+            e->x, e->y, e->_sizeX * 0.5f) ||
+            e->reachedEnd)
         {
-            for (auto& b : activeBullets)
+            e->health = 0.0f;
+            e->escapedBase = true;
+
+            if (base.TakeDamage(base.details.contactDamage))
             {
-                if (b.target == e)
-                    b.target = nullptr;
+                gameOver = true;
+                if (m_bgmLoaded)
+                    AEAudioPauseGroup(m_bgmGroup);
             }
         }
     }
+}
 
-    for (int i = (int)enemies.size() - 1; i >= 0; --i)
-    {
-        Enemy* e = enemies[(size_t)i];
-        if (!e || e->health <= 0.0f)
-        {
-            if (e && !e->escapedBase)       // only reward if killed by towers
-                shop.AddPoints(e->GetPoints());
-            delete e;
-            enemies.erase(enemies.begin() + i);
-        }
-    }
-
+// --------------------------------------------------------
+//  UpdateReturningTowers
+//  Handles towers being returned to the shop.
+//  - Moves towers toward their return target
+//  - Refunds cost when they reach the shop slot
+//  - Removes the tower from the active list
+// --------------------------------------------------------
+void Scene_Prototype::UpdateReturningTowers(float dt)
+{
     for (int i = (int)activeTowers.size() - 1; i >= 0; --i)
     {
         TowerHandler::Tower& t = activeTowers[(size_t)i];
-        if (!t.isReturning) continue;
+        if (!t.isReturning)
+            continue;
 
         const float lerpSpeed = 8.0f;
         t.x += (t.returnTargetX - t.x) * lerpSpeed * dt;
@@ -710,48 +289,106 @@ void Scene_Prototype::Update(float dt)
         {
             shop.AddPoints(shop.GetTowerCost());
             shop.RestoreSlot(t.sourceSlotIndex);
-            RemoveTowerAtIndex(i);
-            RebuildOccupiedFromTowers();
+            buildMergeSystem.RemoveTowerAtIndex(i);
+            buildMergeSystem.RebuildOccupiedFromTowers();
         }
     }
-
-    wasLmbDown = lmbDown;
 }
 
-void Scene_Prototype::DrawUI()
+// --------------------------------------------------------
+//  CleanupDeadEnemies
+//  Removes defeated enemies from the scene.
+//  - Awards points for enemies killed normally
+//  - Does not reward enemies that escaped to the base
+// --------------------------------------------------------
+void Scene_Prototype::CleanupDeadEnemies()
 {
-    if (m_uiFont < 0) return;
+    for (int i = (int)enemies.size() - 1; i >= 0; --i)
+    {
+        Enemy* e = enemies[(size_t)i];
+        if (!e || e->health <= 0.0f)
+        {
+            if (e && !e->escapedBase)
+                shop.AddPoints(e->GetPoints());
 
-    char buf[64];
-
-    if (waveManager.waveComplete) {
-        sprintf_s(buf, "WAVES COMPLETE!");
+            delete e;
+            enemies.erase(enemies.begin() + i);
+        }
     }
-    else {
-        sprintf_s(buf, "WAVE: %d / %d",
-            waveManager.GetCurrentWaveNumber(),
-            waveManager.GetTotalWaves());
+}
+
+// --------------------------------------------------------
+//  CreateBaseTower
+//  Spawns the base tower at the end of the enemy path.
+// --------------------------------------------------------
+void Scene_Prototype::CreateBaseTower()
+{
+    if (!path.empty())
+    {
+        baseTowerIndex = TowerHandler::AddBaseTower(
+            activeTowers,
+            path.back().x,
+            path.back().y,
+            80.0f,
+            80.0f
+        );
+
+        buildMergeSystem.RebuildOccupiedFromTowers();
+    }
+}
+#pragma endregion
+
+#pragma region Scene Funcs
+void Scene_Prototype::Init()
+{
+    DestroyGrid();
+
+    if (!InitLevelAndGrid())
+    {
+        PRINT("Scene_Prototype Init failed to load level.\n");
+        return;
     }
 
-    AEGfxPrint(m_uiFont, buf, -0.95f, 0.90f,
-        1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f);
+    ResetRuntimeState();
 
-    sprintf_s(buf, "ENEMIES: %d", (int)enemies.size());
-    AEGfxPrint(m_uiFont, buf, -0.95f, 0.80f,
-        1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f);
+    TowerHandler::LoadTowerAssets();
 
-    // Pause button top right
-    const char* pauseLabel = m_paused ? "RESUME" : "PAUSE";
-    float screenW = (float)AEGfxGetWindowWidth();
-    float screenH = (float)AEGfxGetWindowHeight();
-    float pauseScreenX = screenW * 0.88f;
-    float pauseScreenY = screenH * 0.08f;
-    AEGfxPrint(m_uiFont, pauseLabel,
-        (pauseScreenX / screenW) * 2.0f - 1.0f,   // to normX
-        1.0f - (pauseScreenY / screenH) * 2.0f,   // to normY
-        1.0f, 1.0f, 1.0f, 0.2f, 1.0f);
+    shop.Init();
+    buildMergeSystem.Init(&level, grid, &shop, &activeTowers, &activeBullets, &occupied);
+
+    InitAudio();
+	CreateBaseTower();
+
+    if (gameOverFont < 0)
+        gameOverFont = AEGfxCreateFont("Assets/buggy-font.ttf", 64);
+
+    if (m_uiFont < 0)
+        m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
+
+    if (!waveManager.LoadFromFile("Assets/waves.txt"))
+        PRINT("Failed to load waves.txt!\n");
+}
+
+void Scene_Prototype::Update(float dt)
+{
+    if (gameOver) return;
+    if (!grid) return;
+
+    int mouseX = 0, mouseY = 0;
+    AEInputGetCursorPosition(&mouseX, &mouseY);
+
+    float worldX = 0.0f, worldY = 0.0f;
+    Utility::GetWorldMousePos(worldX, worldY);
+
+    HandleUserInputs(worldX, worldY, mouseX, mouseY);
+    if (m_paused)
+        return;
+
+    UpdateEnemies(dt);
+    TowerHandler::UpdateTowerLogic(dt, activeTowers, enemies, activeBullets);
+    UpdateBaseCollision();
+    CleanupDeadEnemies();
+    UpdateReturningTowers(dt);
 }
 
 void Scene_Prototype::Draw()
@@ -760,31 +397,24 @@ void Scene_Prototype::Draw()
 
     AEGfxSetBackgroundColor(0.05f, 0.05f, 0.05f);
 
-    // level
     level.Draw(*grid, 1.0f);
 
-    // towers
     for (auto& t : activeTowers)
         t.Draw();
 
-    // bullets
     for (auto& b : activeBullets)
         b.Draw();
 
-    // enemies
     for (Enemy* e : enemies)
     {
         if (e)
             e->Draw();
     }
 
-    // build overlay
-    if (buildMode)
-        DrawBuildOverlay();
+    if (buildMergeSystem.IsDraggingTower())
+        buildMergeSystem.DrawOverlay();
 
-    // shop UI always on top
     shop.Draw();
-
     DrawUI();
 
     Graphics::RenderAll();
@@ -792,9 +422,9 @@ void Scene_Prototype::Draw()
     if (gameOver && gameOverFont >= 0)
     {
         AEGfxPrint(gameOverFont, "GAME OVER",
-            -0.4f, 0.0f,     // screen position
-            1.2f,             // scale
-            1.0f, 0.1f, 0.1f, // color (red)
+            -0.4f, 0.0f,
+            1.2f,
+            1.0f, 0.1f, 0.1f,
             1.0f);
     }
 }
@@ -804,195 +434,35 @@ void Scene_Prototype::Exit()
     shop.Exit();
 
     for (int i = (int)activeTowers.size() - 1; i >= 0; --i)
-    {
-        RemoveTowerAtIndex(i);
-    }
+        buildMergeSystem.RemoveTowerAtIndex(i);
     activeTowers.clear();
 
-    for (Enemy* e : enemies) {
+    for (Enemy* e : enemies)
         delete e;
-    }
     enemies.clear();
 
-    if (m_uiFont >= 0) {
+    if (gameOverFont >= 0)
+    {
+        AEGfxDestroyFont(gameOverFont);
+        gameOverFont = -1;
+    }
+
+    if (m_uiFont >= 0)
+    {
         AEGfxDestroyFont(m_uiFont);
         m_uiFont = -1;
     }
 
-    if (xMesh)
-    {
-        AEGfxMeshFree(xMesh);
-        xMesh = nullptr;
-    }
-
     Graphics::Shutdown();
     level.Shutdown();
-
-    if (grid)
-    {
-        grid->Destroy();
-        delete grid;
-        grid = nullptr;
-    }
+    DestroyGrid();
 
     if (m_bgmLoaded)
     {
         AEAudioStopGroup(m_bgmGroup);
         m_bgmLoaded = false;
     }
+
+    buildMergeSystem.Shutdown();
 }
-#pragma endregion
-
-#pragma region Building
-void Scene_Prototype::BuildXMeshIfNeeded()
-{
-    if (xMesh) return;
-
-    const float half = 0.45f;
-    const float thick = 0.06f;
-
-    auto AddQuad = [](float x0, float y0, float x1, float y1, float t)
-        {
-            float dx = x1 - x0, dy = y1 - y0;
-            float len = sqrtf(dx * dx + dy * dy);
-            if (len <= 0.0001f) return;
-
-            dx /= len; dy /= len;
-            float px = -dy * t;
-            float py = dx * t;
-
-            float ax = x0 + px, ay = y0 + py;
-            float bx = x0 - px, by = y0 - py;
-            float cx = x1 - px, cy = y1 - py;
-            float dx2 = x1 + px, dy2 = y1 + py;
-
-            AEGfxTriAdd(ax, ay, 0xFFFFFFFF, 0, 0, bx, by, 0xFFFFFFFF, 0, 0, cx, cy, 0xFFFFFFFF, 0, 0);
-            AEGfxTriAdd(ax, ay, 0xFFFFFFFF, 0, 0, cx, cy, 0xFFFFFFFF, 0, 0, dx2, dy2, 0xFFFFFFFF, 0, 0);
-        };
-
-    AEGfxMeshStart();
-    AddQuad(-half, -half, half, half, thick);
-    AddQuad(-half, half, half, -half, thick);
-    xMesh = AEGfxMeshEnd();
-}
-
-void Scene_Prototype::DrawXAtCell(int x, int y, float alpha)
-{
-    if (!xMesh || !grid) return;
-
-    float wx, wy, tileSize;
-    grid->GetCellWorldCenter({ x, y }, wx, wy, tileSize);
-
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetColorToAdd(0, 0, 0, 0);
-    AEGfxSetColorToMultiply(1, 1, 1, 1);
-    AEGfxSetTransparency(alpha);
-
-    AEMtx33 scale, trans, m;
-    AEMtx33Scale(&scale, tileSize, tileSize);
-    AEMtx33Trans(&trans, wx, wy);
-    AEMtx33Concat(&m, &trans, &scale);
-
-    AEGfxSetTransform(m.m);
-    AEGfxMeshDraw(xMesh, AE_GFX_MDM_TRIANGLES);
-
-    AEGfxSetTransparency(1.0f);
-}
-
-void Scene_Prototype::DrawBuildOverlay()
-{
-    if (!grid) return;
-
-    const size_t expected = (size_t)level.width * (size_t)level.height;
-    if (expected == 0 || occupied.size() != expected)
-        return;
-
-    grid->Draw();
-
-    // X on non-placeable tiles
-    for (int y = 0; y < level.height; ++y)
-        for (int x = 0; x < level.width; ++x)
-            if (!IsPlaceable(x, y))
-                DrawXAtCell(x, y, 0.75f);
-
-    // hover tint uses current screen mouse
-    int mx = 0, my = 0;
-    AEInputGetCursorPosition(&mx, &my);
-
-    GridSystem::GridCoord c;
-    if (grid->ScreenToGrid(mx, my, c))
-    {
-        if (IsPlaceable(c.x, c.y))
-            grid->DrawTileTinted(c, 0.2f, 1.0f, 0.2f, 0.55f);
-        else
-            grid->DrawTileTinted(c, 1.0f, 0.2f, 0.2f, 0.55f);
-    }
-}
-
-void Scene_Prototype::SnapDraggedTowerToGrid(int mouseX, int mouseY)
-{
-    int draggedIndex = FindDraggedTowerIndex();
-    if (draggedIndex < 0) return;
-
-    GridSystem::GridCoord c;
-    if (!grid->ScreenToGrid(mouseX, mouseY, c) || !InBounds(c.x, c.y))
-    {
-        float slotX = 0.f, slotY = 0.f;
-        int slotIdx = activeTowers[draggedIndex].sourceSlotIndex;
-        if (shop.GetSlotCenter(slotIdx, slotX, slotY))
-        {
-            activeTowers[draggedIndex].isDragging = false;
-            activeTowers[draggedIndex].isReturning = true;
-            activeTowers[draggedIndex].returnTargetX = slotX;
-            activeTowers[draggedIndex].returnTargetY = slotY;
-        }
-        else
-        {
-            RemoveTowerAtIndex(draggedIndex);
-            RebuildOccupiedFromTowers();
-        }
-        return;
-    }
-
-    if (!IsPlaceable(c.x, c.y))
-    {
-        float slotX = 0.f, slotY = 0.f;
-        int slotIdx = activeTowers[draggedIndex].sourceSlotIndex;
-        if (shop.GetSlotCenter(slotIdx, slotX, slotY))
-        {
-            activeTowers[draggedIndex].isDragging = false;
-            activeTowers[draggedIndex].isReturning = true;
-            activeTowers[draggedIndex].returnTargetX = slotX;
-            activeTowers[draggedIndex].returnTargetY = slotY;
-        }
-        else
-        {
-            RemoveTowerAtIndex(draggedIndex);
-            RebuildOccupiedFromTowers();
-        }
-        return;
-    }
-
-    // snap to cell center
-    float wx, wy, tileSize;
-    grid->GetCellWorldCenter({ c.x, c.y }, wx, wy, tileSize);
-
-    activeTowers[draggedIndex].x = wx;
-    activeTowers[draggedIndex].y = wy;
-    activeTowers[draggedIndex].isDragging = false;
-    activeTowers[draggedIndex].isSelected = false;
-
-    RebuildOccupiedFromTowers();
-
-    // try merge after placement
-    while (TryMergeAtCell(c.x, c.y))
-    {
-        RebuildOccupiedFromTowers();
-    }
-
-
-    RebuildOccupiedFromTowers();
-}
-
 #pragma endregion

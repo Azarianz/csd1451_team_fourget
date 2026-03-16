@@ -1,6 +1,39 @@
 #include "LevelLoader.h"
 #include <fstream>
 #include <string>
+#include <cstdio>
+
+bool LevelLoader::Init(int levelIndex)
+{
+    char levelPath[128] = {};
+    sprintf_s(levelPath, "Assets/Levels/level_%02d.txt", levelIndex);
+
+    Shutdown();
+
+    if (!LoadFromText(levelPath))
+    {
+        PRINT("FAILED to load level: %s\n", levelPath);
+        return false;
+    }
+
+    if (!IsValid())
+    {
+        const size_t expected = (size_t)width * (size_t)height;
+        PRINT("LEVEL DATA SIZE MISMATCH! w=%d h=%d expected=%zu map=%zu region=%zu\n",
+            width, height, expected, map.size(), region.size());
+        return false;
+    }
+
+    return true;
+}
+
+bool LevelLoader::IsValid() const
+{
+    const size_t expected = (size_t)width * (size_t)height;
+    return expected > 0 &&
+        map.size() == expected &&
+        region.size() == expected;
+}
 
 static bool ReadToken(std::istream& in, std::string& out)
 {
@@ -53,8 +86,151 @@ bool LevelLoader::LoadFromText(const char* path)
         }
     }
 
-    // Prepare render cache (tilesheet + mesh cache)
     return EnsureRenderReady();
+}
+
+bool LevelLoader::BuildPath(const GridSystem::Grid& grid, std::vector<Point>& outPath) const
+{
+    outPath.clear();
+
+    if (width <= 0 || height <= 0)
+        return false;
+
+    GridSystem::GridCoord spawn{};
+    if (!FindSpawnCell(spawn))
+    {
+        PRINT("No ENEMYSPAWN found.\n");
+        return false;
+    }
+
+    PushCellCenterToPath(grid, spawn, outPath);
+
+    GridSystem::GridCoord current = spawn;
+    GridSystem::GridCoord next{};
+
+    if (!FindNextFromSpawn(spawn, next))
+    {
+        PRINT("Spawn does not connect to any enemy path or goal.\n");
+        return false;
+    }
+
+    const int maxSteps = width * height + 8;
+
+    for (int step = 0; step < maxSteps; ++step)
+    {
+        current = next;
+        PushCellCenterToPath(grid, current, outPath);
+
+        RegionFlag flag = static_cast<RegionFlag>(region[Idx(current.x, current.y)]);
+
+        if (flag == RegionFlag::ENEMYGOAL)
+        {
+            PRINT("Enemy path built. Total points: %d\n", (int)outPath.size());
+            return true;
+        }
+
+        if (!StepFromRegionFlag(current, next))
+        {
+            PRINT("Broken enemy path at cell (%d, %d)\n", current.x, current.y);
+            return false;
+        }
+    }
+
+    PRINT("Enemy path exceeded safety limit. Possible loop.\n");
+    return false;
+}
+
+bool LevelLoader::FindSpawnCell(GridSystem::GridCoord& outSpawn) const
+{
+    for (int y = 0; y < height; ++y)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            RegionFlag flag = static_cast<RegionFlag>(region[Idx(x, y)]);
+            if (flag == RegionFlag::ENEMYSPAWN)
+            {
+                outSpawn = { x, y };
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool LevelLoader::FindNextFromSpawn(const GridSystem::GridCoord& spawn, GridSystem::GridCoord& outNext) const
+{
+    const GridSystem::GridCoord neighbors[4] =
+    {
+        { spawn.x,     spawn.y - 1 },
+        { spawn.x,     spawn.y + 1 },
+        { spawn.x - 1, spawn.y     },
+        { spawn.x + 1, spawn.y     }
+    };
+
+    for (const auto& n : neighbors)
+    {
+        if (!InBounds(n.x, n.y))
+            continue;
+
+        RegionFlag flag = static_cast<RegionFlag>(region[Idx(n.x, n.y)]);
+
+        if (flag == RegionFlag::ENEMYGOAL ||
+            flag == RegionFlag::ENEMYPATH_UP ||
+            flag == RegionFlag::ENEMYPATH_DOWN ||
+            flag == RegionFlag::ENEMYPATH_LEFT ||
+            flag == RegionFlag::ENEMYPATH_RIGHT)
+        {
+            outNext = n;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool LevelLoader::StepFromRegionFlag(const GridSystem::GridCoord& current, GridSystem::GridCoord& outNext) const
+{
+    RegionFlag flag = static_cast<RegionFlag>(region[Idx(current.x, current.y)]);
+    outNext = current;
+
+    switch (flag)
+    {
+    case RegionFlag::ENEMYPATH_UP:
+        outNext.y -= 1;
+        break;
+
+    case RegionFlag::ENEMYPATH_DOWN:
+        outNext.y += 1;
+        break;
+
+    case RegionFlag::ENEMYPATH_LEFT:
+        outNext.x -= 1;
+        break;
+
+    case RegionFlag::ENEMYPATH_RIGHT:
+        outNext.x += 1;
+        break;
+
+    default:
+        return false;
+    }
+
+    if (!InBounds(outNext.x, outNext.y))
+        return false;
+
+    return true;
+}
+
+void LevelLoader::PushCellCenterToPath(const GridSystem::Grid& grid,
+    const GridSystem::GridCoord& cell,
+    std::vector<Point>& outPath) const
+{
+    float wx = 0.0f;
+    float wy = 0.0f;
+    float tileSize = 0.0f;
+    grid.GetCellWorldCenter(cell, wx, wy, tileSize);
+    outPath.push_back({ wx, wy });
 }
 
 bool LevelLoader::EnsureRenderReady()
@@ -69,7 +245,6 @@ bool LevelLoader::EnsureRenderReady()
         return false;
     }
 
-    // Must match your tilesheet assumptions
     const int tilePx = 16;
     const int texW = 80;
     const int texH = 160;
@@ -109,7 +284,6 @@ AEGfxVertexList* LevelLoader::GetTileMesh(int tileId) const
     int tx = index % m_tilesetCols;
     int ty = index / m_tilesetCols;
 
-    // Flip so row 0 == TOP row of texture
     ty = (m_tilesetRows - 1) - ty;
     if (ty < 0 || ty >= m_tilesetRows) return nullptr;
 

@@ -31,13 +31,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         AESysFrameStart();
         float dt = (float)AEFrameRateControllerGetFrameTime();
 
-        // --- scene hotkeys ---
-        if (AEInputCheckTriggered(AEVK_1)) SceneManager::I().SwitchTo(SceneID::LevelEditor);
-        if (AEInputCheckTriggered(AEVK_2)) SceneManager::I().SwitchTo(SceneID::LoadLevel);
-        if (AEInputCheckTriggered(AEVK_3)) SceneManager::I().SwitchTo(SceneID::TowerTest);
-        if (AEInputCheckTriggered(AEVK_4)) SceneManager::I().SwitchTo(SceneID::EnemyTest);
-        if (AEInputCheckTriggered(AEVK_5)) SceneManager::I().SwitchTo(SceneID::ShopTest);
+
+        if (SceneManager::I().Current() != SceneID::LevelEditor) {
+            // --- scene hotkeys ---
+            if (AEInputCheckTriggered(AEVK_1)) SceneManager::I().SwitchTo(SceneID::LevelEditor);
+            if (AEInputCheckTriggered(AEVK_2)) SceneManager::I().SwitchTo(SceneID::LoadLevel);
+            if (AEInputCheckTriggered(AEVK_3)) SceneManager::I().SwitchTo(SceneID::TowerTest);
+            if (AEInputCheckTriggered(AEVK_4)) SceneManager::I().SwitchTo(SceneID::EnemyTest);
+            if (AEInputCheckTriggered(AEVK_5)) SceneManager::I().SwitchTo(SceneID::ShopTest);
+        }
+
         if (AEInputCheckTriggered(AEVK_9)) SceneManager::I().SwitchTo(SceneID::Prototype);
+
 
         SceneID sceneThisFrame = SceneManager::I().Current();
 
@@ -46,11 +51,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         AESysFrameEnd();
 
-        bool escapeHandledByScene = (sceneThisFrame == SceneID::Settings);
-        if (GameSettings::quitGame ||
-            (!escapeHandledByScene && AEInputCheckTriggered(AEVK_ESCAPE)) ||
-            0 == AESysDoesWindowExist())
-            gGameRunning = 0;
+        if (SceneManager::I().Current() != SceneID::LevelEditor) {
+            bool escapeHandledByScene = (sceneThisFrame == SceneID::Settings);
+            if (GameSettings::quitGame ||
+                (!escapeHandledByScene && AEInputCheckTriggered(AEVK_ESCAPE)) ||
+                0 == AESysDoesWindowExist())
+                gGameRunning = 0;
+        }
     }
 
     // Cleanup

@@ -7,7 +7,6 @@ enum class SceneID
     MainMenu,
     LevelEditor,
     TowerTest,
-    Level1,
     ShopTest,
     EnemyTest,
 	LoadLevel,
