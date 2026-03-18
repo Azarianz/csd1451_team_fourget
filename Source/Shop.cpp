@@ -309,7 +309,46 @@ namespace TowerHandler {
                 REFRESH_SHEET_COLS, REFRESH_SHEET_ROWS);
         }
 
+        DrawSlotCosts();
         DrawPoints();
+    }
+
+    // DrawSlotCosts
+    // Renders the point cost in yellow at the top-right corner of every shop slot.
+    void Shop::DrawSlotCosts() const
+    {
+        if (m_uiFont < 0) return;
+
+        const float screenW = (float)AEGfxGetWindowWidth();
+        const float screenH = (float)AEGfxGetWindowHeight();
+
+        // Offset the label to the top-right edge of the circle
+        const float offsetX = slots[0].size * 0.35f;
+        const float offsetY = slots[0].size * 0.30f;
+
+        for (int i = 0; i < TOTAL_SLOTS; ++i)
+        {
+            // Hide cost when slot is empty (tower dragged out); restore after refresh
+            if (!slots[i].isRefreshButton && slots[i].isEmpty) continue;
+
+            int cost = slots[i].isRefreshButton ? REFRESH_COST : TOWER_COST;
+
+            // Position: top-right of the slot circle (world space -> norm)
+            float worldX = slots[i].x + offsetX;
+            float worldY = slots[i].y + offsetY;
+
+            float screenX = worldX + screenW * 0.5f;
+            float screenY = screenH * 0.5f - worldY;
+
+            float normX = (screenX / screenW) * 2.0f - 1.0f;
+            float normY = 1.0f - (screenY / screenH) * 2.0f;
+
+            char buf[8];
+            sprintf_s(buf, "%d", cost);
+
+            // Yellow: r=1, g=1, b=0
+            AEGfxPrint(m_uiFont, buf, normX, normY, 0.65f, 1.0f, 1.0f, 0.0f, 1.0f);
+        }
     }
 
     // DrawPoints

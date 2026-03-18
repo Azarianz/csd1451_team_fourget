@@ -93,6 +93,7 @@ namespace TowerHandler {
         std::unordered_map<int, int> m_towerDefIndex;
 
         void DrawPoints() const;
+        void DrawSlotCosts() const;
         void DrawSpriteAtTex(float cx, float cy, float size,
             int col, int row,
             AEGfxTexture* tex,
