@@ -70,6 +70,7 @@ void Enemy::Init(float sizeX, float sizeY, Color c, float _hp, float _damage, fl
     speed = _speed;
     pathIndex = 0;
     reachedEnd = false;
+    facingX = 1.0f; // Initialize facing right
 }
 
 void Enemy::SetSprite(int row, int col)
@@ -123,6 +124,10 @@ void Enemy::Update(float dt, const std::vector<Point>& path)
         float effectiveSpeed = speed * slowMultiplier; // slow applied
         x += (dx / dist) * effectiveSpeed * dt;
         y += (dy / dist) * effectiveSpeed * dt;
+
+        // Flip sprite based on horizontal movement
+        if (dx > 0.1f) facingX = 1.0f;       // Moving right
+        else if (dx < -0.1f) facingX = -1.0f; // Moving left
     }
     else
     {
@@ -172,7 +177,6 @@ void Enemy::DrawHealthBar() const
     AEGfxSetTransform(transformFg.m);
     AEGfxMeshDraw(quad, AE_GFX_MDM_TRIANGLES);
 }
-
 void Enemy::Draw()
 {
     AEGfxVertexList* mesh = GetEnemyFrameMesh(spriteCol, spriteRow);
@@ -190,7 +194,10 @@ void Enemy::Draw()
         AEGfxSetColorToMultiply(color.r, color.g, color.b, 1.0f);
 
     AEMtx33 scaleM, rotM, transM, transform;
-    AEMtx33Scale(&scaleM, _sizeX, _sizeY);
+
+    // Apply facingX to the scale matrix to flip the sprite
+    AEMtx33Scale(&scaleM, _sizeX * facingX, _sizeY);
+
     AEMtx33Rot(&rotM, 0.0f);
     AEMtx33Trans(&transM, x, y);
 
@@ -205,34 +212,70 @@ void Enemy::Draw()
 
 // --- Specific Enemies ---
 
-void Zombie::Init()
+void ZombieV1::Init()
 {
     Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 50.0f, 10.0f, 150.0f);
+    SetSprite(0, 11);
+}
+
+void SkeletonV1::Init()
+{
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 30.0f, 5.0f, 250.0f);
+    SetSprite(0, 5);
+}
+
+void TrollV1::Init()
+{
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 150.0f, 15.0f, 100.0f);
+    SetSprite(0, 3);
+}
+
+void GolemV1::Init()
+{
+    Enemy::Init(60.0f, 60.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 300.0f, 40.0f, 50.0f);
+    SetSprite(0, 4);
+}
+
+void TitanV1::Init()
+{
+    Enemy::Init(50.0f, 50.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 250.0f, 30.0f, 75.0f);
+    SetSprite(0, 7);
+}
+
+void Zombie::Init()
+{
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 75.0f, 15.0f, 180.0f);
     SetSprite(1, 11);
 }
 
 void Skeleton::Init()
 {
-    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 30.0f, 5.0f, 250.0f);
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 50.0f, 10.0f, 300.0f);
     SetSprite(1, 5);
 }
 
 void Troll::Init()
 {
-    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 150.0f, 15.0f, 100.0f);
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 200.0f, 30.0f, 125.0f);
     SetSprite(1, 3);
 }
 
 void Golem::Init()
 {
-    Enemy::Init(60.0f, 60.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 300.0f, 40.0f, 50.0f);
+    Enemy::Init(60.0f, 60.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 500.0f, 60.0f, 65.0f);
     SetSprite(1, 4);
 }
 
 void Titan::Init()
 {
-    Enemy::Init(50.0f, 50.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 250.0f, 30.0f, 75.0f);
+    Enemy::Init(50.0f, 50.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 450.0f, 40.0f, 85.0f);
     SetSprite(1, 7);
+}
+
+void wavestarter::Init()
+{
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 50.0f, 10.0f, 150.0f);
+    SetSprite(3, 11);
 }
 
 // --- Wave System Implementation ---
@@ -250,15 +293,22 @@ bool WaveManager::LoadFromFile(const std::string& filename)
 
     waves.clear();
     WaveData wd;
+    totalWavestarters = 0; // Reset total counter
 
     // File format expectation: [EnemyType] [Count] [SpawnDelay]
     while (file >> wd.enemyType >> wd.count >> wd.spawnDelay) {
         waves.push_back(wd);
+
+        // Count total wavestarters in the file (Type 5)
+        if (wd.enemyType == 5) {
+            totalWavestarters += wd.count;
+        }
     }
 
     currentWaveIndex = 0;
     spawnedInCurrentWave = 0;
     spawnTimer = 0.0f;
+    wavestarterCount = 0; // Resets current spawned tracker
     waveComplete = waves.empty();
 
     return true;
@@ -277,12 +327,13 @@ Enemy* WaveManager::UpdateAndSpawn(float dt, const std::vector<Point>& path)
 
         Enemy* e = nullptr;
         switch (currentWave.enemyType) {
-        case 0: e = new Zombie();   static_cast<Zombie*>(e)->Init(); break;
-        case 1: e = new Skeleton(); static_cast<Skeleton*>(e)->Init(); break;
-        case 2: e = new Troll();    static_cast<Troll*>(e)->Init(); break;
-        case 3: e = new Golem();    static_cast<Golem*>(e)->Init(); break;
-        case 4: e = new Titan();    static_cast<Titan*>(e)->Init(); break;
-        default: e = new Zombie();  static_cast<Zombie*>(e)->Init(); break;
+        case 0: e = new Zombie();       static_cast<Zombie*>(e)->Init(); break;
+        case 1: e = new Skeleton();     static_cast<Skeleton*>(e)->Init(); break;
+        case 2: e = new Troll();        static_cast<Troll*>(e)->Init(); break;
+        case 3: e = new Golem();        static_cast<Golem*>(e)->Init(); break;
+        case 4: e = new Titan();        static_cast<Titan*>(e)->Init(); break;
+        case 5: e = new wavestarter();  static_cast<wavestarter*>(e)->Init(); wavestarterCount++; break;
+        default: e = new Zombie();      static_cast<Zombie*>(e)->Init(); break;
         }
 
         e->x = path[0].x;

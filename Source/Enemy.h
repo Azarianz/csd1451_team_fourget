@@ -24,6 +24,8 @@ struct Enemy : public GameObject
     bool reachedEnd = false;
     bool escapedBase = false;
 
+    float facingX = 1.0f;
+
     // Static Sprite Data
     int spriteRow = 0;
     int spriteCol = 0;
@@ -46,15 +48,23 @@ struct Enemy : public GameObject
 };
 
 // Specific Types
-struct Zombie : public Enemy { void Init(); int GetPoints() const override { return 5; } };
-struct Skeleton : public Enemy { void Init(); int GetPoints() const override { return 10; } };
-struct Troll : public Enemy { void Init(); int GetPoints() const override { return 15; } };
-struct Golem : public Enemy { void Init(); int GetPoints() const override { return 25; } };
-struct Titan : public Enemy { void Init(); int GetPoints() const override { return 20; } };
+struct Zombie : public Enemy { void Init(); int GetPoints() const override { return 10; } };
+struct Skeleton : public Enemy { void Init(); int GetPoints() const override { return 20; } };
+struct Troll : public Enemy { void Init(); int GetPoints() const override { return 30; } };
+struct Golem : public Enemy { void Init(); int GetPoints() const override { return 50; } };
+struct Titan : public Enemy { void Init(); int GetPoints() const override { return 40; } };
+struct wavestarter : public Enemy { void Init(); int GetPoints() const override { return 5; } };
+
+
+struct ZombieV1 : public Enemy { void Init(); int GetPoints() const override { return 5; } };
+struct SkeletonV1 : public Enemy { void Init(); int GetPoints() const override { return 10; } };
+struct TrollV1 : public Enemy { void Init(); int GetPoints() const override { return 15; } };
+struct GolemV1 : public Enemy { void Init(); int GetPoints() const override { return 25; } };
+struct TitanV1 : public Enemy { void Init(); int GetPoints() const override { return 20; } };
 
 // --- Wave System ---
 struct WaveData {
-    int enemyType; // 0:Zombie, 1:Skeleton, 2:Troll, 3:Golem, 4:Titan
+    int enemyType; // 0:Zombie, 1:Skeleton, 2:Troll, 3:Golem, 4:Titan, 5:wavestarter
     int count;
     float spawnDelay;
 };
@@ -66,6 +76,9 @@ struct WaveManager {
     float spawnTimer = 0.0f;
     bool waveComplete = true;
 
+    int wavestarterCount = 0;
+    int totalWavestarters = 0;
+
     bool LoadFromFile(const std::string& filename);
     bool LoadLevel(int levelNumber);
     Enemy* UpdateAndSpawn(float dt, const std::vector<Point>& path);
@@ -74,5 +87,23 @@ struct WaveManager {
     int GetTotalEnemiesInCurrentWave() const {
         if (currentWaveIndex < (int)waves.size()) return waves[currentWaveIndex].count;
         return 0;
+    }
+    int GetWavestarterCount() const { return wavestarterCount; }
+    int GetTotalWavestarters() const { return totalWavestarters; }
+
+    // Add these two functions to track the timer
+    float GetTimeUntilNextSpawn() const {
+        if (currentWaveIndex < (int)waves.size()) {
+            float remaining = waves[currentWaveIndex].spawnDelay - spawnTimer;
+            return (remaining > 0.0f) ? remaining : 0.0f;
+        }
+        return 0.0f;
+    }
+
+    bool IsWaitingForWavestarter() const {
+        if (currentWaveIndex < (int)waves.size()) {
+            return waves[currentWaveIndex].enemyType == 5; // 5 is wavestarter
+        }
+        return false;
     }
 };

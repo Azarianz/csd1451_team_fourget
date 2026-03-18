@@ -13,10 +13,15 @@ public:
 
 private:
     std::vector<Enemy*> activeEnemies;
-    std::vector<Point> myPath; // The path points
-
+    std::vector<Point> myPath;
 
     WaveManager waveManager;
     s8 m_uiFont = -1;
     void DrawUI();
+
+    // Add game speed multiplier
+    float gameSpeedMultiplier = 1.0f;
+
+    AEGfxTexture* m_spriteSheet = nullptr;
+    AEGfxVertexList* m_flagMeshes[3] = { nullptr };
 };
