@@ -4,6 +4,7 @@
 #include "Enemy.h"
 #include "Graphics.h"
 #include <vector>
+#include <string>
 
 extern int nextTowerID;
 
@@ -13,6 +14,7 @@ extern int nextTowerID;
 //  shop tower used to spawn new towers.
 // ============================================================
 namespace TowerHandler {
+
 
     // --------------------------------------------------------
     //  Enums
@@ -37,51 +39,30 @@ namespace TowerHandler {
     //  Level stats table
     //  Indexed by [TowerType][level - 1]  (3 levels per type)
     //  Fields: range | fireCooldown | damage | projectileSpeed
+    //  Slow tower: slowPercent and slowDuration
     // --------------------------------------------------------
     struct LevelStats {
         float range;
         float fireCooldown;
         float damage;
         float speed;
+        float slowPercent = 0.0f;
+        float slowDuration = 0.0f;
     };
+    extern LevelStats g_TowerLevelStats[5][3];
+    // Reads tower stats for all types and levels from Assets/tower_stats.txt
+    bool LoadTowerStatsFromFile(const std::string& filePath);
 
-    // 3 levels for each tower type (except base)
-    const LevelStats TOWER_LEVEL_STATS[5][3] = {
-        // BASIC_TOWER
-        {
-			// range, cooldown, damage, projectile speed
-            { 400.f, 1.5f, 15.f, 400.f },  // Level 1
-            { 500.f, 1.2f, 25.f, 450.f },  // Level 2
-            { 600.f, 0.9f, 40.f, 500.f },  // Level 3
-        },
-        // SNIPER_TOWER
-        {
-            // range, cooldown, damage, projectile speed
-            { 600.f, 3.0f,  50.f, 600.f }, // Level 1
-            { 750.f, 2.5f,  80.f, 700.f }, // Level 2
-            { 900.f, 2.0f, 120.f, 800.f }, // Level 3
-        },
-        // SLOW_TOWER
-        {
-            // range, cooldown, damage, projectile speed
-            { 200.f, 1.5f,  5.f, 350.f },  // Level 1
-            { 250.f, 1.3f, 10.f, 380.f },  // Level 2
-            { 300.f, 0.8f, 18.f, 420.f },  // Level 3
-        },
-        // RAPID_TOWER
-        {
-            // range, cooldown, damage, projectile speed
-            { 300.f, 1.0f, 10.f, 400.f },  // Level 1
-            { 350.f, 0.7f, 16.f, 450.f },  // Level 2
-            { 400.f, 0.5f, 24.f, 500.f },  // Level 3
-        },
-        // BASE_TOWER
-        {
-            { 0.f, 999999.f, 0.f, 0.f },
-            { 0.f, 999999.f, 0.f, 0.f },
-            { 0.f, 999999.f, 0.f, 0.f },
-        },
+    struct BaseTowerStats {
+		// can be overridden by file, but defaults to these values if file fails to load
+        float health = 100.0f;
+        float contactDamage = 10.0f;
+        float sizeX = 80.0f;
+        float sizeY = 80.0f;
     };
+    extern BaseTowerStats g_BaseTowerStats;
+    // Reads base tower stats from Assets/base_tower_stats.txt
+    bool LoadBaseTowerStatsFromFile(const std::string& filePath);
 
     // --------------------------------------------------------
     //  Projectile  (template stored on a tower)
@@ -137,6 +118,9 @@ namespace TowerHandler {
         TowerDetails      details  {};
         Graphics::ShapeId spriteId = 0;
 
+        static s8 g_StatsFont;          // font handle shared across all towers
+        static void LoadStatsFont();    // loads the stats font, call once in LoadTowerAssets
+
         // --------------------------------------------------------
         //  Slow tower AOE attack (expanding ring, exclusive to 
         //  slow towers)
@@ -163,6 +147,7 @@ namespace TowerHandler {
         // Rendering
         void Draw();
         void DrawHealthBar() const;
+        void DrawTextBox();
  
         // Base-tower health
         bool TakeDamage(float dmg); // returns true if tower dies
@@ -170,7 +155,11 @@ namespace TowerHandler {
         bool IsBaseTower()  const;
     };
 
+    // Fires a projectile at a single enemy if in range and cooldown has expired.
+    // Returns true if a shot was fired.
     bool TowerShoot(Tower& tower, Enemy& enemy, std::vector<ActiveBullet>& bullets);
+    // AoE attack for slow towers. Damages and slows all enemies as the ring expands.
+    // Must be called every frame while the tower is active.
     void SlowTowerAttack(Tower& tower, std::vector<Enemy*>& enemies);
 
     // --------------------------------------------------------
@@ -202,9 +191,10 @@ namespace TowerHandler {
     void DragAndDropOnce(float mouseX, float mouseY, 
         std::vector<Tower>& activeTowers);
 
+    // Moves all active bullets, checks for hits, and removes expired or out of bounds bullets.
     void UpdateProjectiles(float dt, std::vector<Enemy*>& enemies,
         std::vector<ActiveBullet>& activeBullets);
-
+    // Returns true if two circles overlap. Used for tower range, bullet hits and enemy collision.
     bool CircleCircleCollision(float x1, float y1, float r1,
         float x2, float y2, float r2);
 
@@ -253,8 +243,8 @@ namespace TowerHandler {
         const float sheetH = 160.0f;
 
         // Half-texel inset to prevent bleeding into adjacent sprites
-        const float insetX = 0.5f / sheetW;  // 0.002404f
-        const float insetY = 0.5f / sheetH;  // 0.003125f
+        const float insetX = 0.5f / sheetW;  
+        const float insetY = 0.5f / sheetH;  
 
         float w = 1.0f / totalCols;
         float h = 1.0f / totalRows;
@@ -268,13 +258,15 @@ namespace TowerHandler {
     }
 
     // --------------------------------------------------------
-    //  Aza Refactor Additions (Below Onwards)
+    //  Aza's Refactor Additions (Below Onwards)
     // --------------------------------------------------------
+    // Main tower update. Ticks fire timers, triggers attacks and cleans up dead bullet targets.
     void UpdateTowerLogic(float dt,
         std::vector<Tower>& towers,
         std::vector<Enemy*>& enemies,
         std::vector<ActiveBullet>& activeBullets);
 
+    // Creates and adds a base tower at the given position. Returns the index in the towers vector.
     int AddBaseTower(std::vector<Tower>& towers, float x, float y, float sizeX, float sizeY);
 }
 

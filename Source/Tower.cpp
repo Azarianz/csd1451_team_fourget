@@ -3,6 +3,9 @@
 #include "Enemy.h"
 #include <cmath>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 namespace TowerHandler {
 
@@ -11,10 +14,110 @@ namespace TowerHandler {
     // --------------------------------------------------------
     static AEGfxTexture* g_TowerSheet = nullptr;
     int nextTowerID = 0;
+    LevelStats g_TowerLevelStats[5][3] = {};
+    BaseTowerStats g_BaseTowerStats{};
 
     // Maps TowerType enum value -> spritesheet column
     // Order must match the TowerType enum: BASIC, SNIPER, SLOW, RAPID, BASE
     static const int TOWER_SPRITE_COLS[] = { 1, 5, 4, 2, 0 };
+
+    s8 Tower::g_StatsFont = -1;
+
+    // ============================================================
+    //  Load fonts
+    // ============================================================
+    void Tower::LoadStatsFont()
+    {
+        if (g_StatsFont == -1)
+            g_StatsFont = AEGfxCreateFont("Assets/liberation-mono.ttf", 20);
+    }
+
+    // ============================================================
+    //  Converts a type name string from the stats file to a 
+    //  TowerType array index.
+    //  Returns -1 if the name is not recognised.
+    // ============================================================
+    static int GetTypeIndex(const std::string& name)
+    {
+        if (name == "BASIC_TOWER")  return 0;
+        else if (name == "SNIPER_TOWER") return 1;
+        else if (name == "SLOW_TOWER")   return 2;
+        else if (name == "RAPID_TOWER")  return 3;
+        else if (name == "BASE_TOWER")   return 4;
+        else return -1; // unknown type
+    }
+    // ============================================================
+    //  Reads tower stats for all types and levels from a text 
+    //  file.
+    //  Each line: TYPE LEVEL RANGE COOLDOWN DAMAGE SPEED 
+    //  SLOW_PERCENT SLOW_DURATION
+    //  Returns false if the file cannot be opened.
+    // ============================================================
+    bool LoadTowerStatsFromFile(const std::string& filePath)
+    {
+        std::ifstream file(filePath);
+        if (!file.is_open())
+            return false;
+
+        std::string line;
+        while (std::getline(file, line))
+        {
+            // Skip blank lines and comments
+            size_t start = line.find_first_not_of(" \t");
+            if (start == std::string::npos) continue;
+            if (line[start] == '#')         continue;
+
+            std::istringstream ss(line);
+            std::string typeName;
+            int   level;
+            float range, cooldown, damage, speed, slowPercent, slowDuration;
+
+            if (!(ss >> typeName >> level >> range >> cooldown >> damage >> speed >> slowPercent >> slowDuration))
+                continue;
+
+            int typeIndex = GetTypeIndex(typeName);
+            int levelIndex = level - 1;
+
+            if (typeIndex == -1)                    continue;
+            if (levelIndex < 0 || levelIndex > 2)   continue;
+
+            g_TowerLevelStats[typeIndex][levelIndex] = { range, cooldown, damage, speed, slowPercent, slowDuration };
+        }
+
+        return true;
+    }
+    // ============================================================
+    //  Reads base tower stats from a text file.
+    //  Only reads the first valid line: HEALTH CONTACT_DAMAGE
+    //  SIZE_X SIZE_Y
+    //  Returns false if the file cannot be opened.
+    // ============================================================
+    bool LoadBaseTowerStatsFromFile(const std::string& filePath)
+    {
+        std::ifstream file(filePath);
+        if (!file.is_open())
+            return false;
+
+        std::string line;
+        while (std::getline(file, line))
+        {
+            // Skip blank lines and comments
+            size_t start = line.find_first_not_of(" \t");
+            if (start == std::string::npos) continue;
+            if (line[start] == '#')         continue;
+
+            std::istringstream ss(line);
+            float health, contactDamage, sizeX, sizeY;
+
+            if (!(ss >> health >> contactDamage >> sizeX >> sizeY))
+                continue;
+
+            g_BaseTowerStats = { health, contactDamage, sizeX, sizeY };
+            break; // only one entry needed
+        }
+
+        return true;
+    }
 
     // ============================================================
     //  Asset loading
@@ -22,6 +125,43 @@ namespace TowerHandler {
     void LoadTowerAssets(){
         if (!g_TowerSheet)
             g_TowerSheet = AEGfxTextureLoad("Assets/spritesheet.png");
+
+        Tower::LoadStatsFont();
+
+        // Fill defaults before loading files.
+        // If either file is missing these values are used as fallback.
+        g_TowerLevelStats[BASIC_TOWER][0] = { 400.f, 1.5f, 15.f, 400.f, 0.f, 0.f };
+        g_TowerLevelStats[BASIC_TOWER][1] = { 500.f, 1.2f, 25.f, 450.f, 0.f, 0.f };
+        g_TowerLevelStats[BASIC_TOWER][2] = { 600.f, 0.9f, 40.f, 500.f, 0.f, 0.f };
+
+        g_TowerLevelStats[SNIPER_TOWER][0] = { 600.f, 3.0f,  50.f, 600.f, 0.f, 0.f };
+        g_TowerLevelStats[SNIPER_TOWER][1] = { 750.f, 2.5f,  80.f, 700.f, 0.f, 0.f };
+        g_TowerLevelStats[SNIPER_TOWER][2] = { 900.f, 2.0f, 120.f, 800.f, 0.f, 0.f };
+
+        g_TowerLevelStats[SLOW_TOWER][0] = { 200.f, 1.5f,  5.f, 350.f, 0.5f, 1.0f };
+        g_TowerLevelStats[SLOW_TOWER][1] = { 250.f, 1.3f, 10.f, 380.f, 0.5f, 1.5f };
+        g_TowerLevelStats[SLOW_TOWER][2] = { 300.f, 0.8f, 18.f, 420.f, 0.5f, 2.0f };
+
+        g_TowerLevelStats[RAPID_TOWER][0] = { 300.f, 1.0f, 10.f, 400.f, 0.f, 0.f };
+        g_TowerLevelStats[RAPID_TOWER][1] = { 350.f, 0.7f, 16.f, 450.f, 0.f, 0.f };
+        g_TowerLevelStats[RAPID_TOWER][2] = { 400.f, 0.5f, 24.f, 500.f, 0.f, 0.f };
+
+        g_TowerLevelStats[BASE_TOWER][0] = { 0.f, 999999.f, 0.f, 0.f, 0.f, 0.f };
+        g_TowerLevelStats[BASE_TOWER][1] = { 0.f, 999999.f, 0.f, 0.f, 0.f, 0.f };
+        g_TowerLevelStats[BASE_TOWER][2] = { 0.f, 999999.f, 0.f, 0.f, 0.f, 0.f };
+
+        g_BaseTowerStats = { 100.f, 10.f, 80.f, 80.f };
+
+        // Override defaults with file values if the files exist.
+        if (LoadTowerStatsFromFile("Assets/tower_stats.txt"))
+            PRINT("tower_stats.txt loaded successfully.\n");
+        else
+            PRINT("tower_stats.txt not found, using default stats.\n");
+
+        if (LoadBaseTowerStatsFromFile("Assets/base_tower_stats.txt"))
+            PRINT("base_tower_stats.txt loaded successfully.\n");
+        else
+            PRINT("base_tower_stats.txt not found, using default stats.\n");
     }
 
     // ============================================================
@@ -68,11 +208,11 @@ namespace TowerHandler {
             break;
  
         case BASE_TOWER:
-            color                 = { 0.2f, 0.9f, 0.9f, 1.0f };
-            details.maxHealth     = 100.f;
-            details.health        = 100.f;
-            details.contactDamage = 10.f;
-            details.isBase        = true;
+            color = { 0.2f, 0.9f, 0.9f, 1.0f };
+            details.maxHealth = g_BaseTowerStats.health;
+            details.health = g_BaseTowerStats.health;
+            details.contactDamage = g_BaseTowerStats.contactDamage;
+            details.isBase = true;
             break;
  
         default:
@@ -100,25 +240,29 @@ namespace TowerHandler {
     }
 
     // ============================================================
-    //  Tower - stats
+    //  Applies stats from the loaded stats table to the tower 
+    //  based on its type and current level.
     // ============================================================
     void Tower::ApplyLevelStats()
     {
-        int typeIndex  = (int)details.towerType;
-        int levelIndex = details.level - 1;  // level 1 -> index 0
- 
-        // Guard against out-of-bounds if table is not updated for a new type
-        if (typeIndex  < 0 || typeIndex  >= 5) return;
+        int typeIndex = (int)details.towerType;
+        int levelIndex = details.level - 1;
+
+        if (typeIndex < 0 || typeIndex >= 5) return;
         if (levelIndex < 0) levelIndex = 0;
         if (levelIndex > 2) levelIndex = 2;
- 
-        const LevelStats& ls     = TOWER_LEVEL_STATS[typeIndex][levelIndex];
-        details.range             = ls.range;
-        details.fireCooldown      = ls.fireCooldown;
+
+        const LevelStats& ls = g_TowerLevelStats[typeIndex][levelIndex];
+        details.range = ls.range;
+        details.fireCooldown = ls.fireCooldown;
         details.projectile.damage = ls.damage;
-        details.projectile.speed  = ls.speed;
+        details.projectile.speed = ls.speed;
     }
- 
+
+    // ============================================================
+    // Increments the tower level by 1 and applies the new stats and sprite row.
+    // Returns false if the tower is already at max level.
+    // ============================================================
     bool Tower::LevelUp()
     {
         if (details.level >= 3)
@@ -135,7 +279,7 @@ namespace TowerHandler {
  
         return true;
     }
- 
+
     // ============================================================
     //  Tower - base-tower health
     // ============================================================
@@ -148,10 +292,10 @@ namespace TowerHandler {
  
         return details.health <= 0.0f; // true = tower died
     }
- 
+
     bool Tower::IsDead()      const { return details.isBase && details.health <= 0.0f; }
     bool Tower::IsBaseTower() const { return details.isBase; }
- 
+
     // ============================================================
     //  Tower - rendering
     // ============================================================
@@ -188,7 +332,13 @@ namespace TowerHandler {
             _sizeY = savedSY;
             color  = savedColor;
         }
- 
+
+        // Only draw textbox when placed and selected.
+        if(isPlaced && isSelected)
+        {
+            DrawTextBox();
+		}
+
         // Expanding AoE ring (slow tower only)
         if (details.towerType == SLOW_TOWER && aoeRingActive)
         {
@@ -216,7 +366,7 @@ namespace TowerHandler {
 
         DrawHealthBar(); // only for base tower
     }
- 
+
     // ============================================================
     //  Tower - health bar (base tower only)
     // ============================================================
@@ -236,7 +386,7 @@ namespace TowerHandler {
         }
         return quad;
     }
- 
+
     void Tower::DrawHealthBar() const
     {
         if (!details.isBase || details.maxHealth <= 0.0f) return;
@@ -254,7 +404,7 @@ namespace TowerHandler {
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
- 
+
         auto DrawQuad = [&](float cx, float w, float r, float g, float b)
         {
             AEGfxSetColorToMultiply(r, g, b, 1.0f);
@@ -265,7 +415,7 @@ namespace TowerHandler {
             AEGfxSetTransform(m.m);
             AEGfxMeshDraw(quad, AE_GFX_MDM_TRIANGLES);
         };
- 
+
         // Background (red) - full width
         DrawQuad(barX, barWidth, 1.0f, 0.0f, 0.0f);
  
@@ -274,6 +424,169 @@ namespace TowerHandler {
         float fillX     = barX - (barWidth * 0.5f) + (fillWidth * 0.5f);
         DrawQuad(fillX, fillWidth, 0.0f, 1.0f, 0.0f);
     }
+
+    // ============================================================
+    //  Tower::DrawTextBox
+    //  Draws a translucent stat panel at the bottom-left of screen
+    //  when a tower is selected.
+    // ============================================================
+    void Tower::DrawTextBox()
+    {
+        if (g_StatsFont == -1) return;
+
+        // --------------------------------------------------------
+        //  Build text lines first so box can be sized around them
+        // --------------------------------------------------------
+        const char* typeName = "Tower";
+        switch (details.towerType)
+        {
+        case BASIC_TOWER:  typeName = "Basic Tower";  break;
+        case SNIPER_TOWER: typeName = "Sniper Tower"; break;
+        case SLOW_TOWER:   typeName = "Slow Tower";   break;
+        case RAPID_TOWER:  typeName = "Rapid Tower";  break;
+        case BASE_TOWER:   typeName = "Base Tower";   break;
+        }
+
+        char header[64], fireRate[64], damage[64], range[64];
+        char slowPct[64], slowDur[64];
+
+        float rate = (details.fireCooldown > 0.f) ? 1.0f / details.fireCooldown : 0.f;
+        // header for base tower and other towers are different
+        if (details.towerType == BASE_TOWER)
+            sprintf_s(header, "[ %s ]", typeName);
+        else
+            sprintf_s(header, "[ %s  Lv.%d ]", typeName, details.level);
+
+        sprintf_s(fireRate, "Fire Rate : %.2f /s", rate);
+        sprintf_s(damage,   "Damage    : %.0f", details.projectile.damage);
+        sprintf_s(range,    "Range     : %.0f", details.range);
+
+        bool isSlowTower = (details.towerType == SLOW_TOWER);
+        bool isBaseTower = (details.towerType == BASE_TOWER);
+
+        if (isSlowTower)
+        {
+            const LevelStats& ls = g_TowerLevelStats[(int)details.towerType][details.level - 1];
+            sprintf_s(slowPct, "Slow      : %.0f%%", ls.slowPercent * 100.0f);
+            sprintf_s(slowDur, "Slow Dur  : %.1fs", ls.slowDuration);
+        }
+
+        // --------------------------------------------------------
+		//  Layout constants (tweak as needed).
+        //  Uses normalized device coordinates
+        // --------------------------------------------------------
+        const float charW = 0.015f;
+        const float lineStep = 0.085f; // vertical gap between lines in NDC
+        const float margin = 0.04f;  // same margin on all 4 sides
+
+        // --------------------------------------------------------
+        //  Calculate box size from content
+        // --------------------------------------------------------
+        // Find longest line in characters (header, fireRate, damage, range are always shown)
+        int maxChars = (int)strlen(header);
+        maxChars = max(maxChars, (int)strlen(fireRate));
+        maxChars = max(maxChars, (int)strlen(damage));
+        maxChars = max(maxChars, (int)strlen(range));
+        if (isSlowTower)
+        {
+            maxChars = max(maxChars, (int)strlen(slowPct));
+            maxChars = max(maxChars, (int)strlen(slowDur));
+        }
+        if (isBaseTower)
+        {
+            char healthBuf[64];
+            sprintf_s(healthBuf, "HP : %.0f / %.0f", details.health, details.maxHealth);
+            maxChars = max(maxChars, (int)strlen(healthBuf));
+        }
+
+        // Checks for slow tower and base tower
+		int numLines = isSlowTower ? 6 : isBaseTower ? 2 : 4;
+
+        // Box width = longest line width + equal left and right margin
+        float boxW = (float)maxChars * charW + margin * 2.0f;
+
+        // Box height = all lines stacked + equal top and bottom margin
+        float boxH = (float)numLines * lineStep + margin * 2.0f;
+
+        // Anchor box to bottom left of screen
+        const float boxLeft = -0.98f;
+        const float boxBottom = -0.98f;
+
+        // --------------------------------------------------------
+        //  Draw background quad
+        // --------------------------------------------------------
+        float cx = boxLeft + boxW * 0.5f;
+        float cy = boxBottom + boxH * 0.5f;
+
+		// Convert from NDC to world coordinates for rendering the quad
+        float screenW = (float)AEGfxGetWindowWidth();
+        float screenH = (float)AEGfxGetWindowHeight();
+        float worldW = boxW * screenW * 0.5f;
+        float worldH = boxH * screenH * 0.5f;
+        float worldX = cx * screenW * 0.5f;
+        float worldY = cy * screenH * 0.5f;
+
+        static AEGfxVertexList* boxQuad = nullptr;
+        if (!boxQuad)
+        {
+            AEGfxMeshStart();
+            AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0, 0,
+                0.5f, -0.5f, 0xFFFFFFFF, 1, 0,
+                0.5f, 0.5f, 0xFFFFFFFF, 1, 1);
+            AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0, 0,
+                0.5f, 0.5f, 0xFFFFFFFF, 1, 1,
+                -0.5f, 0.5f, 0xFFFFFFFF, 0, 1);
+            boxQuad = AEGfxMeshEnd();
+        }
+
+        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(0.7f);
+        AEGfxSetColorToMultiply(0.1f, 0.1f, 0.15f, 1.0f);
+
+        AEMtx33 s, t, m;
+        AEMtx33Scale(&s, worldW, worldH);
+        AEMtx33Trans(&t, worldX, worldY);
+        AEMtx33Concat(&m, &t, &s);
+        AEGfxSetTransform(m.m);
+        AEGfxMeshDraw(boxQuad, AE_GFX_MDM_TRIANGLES);
+        AEGfxSetTransparency(1.0f);
+
+        // --------------------------------------------------------
+        //  Draw text
+        // --------------------------------------------------------
+        float textX = boxLeft + margin;                                 // left margin
+        float textY = (boxBottom + boxH) - margin - lineStep * 0.3f;    // top margin
+
+        // Header (shared by all tower types, typeName switch already handles BASE_TOWER)
+        AEGfxPrint(g_StatsFont, header, textX, textY, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+        textY -= lineStep;
+
+        // Base tower only shows health, skip fire rate, damage, range
+        if (isBaseTower)
+        {
+            char health[64];
+            sprintf_s(health, "HP : %.0f / %.0f", details.health, details.maxHealth);
+            AEGfxPrint(g_StatsFont, health, textX, textY, 1.0f, 0.2f, 0.9f, 0.9f, 1.0f);
+            return;
+        }
+
+        // All other towers show fire rate, damage, range
+        AEGfxPrint(g_StatsFont, fireRate, textX, textY, 1.0f, 1.0f, 0.9f, 0.9f, 0.9f);
+        textY -= lineStep;
+        AEGfxPrint(g_StatsFont, damage, textX, textY, 1.0f, 1.0f, 0.9f, 0.9f, 0.9f);
+        textY -= lineStep;
+        AEGfxPrint(g_StatsFont, range, textX, textY, 1.0f, 1.0f, 0.9f, 0.9f, 0.9f);
+
+        if (isSlowTower)
+        {
+            textY -= lineStep;
+            AEGfxPrint(g_StatsFont, slowPct, textX, textY, 1.0f, 1.0f, 0.5f, 0.8f, 1.0f);
+            textY -= lineStep;
+            AEGfxPrint(g_StatsFont, slowDur, textX, textY, 1.0f, 1.0f, 0.5f, 0.8f, 1.0f);
+        }
+    }
+
  
     // ============================================================
     //  ShopTower
@@ -539,9 +852,10 @@ namespace TowerHandler {
 
             if (ringRadius >= dist)
             {
+                const LevelStats& ls = g_TowerLevelStats[(int)tower.details.towerType][tower.details.level - 1];
                 e->health -= tower.details.projectile.damage;
-                e->slowMultiplier = 0.7f;   // 30% slow
-                e->slowTimer = 2.0f;        // refresh duration
+                e->slowMultiplier = 1.0f - ls.slowPercent;
+                e->slowTimer = ls.slowDuration;
                 tower.aoeHitList.push_back(e);
             }
         }

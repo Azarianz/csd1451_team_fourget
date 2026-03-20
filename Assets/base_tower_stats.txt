@@ -1,0 +1,5 @@
+# Base tower stats file
+# Format: HEALTH CONTACT_DAMAGE SIZE_X SIZE_Y
+# Only one entry needed (base tower has no levels)
+
+100   10   80   80

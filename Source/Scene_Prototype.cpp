@@ -218,6 +218,16 @@ void Scene_Prototype::UpdateSelectionAndDragging(float worldX, float worldY, int
     shop.Update(activeTowers);
 
     buildMergeSystem.UpdateDragging(worldX, worldY, lmbDown, justReleasedLmb, mouseX, mouseY);
+    
+    // Mark towers as placed the moment the mouse is released
+    if (justReleasedLmb)
+    {
+        for (auto& t : activeTowers)
+        {
+            if (!t.isDragging && !t.isPlaced)
+                t.isPlaced = true;
+        }
+    }
 
     if (justPressedLmb && !buildMergeSystem.IsDraggingTower())
         TowerHandler::SelectTopmostTower(worldX, worldY, activeTowers);
@@ -345,9 +355,12 @@ void Scene_Prototype::CreateBaseTower()
             activeTowers,
             path.back().x,
             path.back().y,
-            80.0f,
-            80.0f
+            TowerHandler::g_BaseTowerStats.sizeX, 
+            TowerHandler::g_BaseTowerStats.sizeY 
         );
+
+        if (baseTowerIndex >= 0 && baseTowerIndex < (int)activeTowers.size())
+            activeTowers[(size_t)baseTowerIndex].isPlaced = true;
 
         buildMergeSystem.RebuildOccupiedFromTowers();
     }

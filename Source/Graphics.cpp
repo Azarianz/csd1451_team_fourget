@@ -130,7 +130,7 @@ namespace Graphics
     // Public API: create shapes
     // ---------------------------
 
-    ShapeId DrawRect(float cx, float cy, float w, float h,
+    ShapeId DrawRect    (float cx, float cy, float w, float h,
         float r, float g, float b, float a)
     {
         Shape s;
