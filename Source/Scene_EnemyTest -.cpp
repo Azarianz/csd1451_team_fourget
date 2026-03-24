@@ -56,7 +56,7 @@ void Scene_Enemy::Update(float dt)
     if (AEInputCheckTriggered(AEVK_SPACE))
     {
         if (gameSpeedMultiplier == 1.0f) gameSpeedMultiplier = 2.0f;
-        else if (gameSpeedMultiplier == 2.0f) gameSpeedMultiplier = 4.0f;
+        else if (gameSpeedMultiplier == 2.0f) gameSpeedMultiplier = 2.0f;
         else gameSpeedMultiplier = 1.0f;
     }
 

@@ -1,3 +1,4 @@
+// Scene_Prototype.h
 #pragma once
 #include "Scene.h"
 #include "GridSystem.h"
@@ -67,4 +68,8 @@ private:
     bool wasLmbDown = false;
     bool m_paused = false;
     bool IsPauseButtonClicked(int worldX, int worldY) const;
+
+    float gameSpeedMultiplier = 1.0f;
+    AEGfxTexture* m_spriteSheet = nullptr;
+    AEGfxVertexList* m_flagMeshes[3] = { nullptr };
 };

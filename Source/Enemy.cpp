@@ -117,13 +117,15 @@ void Enemy::Update(float dt, const std::vector<Point>& path)
     float dy = target.y - y;
     float distSq = dx * dx + dy * dy;
 
-    // Check if the enemy is further than 5 units away from the waypoint
-    if (distSq > 25.0f)
+    float effectiveSpeed = speed * slowMultiplier;
+    float moveDist = effectiveSpeed * dt;
+    float dist = sqrtf(distSq);
+
+    // If the distance to the target is greater than the distance we move this frame
+    if (dist > moveDist)
     {
-        float dist = sqrtf(distSq);
-        float effectiveSpeed = speed * slowMultiplier; // slow applied
-        x += (dx / dist) * effectiveSpeed * dt;
-        y += (dy / dist) * effectiveSpeed * dt;
+        x += (dx / dist) * moveDist;
+        y += (dy / dist) * moveDist;
 
         // Flip sprite based on horizontal movement
         if (dx > 0.1f) facingX = 1.0f;       // Moving right
@@ -131,13 +133,16 @@ void Enemy::Update(float dt, const std::vector<Point>& path)
     }
     else
     {
+        // We will reach or pass the target this frame, so snap to it and move to next
+        x = target.x;
+        y = target.y;
+
         pathIndex++;
         if (pathIndex >= (int)path.size()) {
             reachedEnd = true;
         }
     }
 }
-
 void Enemy::DrawHealthBar() const
 {
     if (health <= 0) return;
