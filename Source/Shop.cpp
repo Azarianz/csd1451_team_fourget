@@ -112,16 +112,8 @@ namespace TowerHandler {
     // RefreshSlots
     void Shop::RefreshSlots()
     {
-        int idx[TOWER_DEF_COUNT];
-        for (int i = 0; i < TOWER_DEF_COUNT; ++i) idx[i] = i;
-        for (int i = TOWER_DEF_COUNT - 1; i > 0; --i)
-        {
-            int j = rand() % (i + 1);
-            int tmp = idx[i]; idx[i] = idx[j]; idx[j] = tmp;
-        }
-
         for (int i = 0; i < TOWER_SLOTS; ++i) {
-            slots[i].defIndex = idx[i];
+            slots[i].defIndex = rand() % TOWER_DEF_COUNT;
             slots[i].isEmpty = false;
         }
     }
