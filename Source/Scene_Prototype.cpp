@@ -1,5 +1,6 @@
 // Scene_Prototype.cpp
 #include "Scene_Prototype.h"
+#include "SceneManager.h"
 
 #include "AEEngine.h"
 #include "AEInput.h"
@@ -7,6 +8,305 @@
 #include <cstdio>
 
 #pragma region Helper Funcs
+#pragma region Win Popup
+void Scene_Prototype::OpenWinPopup()
+{
+    m_stageWon = true;
+    m_paused = true;
+
+    if (m_bgmLoaded)
+        AEAudioPauseGroup(m_bgmGroup);
+}
+
+bool Scene_Prototype::IsInNextStageButton(int mouseX, int mouseY) const
+{
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    const float popupW = 520.0f;
+    const float popupH = 250.0f;
+    const float left = (screenW - popupW) * 0.5f;
+    const float top = (screenH - popupH) * 0.5f;
+    const float centerX = left + popupW * 0.5f;
+
+    const float buttonW = 190.0f;
+    const float buttonH = 24.0f;
+    const float buttonX = centerX - buttonW * 0.5f;
+    const float buttonY = top + 118.0f; // match draw row
+
+    return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
+        (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
+}
+
+bool Scene_Prototype::IsInMainMenuButton(int mouseX, int mouseY) const
+{
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    const float popupW = 520.0f;
+    const float popupH = 250.0f;
+    const float left = (screenW - popupW) * 0.5f;
+    const float top = (screenH - popupH) * 0.5f;
+    const float centerX = left + popupW * 0.5f;
+
+    const float buttonW = 180.0f;
+    const float buttonH = 24.0f;
+    const float buttonX = centerX - buttonW * 0.5f;
+    const float buttonY = top + 172.0f; // match draw row
+
+    return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
+        (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
+}
+void Scene_Prototype::UpdateWinPopup(int mouseX, int mouseY)
+{
+    if (!m_stageWon)
+        return;
+
+    if (AEInputCheckTriggered(AEVK_LBUTTON))
+    {
+        if (IsInNextStageButton(mouseX, mouseY))
+        {
+            if (!LoadNextLevel())
+            {
+                PRINT("No next stage configured. Returning to main menu.\n");
+                SceneManager::I().SwitchTo(SceneID::MainMenu);
+            }
+            return;
+        }
+
+        if (IsInMainMenuButton(mouseX, mouseY))
+        {
+            SceneManager::I().SwitchTo(SceneID::MainMenu);
+            return;
+        }
+    }
+
+    if (AEInputCheckTriggered(AEVK_RETURN) || AEInputCheckTriggered(AEVK_SPACE))
+    {
+        if (!LoadNextLevel())
+        {
+            PRINT("No next stage configured. Returning to main menu.\n");
+            SceneManager::I().SwitchTo(SceneID::MainMenu);
+        }
+    }
+
+    if (AEInputCheckTriggered(AEVK_ESCAPE))
+    {
+        SceneManager::I().SwitchTo(SceneID::MainMenu);
+    }
+}
+
+void Scene_Prototype::DrawWinPopup() const
+{
+    if (!m_stageWon)
+        return;
+
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    const float popupW = 520.0f;
+    const float popupH = 250.0f;
+    const float left = (screenW - popupW) * 0.5f;
+    const float top = (screenH - popupH) * 0.5f;
+    const float centerX = left + popupW * 0.5f;
+    const float centerY = top + popupH * 0.5f;
+
+    int mouseX = 0;
+    int mouseY = 0;
+    AEInputGetCursorPosition(&mouseX, &mouseY);
+
+    const bool hoverNext = IsInNextStageButton(mouseX, mouseY);
+    const bool hoverMenu = IsInMainMenuButton(mouseX, mouseY);
+
+    auto ToNdcX = [screenW](float px) { return (px / screenW) * 2.0f - 1.0f; };
+    auto ToNdcY = [screenH](float py) { return 1.0f - (py / screenH) * 2.0f; };
+
+    auto GetCenteredX = [](const char* text, float scale, float areaCenterX)
+        {
+            const float charWidthPx = 22.0f * scale;
+            const float textWidth = (float)std::strlen(text) * charWidthPx;
+            return areaCenterX - textWidth * 0.5f;
+        };
+
+    // same-sized hit/button areas used by hover + click
+    const float buttonW = 280.0f;
+    const float buttonH = 42.0f;
+    const float buttonX = centerX - buttonW * 0.5f;
+    const float nextY = top + 118.0f;
+    const float menuY = top + 172.0f;
+
+    // dark fullscreen overlay
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(0.60f);
+    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+
+    AEGfxMeshStart();
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFF000000, 0.0f, 0.0f, 0.5f, -0.5f, 0xFF000000, 0.0f, 0.0f, 0.5f, 0.5f, 0xFF000000, 0.0f, 0.0f);
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFF000000, 0.0f, 0.0f, 0.5f, 0.5f, 0xFF000000, 0.0f, 0.0f, -0.5f, 0.5f, 0xFF000000, 0.0f, 0.0f);
+    AEGfxVertexList* overlayMesh = AEGfxMeshEnd();
+
+    if (overlayMesh)
+    {
+        AEMtx33 scaleM, rotM, transM, finalMtx;
+        AEMtx33Scale(&scaleM, screenW, screenH);
+        AEMtx33Rot(&rotM, 0.0f);
+        AEMtx33Trans(&transM, 0.0f, 0.0f);
+        AEMtx33Concat(&finalMtx, &rotM, &scaleM);
+        AEMtx33Concat(&finalMtx, &transM, &finalMtx);
+        AEGfxSetTransform(finalMtx.m);
+        AEGfxMeshDraw(overlayMesh, AE_GFX_MDM_TRIANGLES);
+        AEGfxMeshFree(overlayMesh);
+    }
+
+    // popup panel
+    AEGfxSetTransparency(0.92f);
+
+    AEGfxMeshStart();
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFF202020, 0.0f, 0.0f, 0.5f, -0.5f, 0xFF202020, 0.0f, 0.0f, 0.5f, 0.5f, 0xFF202020, 0.0f, 0.0f);
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFF202020, 0.0f, 0.0f, 0.5f, 0.5f, 0xFF202020, 0.0f, 0.0f, -0.5f, 0.5f, 0xFF202020, 0.0f, 0.0f);
+    AEGfxVertexList* panelMesh = AEGfxMeshEnd();
+
+    if (panelMesh)
+    {
+        AEMtx33 scaleM, rotM, transM, finalMtx;
+        AEMtx33Scale(&scaleM, popupW, popupH);
+        AEMtx33Rot(&rotM, 0.0f);
+        AEMtx33Trans(&transM, centerX - screenW * 0.5f, screenH * 0.5f - centerY);
+        AEMtx33Concat(&finalMtx, &rotM, &scaleM);
+        AEMtx33Concat(&finalMtx, &transM, &finalMtx);
+        AEGfxSetTransform(finalMtx.m);
+        AEGfxMeshDraw(panelMesh, AE_GFX_MDM_TRIANGLES);
+        AEGfxMeshFree(panelMesh);
+    }
+
+    if (m_uiFont >= 0)
+    {
+        const char* titleText = "YOU WIN";
+        const char* nextText = "NEXT STAGE";
+        const char* menuText = "MAIN MENU";
+
+        const float bright = 1.0f;
+        const float dim = 0.35f;
+
+        const float titleScale = 1.25f;
+        const float optionScale = 1.0f;
+
+        const float titleX = GetCenteredX(titleText, titleScale, centerX - 180);
+        const float titleY = top + 64.0f;
+
+        const float nextTextX = GetCenteredX(nextText, optionScale, centerX);
+        const float nextTextY = nextY + 6.0f;
+
+        const float menuTextX = GetCenteredX(menuText, optionScale, centerX);
+        const float menuTextY = menuY + 6.0f;
+
+        AEGfxPrint(
+            gameOverFont >= 0 ? gameOverFont : m_uiFont,
+            titleText,
+            ToNdcX(titleX),
+            ToNdcY(titleY),
+            titleScale,
+            0.2f, 1.0f, 0.3f, 1.0f
+        );
+
+        AEGfxPrint(
+            m_uiFont,
+            nextText,
+            ToNdcX(nextTextX),
+            ToNdcY(nextTextY),
+            optionScale,
+            hoverNext ? bright : dim,
+            hoverNext ? bright : dim,
+            hoverNext ? bright : dim,
+            1.0f
+        );
+
+        AEGfxPrint(
+            m_uiFont,
+            menuText,
+            ToNdcX(menuTextX),
+            ToNdcY(menuTextY),
+            optionScale,
+            hoverMenu ? bright : dim,
+            hoverMenu ? bright : dim,
+            hoverMenu ? bright : dim,
+            1.0f
+        );
+    }
+}
+#pragma endregion
+
+#pragma region Tutorial Helpers
+bool Scene_Prototype::IsTutorialLevel() const
+{
+    // Adjust these names to match your actual tutorial file names
+    return (levelFile.find("level_01") != std::string::npos);
+}
+
+void Scene_Prototype::UpdateTutorialPopup()
+{
+    bool wasActive = m_tutorialPopup.IsActive();
+
+    // Manual reopen from any scene
+    if (AEInputCheckTriggered(AEVK_F1) && !m_tutorialPopup.IsActive())
+    {
+        m_tutorialPopup.ForceStart();
+    }
+
+    // Auto-open once at start for tutorial level
+    if (IsTutorialLevel() && !m_tutorialPopup.HasStarted())
+    {
+        m_tutorialPopup.Start();
+    }
+
+    m_tutorialPopup.Update();
+
+    bool isActive = m_tutorialPopup.IsActive();
+
+    if (!wasActive && isActive)
+    {
+        m_paused = true;
+        if (m_bgmLoaded)
+            AEAudioPauseGroup(m_bgmGroup);
+    }
+    else if (wasActive && !isActive)
+    {
+        m_paused = false;
+        if (m_bgmLoaded)
+            AEAudioResumeGroup(m_bgmGroup);
+    }
+}
+#pragma endregion
+
+bool Scene_Prototype::IsStageCleared() const
+{
+    return waveManager.waveComplete && enemies.empty();
+}
+
+bool Scene_Prototype::LoadNextLevel()
+{
+    std::string nextLevel = levelFile;
+
+    if (nextLevel.find("level_01.txt") != std::string::npos)
+        nextLevel.replace(nextLevel.find("level_01.txt"), std::string("level_01.txt").length(), "level_02.txt");
+    else if (nextLevel.find("level_02.txt") != std::string::npos)
+        nextLevel.replace(nextLevel.find("level_02.txt"), std::string("level_02.txt").length(), "level_03.txt");
+    else if (nextLevel.find("level_03.txt") != std::string::npos)
+        nextLevel.replace(nextLevel.find("level_03.txt"), std::string("level_03.txt").length(), "level_04.txt");
+    else
+        return false; // no next level configured
+
+    GameSettings::selectedLevelFile = nextLevel;
+    PRINT("Loading next level file: %s\n", GameSettings::selectedLevelFile.c_str());
+
+    SceneManager::I().SwitchTo(SceneID::Prototype);
+    return true;
+}
+// --------------------------------------------------------
+//  Tutorial Helpers
+// --------------------------------------------------------
 
 static AEGfxVertexList* CreateFlagMesh(int row, int col)
 {
@@ -218,6 +518,7 @@ void Scene_Prototype::ResetRuntimeState()
     wasLmbDown = false;
     baseTowerIndex = -1;
     gameOver = false;
+    m_stageWon = false;
     m_paused = false;
     gameSpeedMultiplier = 1.0f;
 }
@@ -473,15 +774,46 @@ void Scene_Prototype::Init()
     m_flagMeshes[0] = CreateFlagMesh(9, 17);
     m_flagMeshes[1] = CreateFlagMesh(6, 17);
     m_flagMeshes[2] = CreateFlagMesh(7, 17);
+
+    m_tutorialPopup.Init();
+    m_tutorialPopup.Reset();
+
+    m_tutorialPopup.SetEnabled(IsTutorialLevel());
+    PRINT("IsTutorialLevel: %d\n", IsTutorialLevel());
+    m_tutorialPopup.SetSlides({
+        "Assets/Tutorial/tutorial_01.png",
+        "Assets/Tutorial/tutorial_02.png",
+        "Assets/Tutorial/tutorial_03.png",
+        "Assets/Tutorial/tutorial_04.png",
+        "Assets/Tutorial/tutorial_05.png",
+        "Assets/Tutorial/tutorial_06.png",
+        });
 }
 
 void Scene_Prototype::Update(float dt)
 {
-    if (gameOver) return;
+   if (gameOver) return;
     if (!grid) return;
+
+    UpdateTutorialPopup();
+    if (m_tutorialPopup.IsActive())
+        return;
 
     int mouseX = 0, mouseY = 0;
     AEInputGetCursorPosition(&mouseX, &mouseY);
+
+    if (m_stageWon)
+    {
+        UpdateWinPopup(mouseX, mouseY);
+        return;
+    }
+
+    // DEBUG WIN KEY
+    if (AEInputCheckTriggered(AEVK_F10))
+    {
+        OpenWinPopup();
+        return;
+    }
 
     float worldX = 0.0f, worldY = 0.0f;
     Utility::GetWorldMousePos(worldX, worldY);
@@ -497,6 +829,13 @@ void Scene_Prototype::Update(float dt)
     UpdateBaseCollision();
     CleanupDeadEnemies();
     UpdateReturningTowers(scaled_dt);
+
+    if (IsStageCleared() && !m_stageWon)
+    {
+        OpenWinPopup();
+        UpdateWinPopup(mouseX, mouseY);
+        return;
+    }
 }
 
 void Scene_Prototype::Draw()
@@ -527,6 +866,11 @@ void Scene_Prototype::Draw()
 
     Graphics::RenderAll();
 
+    m_tutorialPopup.Draw(m_uiFont);
+
+    if (m_stageWon)
+        DrawWinPopup();
+
     if (gameOver && gameOverFont >= 0)
     {
         AEGfxPrint(gameOverFont, "GAME OVER",
@@ -539,6 +883,7 @@ void Scene_Prototype::Draw()
 
 void Scene_Prototype::Exit()
 {
+    m_tutorialPopup.Shutdown();
     shop.Exit();
 
     for (int i = (int)activeTowers.size() - 1; i >= 0; --i)

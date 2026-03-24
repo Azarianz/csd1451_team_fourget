@@ -19,7 +19,7 @@ namespace TowerHandler {
 
     // Maps TowerType enum value -> spritesheet column
     // Order must match the TowerType enum: BASIC, SNIPER, SLOW, RAPID, BASE
-    static const int TOWER_SPRITE_COLS[] = { 1, 5, 4, 2, 0 };
+    static const int TOWER_SPRITE_COLS[] = { 1, 5, 4, 2, 7 };
 
     s8 Tower::g_StatsFont = -1;
 

@@ -8,6 +8,7 @@
 #include "Tower.h"
 #include "GameSettings.h"
 #include "BuildMergeSystem.h"
+#include "TutorialPopup.h"
 
 #include <vector>
 #include <cstdint>
@@ -38,13 +39,29 @@ private:
     void CleanupDeadEnemies();
     void UpdateReturningTowers(float dt);
 
+    bool IsStageCleared() const;
+    bool LoadNextLevel();
+
+
+	// Win Popup
+    void OpenWinPopup();
+    void UpdateWinPopup(int mouseX, int mouseY);
+    void DrawWinPopup() const;
+    bool IsInNextStageButton(int mouseX, int mouseY) const;
+    bool IsInMainMenuButton(int mouseX, int mouseY) const;
+
 private:
+    TutorialPopup m_tutorialPopup;
+    bool IsTutorialLevel() const;
+    void UpdateTutorialPopup();
+
     std::string levelFile;
     LevelLoader level;
     GridSystem::Grid* grid = nullptr;
 
     int baseTowerIndex = -1;
     bool gameOver = false;
+    bool m_stageWon = false;
     s8 gameOverFont = -1;
 
     WaveManager waveManager;
@@ -67,7 +84,7 @@ private:
 
     bool wasLmbDown = false;
     bool m_paused = false;
-    bool IsPauseButtonClicked(int worldX, int worldY) const;
+    bool IsPauseButtonClicked(int mouseX, int mouseY) const;
 
     float gameSpeedMultiplier = 1.0f;
     AEGfxTexture* m_spriteSheet = nullptr;
