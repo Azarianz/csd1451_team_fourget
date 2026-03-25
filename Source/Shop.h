@@ -69,14 +69,16 @@ namespace TowerHandler {
 
         ShopSlot slots[TOTAL_SLOTS] = {};
 
-        float slotSize = 60.0f;
-        float padding = 60.0f;
+        float slotSize = 110.0f;
+        float padding = 40.0f;
+        float m_uiScale = 1.0f;
 
         float m_pulseTimer = 0.0f;
         int   m_draggedSlot = -1;
 
         AEGfxVertexList* pCircleMesh = nullptr;
         AEGfxTexture* pSpritesheet = nullptr;
+        AEGfxTexture* pSlotTex = nullptr;
 
         AEGfxTexture* pRefreshSheet = nullptr;
         static const int REFRESH_SHEET_COLS = 11; 
