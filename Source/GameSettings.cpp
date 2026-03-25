@@ -2,6 +2,7 @@
 
 namespace GameSettings
 {
+    Difficulty currentDifficulty = Difficulty::Easy;
     const Resolution RESOLUTIONS[3] = {
         { 1280, 720,  "1280 x 720"  },
         { 1600, 900,  "1600 x 900"  },

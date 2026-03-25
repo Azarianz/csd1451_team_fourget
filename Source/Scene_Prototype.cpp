@@ -767,8 +767,30 @@ void Scene_Prototype::Init()
     if (m_uiFont < 0)
         m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
 
-    if (!waveManager.LoadFromFile("Assets/waves.txt"))
-        PRINT("Failed to load waves.txt!\n");
+    // Load level easy/ Hard
+    std::string baseName = "level_01";
+    size_t lastSlash = levelFile.find_last_of("/\\");
+    size_t lastDot = levelFile.find_last_of(".");
+    if (lastSlash != std::string::npos && lastDot != std::string::npos) {
+        baseName = levelFile.substr(lastSlash + 1, lastDot - lastSlash - 1);
+    }
+
+    std::string waveFilePath = "Assets/" + baseName;
+    if (GameSettings::currentDifficulty == GameSettings::Difficulty::Easy) {
+        waveFilePath += "_easy.txt";
+    }
+    else {
+        waveFilePath += "_hard.txt";
+    }
+
+    if (!waveManager.LoadFromFile(waveFilePath))
+    {
+        PRINT("Failed to load %s! Falling back to Assets/waves.txt\n", waveFilePath.c_str());
+
+        if (!waveManager.LoadFromFile("Assets/waves.txt")) {
+            PRINT("Failed to load fallback waves.txt!\n");
+        }
+    }
 
     m_spriteSheet = AEGfxTextureLoad("Assets/rawspritesheet.png");
     m_flagMeshes[0] = CreateFlagMesh(9, 17);

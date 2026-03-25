@@ -24,6 +24,11 @@ private:
     };
 
 private:
+    enum class MenuState { SelectingLevel, SelectingDifficulty };
+    MenuState m_state = MenuState::SelectingLevel;
+
+    int m_pendingLevelIndex = -1;
+    int m_selectedDifficulty = 0; // 0 = Easy, 1 = Hard
     void LoadLevelList();
     void BuildButtonLayout();
     void UpdateMouseInput();
