@@ -809,7 +809,7 @@ void Scene_Prototype::Update(float dt)
     }
 
     // DEBUG WIN KEY
-    if (AEInputCheckTriggered(AEVK_F10))
+    if (AEInputCheckTriggered(AEVK_F2))
     {
         OpenWinPopup();
         return;
