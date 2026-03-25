@@ -52,8 +52,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         if (SceneManager::I().Current() != SceneID::LevelEditor) {
             bool escapeHandledByScene = (sceneThisFrame == SceneID::Settings);
-            if (GameSettings::quitGame ||
-                (!escapeHandledByScene && AEInputCheckTriggered(AEVK_ESCAPE)))
+            if (GameSettings::quitGame)
                 gGameRunning = 0;
         }
     }
