@@ -9,6 +9,7 @@
 #include "GameSettings.h"
 #include "BuildMergeSystem.h"
 #include "TutorialPopup.h"
+#include "ParticleSystem.h"
 
 #include <vector>
 #include <cstdint>
