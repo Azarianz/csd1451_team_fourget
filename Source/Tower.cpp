@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include "ParticleSystem.h"
 
 namespace TowerHandler {
 
@@ -879,6 +880,16 @@ namespace TowerHandler {
                 if (CircleCircleCollision(b.x, b.y, b._sizeX, e->x, e->y, e->_sizeX))
                 {
                     e->health     -= b.damage;
+
+                    // Spawn burst matching bullet color and tower type size
+                    ParticleSystem::BurstSize burstSize = ParticleSystem::BurstSize::MEDIUM;
+                    if (b.speed >= 600.0f) burstSize = ParticleSystem::BurstSize::LARGE;  // sniper
+                    else if (b.speed <= 400.0f && b._sizeX <= 10.0f) burstSize = ParticleSystem::BurstSize::SMALL; // rapid
+
+                    ParticleSystem::SpawnBurst(e->x, e->y,
+                                                b.color.r, b.color.g, b.color.b,
+                                                burstSize);
+
                     b.shouldRemove = true;
                     break;
                 }

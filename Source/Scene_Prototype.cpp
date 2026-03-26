@@ -814,7 +814,11 @@ void Scene_Prototype::Init()
 
 void Scene_Prototype::Update(float dt)
 {
-   if (gameOver) return;
+    // Prevents bullet teleporting when window is dragged or focus is lost.
+    const float MAX_DT = 1.0f / 60.0f;
+    if (dt > MAX_DT) dt = MAX_DT;
+
+    if (gameOver) return;
     if (!grid) return;
 
     UpdateTutorialPopup();
@@ -851,6 +855,7 @@ void Scene_Prototype::Update(float dt)
     UpdateBaseCollision();
     CleanupDeadEnemies();
     UpdateReturningTowers(scaled_dt);
+    ParticleSystem::Update(scaled_dt);
 
     if (IsStageCleared() && !m_stageWon)
     {
@@ -879,6 +884,8 @@ void Scene_Prototype::Draw()
         if (e)
             e->Draw();
     }
+
+    ParticleSystem::Draw();
 
     if (buildMergeSystem.IsDraggingTower())
         buildMergeSystem.DrawOverlay();
@@ -944,6 +951,7 @@ void Scene_Prototype::Exit()
     }
 
     Graphics::Shutdown();
+    ParticleSystem::Shutdown();
     level.Shutdown();
     DestroyGrid();
 
