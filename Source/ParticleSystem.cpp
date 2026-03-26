@@ -3,6 +3,11 @@
 #include <cstdlib>
 #include <algorithm>
 
+//cmath should have M_PI, but just in case:
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 namespace ParticleSystem
 {
     // --------------------------------------------------------
@@ -72,7 +77,7 @@ namespace ParticleSystem
         for (int i = 0; i < count; ++i)
         {
             // Spread particles in a random direction
-            float angle = RandRange(0.0f, 6.2832f); // 0 to 2*PI
+            float angle = RandRange(0.0f, 2.0f * (float)M_PI);
             float speed = RandRange(minSpeed, maxSpeed);
             float life = RandRange(minLife, maxLife);
             float size = RandRange(minSize, maxSize);
@@ -106,8 +111,8 @@ namespace ParticleSystem
             p.lifetime -= dt;
 
             // Slow down over time
-            p.velX *= 0.92f;
-            p.velY *= 0.92f;
+            p.velX *= 0.99f;
+            p.velY *= 0.99f;
         }
 
         // Remove dead particles
