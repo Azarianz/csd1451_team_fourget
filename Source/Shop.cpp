@@ -214,6 +214,7 @@ namespace TowerHandler {
 
                 Tower newTower;
                 newTower.TowerInit(mouseX, mouseY, 55.0f, 55.0f, tempShop);
+
                 // Destroy the temporary sprite
                 if (tempShop.spriteId != 0)
                 {
@@ -221,16 +222,8 @@ namespace TowerHandler {
                     tempShop.spriteId = 0;
                 }
 
-                newTower.details.spriteCol = def.spriteCol;
-                newTower.details.spriteBaseRow = def.spriteRow;
-
                 // Override color to match the shop slot (TowerInit sets generic type color)
                 newTower.color = def.color;
-
-                // Override the Graphics sprite UV to use the TowerDef's exact spriteCol/spriteRow
-                // TowerInit defaults to col=(int)towerType 
-                UVRect uv = GetSpriteUV(def.spriteCol, def.spriteRow, 13, 10);
-                Graphics::SetUV(newTower.spriteId, uv.u0, uv.v0, uv.u1, uv.v1);
 
                 newTower.isDragging = true;
                 newTower.sourceSlotIndex = i;
@@ -267,14 +260,18 @@ namespace TowerHandler {
             }
         }
 
-        // 2: tower sprites — drawn smaller so they sit inside the window
+        // 2: tower sprites ï¿½ drawn smaller so they sit inside the window
         for (int i = 0; i < TOTAL_SLOTS; ++i)
         {
             if (slots[i].isRefreshButton) continue;
             if (slots[i].isEmpty) continue;
             const TowerDef& def = TOWER_DEFS[slots[i].defIndex];
+
+            int col = TowerHandler::TOWER_SPRITE_COLS[(int)def.type];
+            int row = 0;
+
             DrawSpriteAtTex(slots[i].x, slots[i].y, slots[i].size * 0.55f,
-                def.spriteCol, def.spriteRow, pSpritesheet, SHEET_COLS, SHEET_ROWS);
+                col, row, pSpritesheet, SHEET_COLS, SHEET_ROWS);
         }
 
         // 3: refresh icon

@@ -14,7 +14,7 @@ extern int nextTowerID;
 //  shop tower used to spawn new towers.
 // ============================================================
 namespace TowerHandler {
-
+    extern const int TOWER_SPRITE_COLS[5];  //AZA NEW ADDITION****
 
     // --------------------------------------------------------
     //  Enums
