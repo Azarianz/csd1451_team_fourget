@@ -65,7 +65,7 @@ void Scene_LevelSelect::LoadLevelList()
     WIN32_FIND_DATA findFileData;
     HANDLE hFind = INVALID_HANDLE_VALUE;
 
-    hFind = FindFirstFile("../../Assets\\Levels\\*.txt", &findFileData);
+    hFind = FindFirstFile("Assets\\Levels\\*.txt", &findFileData);
 
     if (hFind == INVALID_HANDLE_VALUE)
         return;
@@ -183,7 +183,7 @@ void Scene_LevelSelect::SelectLevel(size_t index)
     if (index >= m_buttons.size())
         return;
 
-    GameSettings::selectedLevelFile = "../../Assets/Levels/" + m_buttons[index].fileName;
+    GameSettings::selectedLevelFile = "Assets/Levels/" + m_buttons[index].fileName;
     PRINT("Selected level file: %s\n", GameSettings::selectedLevelFile.c_str());
 
     SceneManager::I().SwitchTo(SceneID::Prototype);

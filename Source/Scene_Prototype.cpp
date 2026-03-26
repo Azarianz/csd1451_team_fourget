@@ -352,8 +352,8 @@ bool Scene_Prototype::InitLevelAndGrid()
 
     if (levelFile.empty())
     {
-        PRINT("Level file empty, defaulting to ../../Assets/Levels/level_01.txt\n");
-        levelFile = "../../Assets/Levels/level_01.txt";
+        PRINT("Level file empty, defaulting to Assets/Levels/level_01.txt\n");
+        levelFile = "Assets/Levels/level_01.txt";
     }
 
     PRINT("Loading level file: %s\n", levelFile.c_str());

@@ -259,7 +259,7 @@ void LevelEditor::Update(float /*dt*/)
     if (fullName.find(".txt") == std::string::npos)
         fullName += ".txt";
 
-    std::string fullPath = "../../Assets/Levels/" + fullName;
+    std::string fullPath = "Assets/Levels/" + fullName;
 
     if (AEInputCheckTriggered(AEVK_F3))
     {
