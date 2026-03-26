@@ -338,6 +338,11 @@ Enemy* WaveManager::UpdateAndSpawn(float dt, const std::vector<Point>& path)
         case 3: e = new Golem();        static_cast<Golem*>(e)->Init(); break;
         case 4: e = new Titan();        static_cast<Titan*>(e)->Init(); break;
         case 5: e = new wavestarter();  static_cast<wavestarter*>(e)->Init(); wavestarterCount++; break;
+        case 6: e = new Zombie();       static_cast<ZombieV1*>(e)->Init(); break;
+        case 7: e = new Skeleton();     static_cast<SkeletonV1*>(e)->Init(); break;
+        case 8: e = new Troll();        static_cast<TrollV1*>(e)->Init(); break;
+        case 9: e = new Golem();        static_cast<GolemV1*>(e)->Init(); break;
+        case 10: e = new Titan();        static_cast<TitanV1*>(e)->Init(); break;
         default: e = new Zombie();      static_cast<Zombie*>(e)->Init(); break;
         }
 

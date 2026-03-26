@@ -4,6 +4,8 @@
 
 namespace GameSettings
 {
+    enum class Difficulty { Easy, Hard };
+    extern Difficulty currentDifficulty;
     struct Resolution { int width; int height; const char* label; };
 
     extern const Resolution RESOLUTIONS[3];

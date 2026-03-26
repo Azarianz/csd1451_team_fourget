@@ -31,6 +31,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         AESysFrameStart();
         float dt = (float)AEFrameRateControllerGetFrameTime();
 
+        if (!AESysDoesWindowExist())
+        {
+            gGameRunning = 0;
+            break;
+        }
 
         if (SceneManager::I().Current() != SceneID::LevelEditor) {
             // --- scene hotkeys ---
@@ -44,6 +49,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         SceneManager::I().Draw();
 
         AESysFrameEnd();
+
+        if (SceneManager::I().Current() != SceneID::LevelEditor) {
+            bool escapeHandledByScene = (sceneThisFrame == SceneID::Settings);
+            if (GameSettings::quitGame)
+                gGameRunning = 0;
+        }
     }
 
     // Cleanup

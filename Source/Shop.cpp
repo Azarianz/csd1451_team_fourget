@@ -60,7 +60,7 @@ namespace TowerHandler {
         AEGfxVertexList* mesh = AEGfxMeshEnd();
         if (!mesh) return;
 
-        float spriteSize = size * 0.80f;
+        float spriteSize = size;
 
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(tex, 0, 0);
@@ -83,6 +83,12 @@ namespace TowerHandler {
     {
         float windowHeight = (float)AEGfxGetWindowHeight();
 
+        m_uiScale = windowHeight / 900.0f;
+        if (m_uiScale > 1.0f) m_uiScale = 1.0f; // cap so it never grows beyond 100%
+
+        slotSize = 100.0f * m_uiScale;
+        padding = 60.0f * m_uiScale;
+
         float totalWidth = (TOTAL_SLOTS * slotSize) + ((TOTAL_SLOTS - 1) * padding);
         float startX = -(totalWidth / 2.0f) + (slotSize / 2.0f);
         float posY = -(windowHeight / 2.0f) + (slotSize / 2.0f) + 30.0f;
@@ -98,12 +104,16 @@ namespace TowerHandler {
         pCircleMesh = BuildCircleMesh(64);
         pSpritesheet = AEGfxTextureLoad("Assets/spritesheet.png");
         pRefreshSheet = AEGfxTextureLoad("Assets/refresh_overlay.png");
+        pSlotTex = AEGfxTextureLoad("Assets/item_window.png");
 
+        if (!pSlotTex) PRINT("Shop Init: Failed to load Assets/item_window.png!\n");
         if (!pCircleMesh)  PRINT("Shop Init: Failed to create circle mesh!\n");
         if (!pSpritesheet) PRINT("Shop Init: Failed to load Assets/spritesheet.png!\n");
         if (!pRefreshSheet) PRINT("Refresh Init: Failed to load Assets/refresh_overlay.png!\n");
 
-        m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
+        int fontSize = (int)(24.0f * m_uiScale);
+        if (fontSize < 10) fontSize = 10;
+        m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", fontSize);
         m_points = 1000;
 
         RefreshSlots();
@@ -247,58 +257,33 @@ namespace TowerHandler {
     // Draw - shop UI only
     void Shop::Draw()
     {
-        if (!pCircleMesh) return;
-
-        // 1: colored circles
-        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(1.0f);
-        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
-
-        for (int i = 0; i < TOTAL_SLOTS; ++i)
+        // 1: item_window background for every slot
+        if (pSlotTex)
         {
-            // Pulse the slot when its tower is being dragged out
-            float drawSize = slots[i].size;
-            if (i == m_draggedSlot)
-                drawSize *= 1.0f + 0.12f * sinf(m_pulseTimer * 6.0f);
-
-            AEMtx33 scale, trans, transform;
-            AEMtx33Scale(&scale, slots[i].size, slots[i].size);
-            AEMtx33Trans(&trans, slots[i].x, slots[i].y);
-            AEMtx33Concat(&transform, &trans, &scale);
-            AEGfxSetTransform(transform.m);
-
-            if (slots[i].isRefreshButton)
-                AEGfxSetColorToMultiply(0.4f, 0.4f, 0.4f, 1.0f);
-            else if (slots[i].isEmpty)
-                AEGfxSetColorToMultiply(0.15f, 0.15f, 0.15f, 0.15f);
-            else
+            for (int i = 0; i < TOTAL_SLOTS; ++i)
             {
-                const Color& c = TOWER_DEFS[slots[i].defIndex].color;
-                AEGfxSetColorToMultiply(c.r, c.g, c.b, 1.0f);
+                DrawSpriteAtTex(slots[i].x, slots[i].y, slots[i].size,
+                    0, 0, pSlotTex, 1, 1);
             }
-
-            AEGfxMeshDraw(pCircleMesh, AE_GFX_MDM_TRIANGLES);
         }
 
-        // 2: sprites on top of tower slots
+        // 2: tower sprites — drawn smaller so they sit inside the window
         for (int i = 0; i < TOTAL_SLOTS; ++i)
         {
             if (slots[i].isRefreshButton) continue;
             if (slots[i].isEmpty) continue;
             const TowerDef& def = TOWER_DEFS[slots[i].defIndex];
-            DrawSpriteAtTex(slots[i].x, slots[i].y, slots[i].size,
+            DrawSpriteAtTex(slots[i].x, slots[i].y, slots[i].size * 0.55f,
                 def.spriteCol, def.spriteRow, pSpritesheet, SHEET_COLS, SHEET_ROWS);
         }
 
-        // 3: refresh icon on top of the refresh button
+        // 3: refresh icon
         for (int i = 0; i < TOTAL_SLOTS; ++i)
         {
             if (!slots[i].isRefreshButton) continue;
-            DrawSpriteAtTex(slots[i].x, slots[i].y, slots[i].size * 1.5f, // enlarge sprite size
+            DrawSpriteAtTex(slots[i].x, slots[i].y, slots[i].size * 0.65f,
                 REFRESH_ICON_COL, REFRESH_ICON_ROW,
-                pRefreshSheet,
-                REFRESH_SHEET_COLS, REFRESH_SHEET_ROWS);
+                pRefreshSheet, REFRESH_SHEET_COLS, REFRESH_SHEET_ROWS);
         }
 
         DrawSlotCosts();
@@ -315,8 +300,8 @@ namespace TowerHandler {
         const float screenH = (float)AEGfxGetWindowHeight();
 
         // Offset the label to the top-right edge of the circle
-        const float offsetX = slots[0].size * 0.35f;
-        const float offsetY = slots[0].size * 0.30f;
+        const float offsetX = slots[0].size * 0.18f;
+        const float offsetY = slots[0].size * 0.20f;
 
         for (int i = 0; i < TOTAL_SLOTS; ++i)
         {
@@ -367,6 +352,7 @@ namespace TowerHandler {
     void Shop::Exit()
     {
         if (pCircleMesh) { AEGfxMeshFree(pCircleMesh);       pCircleMesh = nullptr; }
+        if (pSlotTex) { AEGfxTextureUnload(pSlotTex); pSlotTex = nullptr; }
         if (pSpritesheet) { AEGfxTextureUnload(pSpritesheet);  pSpritesheet = nullptr; }
         if (pRefreshSheet) { AEGfxTextureUnload(pRefreshSheet);  pRefreshSheet = nullptr; }
         if (m_uiFont >= 0) { AEGfxDestroyFont(m_uiFont);        m_uiFont = -1; }
