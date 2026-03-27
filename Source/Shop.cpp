@@ -114,7 +114,7 @@ namespace TowerHandler {
         int fontSize = (int)(24.0f * m_uiScale);
         if (fontSize < 10) fontSize = 10;
         m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", fontSize);
-        m_points = 1000;
+        m_points = 300;
 
         RefreshSlots();
     }
@@ -126,6 +126,14 @@ namespace TowerHandler {
             slots[i].defIndex = rand() % TOWER_DEF_COUNT;
             slots[i].isEmpty = false;
         }
+        m_purchaseCount = 0; // reset cost back to 25
+    }
+
+    int Shop::GetCurrentTowerCost() const
+    {
+        int cost = (m_purchaseCount + 1) * 25; // 25, 50, 75, 100
+        if (cost > 100) cost = 100;            // cap at 100
+        return cost;
     }
 
     // Update
@@ -136,6 +144,10 @@ namespace TowerHandler {
 
         // Advance pulse timer
         m_pulseTimer += (float)AEFrameRateControllerGetFrameTime();
+
+        // Debug purposes only
+        if (AEInputCheckTriggered(AEVK_M))
+            m_points += 100;
 
         // Find which slot (if any) has its tower currently being dragged
         m_draggedSlot = -1;
@@ -163,8 +175,7 @@ namespace TowerHandler {
                     slots[slotIdx].size / 2.0f, mouseX, mouseY))
                 {
                     // Refund points and restore slot
-                    m_points += TOWER_COST;
-                    slots[slotIdx].isEmpty = false;
+                    RefundTower(slotIdx, t.purchaseCost);
 
                     // Remove the tower's Graphics sprite
                     if (t.spriteId != 0)
@@ -198,41 +209,39 @@ namespace TowerHandler {
                     return;
                 }
 
-                if (m_points < TOWER_COST)
+                if (m_points < GetCurrentTowerCost())
                 {
-                    PRINT("Not enough points! Need %d\n", TOWER_COST);
+                    PRINT("Not enough points! Need %d\n", GetCurrentTowerCost());
                     return;
                 }
 
-                m_points -= TOWER_COST;
+                int cost = GetCurrentTowerCost(); // capture cost before incrementing
+                m_points -= cost;
 
                 const TowerDef& def = TOWER_DEFS[slots[i].defIndex];
 
-                // Build a ShopTower so TowerInit gets the correct type
                 ShopTower tempShop;
                 tempShop.ShopTowerInit(mouseX, mouseY, 55.0f, 55.0f, def.type);
 
                 Tower newTower;
                 newTower.TowerInit(mouseX, mouseY, 55.0f, 55.0f, tempShop);
+                newTower.purchaseCost = cost; // assign after newTower is declared
 
-                // Destroy the temporary sprite
                 if (tempShop.spriteId != 0)
                 {
                     Graphics::Destroy(tempShop.spriteId);
                     tempShop.spriteId = 0;
                 }
 
-                // Override color to match the shop slot (TowerInit sets generic type color)
                 newTower.color = def.color;
-
                 newTower.isDragging = true;
                 newTower.sourceSlotIndex = i;
 
-                // Map tower ID -> def index so DrawTowerSprites can find the right sprite
                 m_towerDefIndex[newTower.details.ID] = slots[i].defIndex;
 
                 activeTowers.push_back(newTower);
                 slots[i].isEmpty = true;
+                m_purchaseCount++; // increment once here only
                 break;
             }
         }
@@ -297,7 +306,7 @@ namespace TowerHandler {
         const float screenH = (float)AEGfxGetWindowHeight();
 
         // Offset the label to the top-right edge of the circle
-        const float offsetX = slots[0].size * 0.18f;
+        const float offsetX = slots[0].size * 0.05f;
         const float offsetY = slots[0].size * 0.20f;
 
         for (int i = 0; i < TOTAL_SLOTS; ++i)
@@ -305,7 +314,7 @@ namespace TowerHandler {
             // Hide cost when slot is empty (tower dragged out); restore after refresh
             if (!slots[i].isRefreshButton && slots[i].isEmpty) continue;
 
-            int cost = slots[i].isRefreshButton ? REFRESH_COST : TOWER_COST;
+            int cost = slots[i].isRefreshButton ? REFRESH_COST : GetCurrentTowerCost();
 
             // Position: top-right of the slot circle (world space -> norm)
             float worldX = slots[i].x + offsetX;
@@ -321,7 +330,7 @@ namespace TowerHandler {
             sprintf_s(buf, "%d", cost);
 
             // Yellow: r=1, g=1, b=0
-            AEGfxPrint(m_uiFont, buf, normX, normY, 0.65f, 1.0f, 1.0f, 0.0f, 1.0f);
+            AEGfxPrint(m_uiFont, buf, normX, normY, 0.55f, 1.0f, 1.0f, 0.0f, 1.0f);
         }
     }
 

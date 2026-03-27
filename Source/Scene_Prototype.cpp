@@ -686,8 +686,7 @@ void Scene_Prototype::UpdateReturningTowers(float dt)
         float dy = t.returnTargetY - t.y;
         if (dx * dx + dy * dy < 4.0f)
         {
-            shop.AddPoints(shop.GetTowerCost());
-            shop.RestoreSlot(t.sourceSlotIndex);
+            shop.RefundTower(t.sourceSlotIndex, t.purchaseCost);
             buildMergeSystem.RemoveTowerAtIndex(i);
             buildMergeSystem.RebuildOccupiedFromTowers();
         }

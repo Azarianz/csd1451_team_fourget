@@ -114,6 +114,7 @@ namespace TowerHandler {
         float returnTargetX  = 0.0f;
         float returnTargetY  = 0.0f;
         float pulseTimer     = 0.0f;
+        int purchaseCost     = 0;
  
         TowerDetails      details  {};
         Graphics::ShapeId spriteId = 0;

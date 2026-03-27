@@ -55,6 +55,14 @@ namespace TowerHandler {
                 slots[slotIdx].isEmpty = false;
         }
 
+        void RefundTower(int slotIdx, int paidCost)
+        {
+            m_points += paidCost;
+            if (m_purchaseCount > 0)
+                m_purchaseCount--;
+            RestoreSlot(slotIdx);
+        }
+
         int GetTowerSlotCount() const { return TOWER_SLOTS; }
         int GetTowerCost()      const { return TOWER_COST; }
 
@@ -63,6 +71,8 @@ namespace TowerHandler {
         s8  m_uiFont = -1;
         const int TOWER_COST = 25;
         const int REFRESH_COST = 25;
+        int m_purchaseCount = 0;
+        int GetCurrentTowerCost() const;
 
         static const int TOTAL_SLOTS = 5;
         static const int TOWER_SLOTS = 4;
