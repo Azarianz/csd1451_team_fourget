@@ -4,22 +4,55 @@
 #include "AEEngine.h"
 #include "AEInput.h"
 #include "GameSettings.h"
+
 #include <cstring>
 
-float Scene_MainMenu::ScreenToNormX(float px) const
+namespace
 {
-    return (px / AEGfxGetWindowWidth()) * 2.0f - 1.0f;
+    constexpr float kBgR = 0.08f;
+    constexpr float kBgG = 0.08f;
+    constexpr float kBgB = 0.12f;
+
+    constexpr float kBaseTextScale = 1.0f;
+    constexpr float kTitleScale = 1.4f;
+    constexpr float kControlsScale = 0.9f;
+    constexpr float kControlsLineScale = 0.8f;
+
+    constexpr float kApproxCharWidth = 22.0f;
+
+    constexpr float kTitleYRatio = 0.24f;
+    constexpr float kControlsYRatio = 0.72f;
+
+    // Fixed menu layout
+    constexpr float kButtonStartY = 380.0f;
+    constexpr float kButtonSpacing = 62.0f;
+    constexpr float kButtonHeight = 40.0f;
+    constexpr float kButtonPadX = 18.0f;
+
+    // IMPORTANT:
+    // AEGfxPrint Y behaves more like a baseline than a top-left corner.
+    // So to make text appear visually centered inside a 40px box,
+    // we place the text baseline lower than the box midpoint.
+    constexpr float kTextBaselineInsetY = 30.0f;
+
+    constexpr float kPanelBorderThickness = 2.0f;
+    constexpr float kArrowOffsetX = 28.0f;
+
+    constexpr float kBright = 1.0f;
+    constexpr float kDim = 0.35f;
+    constexpr float kInfo = 0.7f;
 }
 
-float Scene_MainMenu::ScreenToNormY(float py) const
-{
-    return 1.0f - (py / AEGfxGetWindowHeight()) * 2.0f;
-}
+#pragma region Main
 
 void Scene_MainMenu::Init()
 {
     selectedOption = MenuOption::Play;
-    m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
+
+    if (m_uiFont < 0)
+    {
+        m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
+    }
 }
 
 void Scene_MainMenu::Update(float /*dt*/)
@@ -42,50 +75,9 @@ void Scene_MainMenu::Update(float /*dt*/)
     }
 }
 
-void Scene_MainMenu::UpdateMouseInput()
-{
-    int mouseX = 0;
-    int mouseY = 0;
-    AEInputGetCursorPosition(&mouseX, &mouseY);
-
-    ButtonRect play = GetPlayButtonRect();
-    ButtonRect levelSelect = GetLevelSelectButtonRect();
-    ButtonRect settings = GetSettingsButtonRect();
-    ButtonRect quit = GetQuitButtonRect();
-
-    if (IsPointInRect((float)mouseX, (float)mouseY, play.x, play.y, play.w, play.h))
-    {
-        selectedOption = MenuOption::Play;
-
-        if (AEInputCheckTriggered(AEVK_LBUTTON))
-            HandlePlay();
-    }
-    else if (IsPointInRect((float)mouseX, (float)mouseY, levelSelect.x, levelSelect.y, levelSelect.w, levelSelect.h))
-    {
-        selectedOption = MenuOption::LevelSelect;
-
-        if (AEInputCheckTriggered(AEVK_LBUTTON))
-            HandleLevelSelect();
-    }
-    else if (IsPointInRect((float)mouseX, (float)mouseY, settings.x, settings.y, settings.w, settings.h))
-    {
-        selectedOption = MenuOption::Settings;
-
-        if (AEInputCheckTriggered(AEVK_LBUTTON))
-            HandleSettings();
-    }
-    else if (IsPointInRect((float)mouseX, (float)mouseY, quit.x, quit.y, quit.w, quit.h))
-    {
-        selectedOption = MenuOption::Quit;
-
-        if (AEInputCheckTriggered(AEVK_LBUTTON))
-            HandleQuit();
-    }
-}
-
 void Scene_MainMenu::Draw()
 {
-    AEGfxSetBackgroundColor(0.08f, 0.08f, 0.12f);
+    AEGfxSetBackgroundColor(kBgR, kBgG, kBgB);
     DrawUI();
 }
 
@@ -98,14 +90,64 @@ void Scene_MainMenu::Exit()
     }
 }
 
+#pragma endregion
+
+#pragma region InputAndSelection
+
+void Scene_MainMenu::UpdateMouseInput()
+{
+    int mouseX = 0;
+    int mouseY = 0;
+    AEInputGetCursorPosition(&mouseX, &mouseY);
+
+    const ButtonRect playRect = GetPlayButtonRect();
+    const ButtonRect settingsRect = GetSettingsButtonRect();
+    const ButtonRect quitRect = GetQuitButtonRect();
+
+    if (IsPointInRect((float)mouseX, (float)mouseY, playRect.x, playRect.y, playRect.w, playRect.h))
+    {
+        selectedOption = MenuOption::Play;
+
+        if (AEInputCheckTriggered(AEVK_LBUTTON))
+        {
+            HandlePlay();
+        }
+    }
+    else if (IsPointInRect((float)mouseX, (float)mouseY, settingsRect.x, settingsRect.y, settingsRect.w, settingsRect.h))
+    {
+        selectedOption = MenuOption::Settings;
+
+        if (AEInputCheckTriggered(AEVK_LBUTTON))
+        {
+            HandleSettings();
+        }
+    }
+    else if (IsPointInRect((float)mouseX, (float)mouseY, quitRect.x, quitRect.y, quitRect.w, quitRect.h))
+    {
+        selectedOption = MenuOption::Quit;
+
+        if (AEInputCheckTriggered(AEVK_LBUTTON))
+        {
+            HandleQuit();
+        }
+    }
+}
+
 void Scene_MainMenu::MoveUp()
 {
     switch (selectedOption)
     {
-    case MenuOption::Play:        selectedOption = MenuOption::Quit;        break;
-    case MenuOption::LevelSelect: selectedOption = MenuOption::Play;        break;
-    case MenuOption::Settings:    selectedOption = MenuOption::LevelSelect; break;
-    case MenuOption::Quit:        selectedOption = MenuOption::Settings;    break;
+    case MenuOption::Play:
+        selectedOption = MenuOption::Quit;
+        break;
+
+    case MenuOption::Settings:
+        selectedOption = MenuOption::Play;
+        break;
+
+    case MenuOption::Quit:
+        selectedOption = MenuOption::Settings;
+        break;
     }
 }
 
@@ -113,10 +155,17 @@ void Scene_MainMenu::MoveDown()
 {
     switch (selectedOption)
     {
-    case MenuOption::Play:        selectedOption = MenuOption::LevelSelect; break;
-    case MenuOption::LevelSelect: selectedOption = MenuOption::Settings;    break;
-    case MenuOption::Settings:    selectedOption = MenuOption::Quit;        break;
-    case MenuOption::Quit:        selectedOption = MenuOption::Play;        break;
+    case MenuOption::Play:
+        selectedOption = MenuOption::Settings;
+        break;
+
+    case MenuOption::Settings:
+        selectedOption = MenuOption::Quit;
+        break;
+
+    case MenuOption::Quit:
+        selectedOption = MenuOption::Play;
+        break;
     }
 }
 
@@ -127,26 +176,21 @@ void Scene_MainMenu::ConfirmSelection()
     case MenuOption::Play:
         HandlePlay();
         break;
-    case MenuOption::LevelSelect:
-        HandleLevelSelect();
-        break;
+
     case MenuOption::Settings:
         HandleSettings();
         break;
+
     case MenuOption::Quit:
         HandleQuit();
         break;
+
     default:
         break;
     }
 }
 
 void Scene_MainMenu::HandlePlay()
-{
-    SceneManager::I().SwitchTo(SceneID::Prototype);
-}
-
-void Scene_MainMenu::HandleLevelSelect()
 {
     SceneManager::I().SwitchTo(SceneID::LevelSelect);
 }
@@ -161,16 +205,26 @@ void Scene_MainMenu::HandleQuit()
     GameSettings::quitGame = true;
 }
 
+#pragma endregion
+
+#pragma region LayoutHelpers
+
+float Scene_MainMenu::ScreenToNormX(float px) const
+{
+    return (px / AEGfxGetWindowWidth()) * 2.0f - 1.0f;
+}
+
+float Scene_MainMenu::ScreenToNormY(float py) const
+{
+    return 1.0f - (py / AEGfxGetWindowHeight()) * 2.0f;
+}
+
 float Scene_MainMenu::GetCenteredX(const char* text, float scale) const
 {
     const float screenW = (float)AEGfxGetWindowWidth();
     const float centerX = screenW * 0.5f;
+    const float textWidth = (float)std::strlen(text) * kApproxCharWidth * scale;
 
-    // Approximate width per character in pixels for this font.
-    // Tweak this if needed.
-    const float charWidthPx = 22.f * scale;
-
-    const float textWidth = (float)std::strlen(text) * charWidthPx;
     return centerX - textWidth * 0.5f;
 }
 
@@ -182,61 +236,147 @@ bool Scene_MainMenu::IsPointInRect(float mx, float my, float x, float y, float w
 
 Scene_MainMenu::ButtonRect Scene_MainMenu::GetPlayButtonRect() const
 {
+    const char* text = "PLAY";
+    const float textW = (float)std::strlen(text) * kApproxCharWidth;
     const float screenW = (float)AEGfxGetWindowWidth();
-    const float screenH = (float)AEGfxGetWindowHeight();
 
-    ButtonRect r;
-    r.w = 220.0f;
-    r.h = 42.0f;
-    r.x = screenW * 0.5f - r.w * 0.5f;
-    r.y = screenH * 0.42f - r.h * 0.5f;
-    return r;
-}
-
-Scene_MainMenu::ButtonRect Scene_MainMenu::GetLevelSelectButtonRect() const
-{
-    ButtonRect play = GetPlayButtonRect();
-    ButtonRect r{ 0, 0, 220.0f, 42.0f };
-    r.x = play.x;
-    r.y = play.y + 50.0f; // one row below Play
-    return r;
+    ButtonRect rect;
+    rect.w = textW + (kButtonPadX * 2.0f);
+    rect.h = kButtonHeight;
+    rect.x = screenW * 0.5f - rect.w * 0.5f;
+    rect.y = kButtonStartY;
+    return rect;
 }
 
 Scene_MainMenu::ButtonRect Scene_MainMenu::GetSettingsButtonRect() const
 {
-    ButtonRect levelSelect = GetLevelSelectButtonRect();
-    ButtonRect r{ 0, 0, 220.0f, 42.0f };
-    r.x = levelSelect.x;
-    r.y = levelSelect.y + 50.0f; // one row below Level Select
-    return r;
+    const char* text = "SETTINGS";
+    const float textW = (float)std::strlen(text) * kApproxCharWidth;
+    const float screenW = (float)AEGfxGetWindowWidth();
+
+    ButtonRect rect;
+    rect.w = textW + (kButtonPadX * 2.0f);
+    rect.h = kButtonHeight;
+    rect.x = screenW * 0.5f - rect.w * 0.5f;
+    rect.y = kButtonStartY + kButtonSpacing;
+    return rect;
 }
 
 Scene_MainMenu::ButtonRect Scene_MainMenu::GetQuitButtonRect() const
 {
-    ButtonRect settings = GetSettingsButtonRect();
-    ButtonRect r = settings;
-    r.y = settings.y + 50.0f;
-    return r;
+    const char* text = "QUIT";
+    const float textW = (float)std::strlen(text) * kApproxCharWidth;
+    const float screenW = (float)AEGfxGetWindowWidth();
+
+    ButtonRect rect;
+    rect.w = textW + (kButtonPadX * 2.0f);
+    rect.h = kButtonHeight;
+    rect.x = screenW * 0.5f - rect.w * 0.5f;
+    rect.y = kButtonStartY + (kButtonSpacing * 2.0f);
+    return rect;
 }
+
+#pragma endregion
+
+#pragma region DrawingHelpers
+
+void Scene_MainMenu::DrawPanelPx(float x, float y, float w, float h,
+    float r, float g, float b, float a) const
+{
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(a);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+
+    const unsigned int fillColor =
+        (0xFFu << 24) |
+        ((unsigned int)(r * 255.0f) << 16) |
+        ((unsigned int)(g * 255.0f) << 8) |
+        ((unsigned int)(b * 255.0f));
+
+    AEGfxMeshStart();
+    AEGfxTriAdd(-0.5f, -0.5f, fillColor, 0.0f, 0.0f,
+        0.5f, -0.5f, fillColor, 0.0f, 0.0f,
+        0.5f, 0.5f, fillColor, 0.0f, 0.0f);
+    AEGfxTriAdd(-0.5f, -0.5f, fillColor, 0.0f, 0.0f,
+        0.5f, 0.5f, fillColor, 0.0f, 0.0f,
+        -0.5f, 0.5f, fillColor, 0.0f, 0.0f);
+    AEGfxVertexList* panelMesh = AEGfxMeshEnd();
+
+    if (panelMesh)
+    {
+        AEMtx33 scaleM, rotM, transM, finalMtx;
+        const float centerX = x + (w * 0.5f);
+        const float centerY = y + (h * 0.5f);
+
+        AEMtx33Scale(&scaleM, w, h);
+        AEMtx33Rot(&rotM, 0.0f);
+        AEMtx33Trans(&transM, centerX - screenW * 0.5f, screenH * 0.5f - centerY);
+
+        AEMtx33Concat(&finalMtx, &rotM, &scaleM);
+        AEMtx33Concat(&finalMtx, &transM, &finalMtx);
+
+        AEGfxSetTransform(finalMtx.m);
+        AEGfxMeshDraw(panelMesh, AE_GFX_MDM_TRIANGLES);
+        AEGfxMeshFree(panelMesh);
+    }
+
+    const unsigned int borderColor = 0xFFFFFFFF;
+
+    auto DrawBorderPiece = [&](float bx, float by, float bw, float bh)
+        {
+            AEGfxMeshStart();
+            AEGfxTriAdd(-0.5f, -0.5f, borderColor, 0.0f, 0.0f,
+                0.5f, -0.5f, borderColor, 0.0f, 0.0f,
+                0.5f, 0.5f, borderColor, 0.0f, 0.0f);
+            AEGfxTriAdd(-0.5f, -0.5f, borderColor, 0.0f, 0.0f,
+                0.5f, 0.5f, borderColor, 0.0f, 0.0f,
+                -0.5f, 0.5f, borderColor, 0.0f, 0.0f);
+            AEGfxVertexList* mesh = AEGfxMeshEnd();
+
+            if (mesh)
+            {
+                AEMtx33 scaleM, rotM, transM, finalMtx;
+                const float centerX = bx + (bw * 0.5f);
+                const float centerY = by + (bh * 0.5f);
+
+                AEMtx33Scale(&scaleM, bw, bh);
+                AEMtx33Rot(&rotM, 0.0f);
+                AEMtx33Trans(&transM, centerX - screenW * 0.5f, screenH * 0.5f - centerY);
+
+                AEMtx33Concat(&finalMtx, &rotM, &scaleM);
+                AEMtx33Concat(&finalMtx, &transM, &finalMtx);
+
+                AEGfxSetTransform(finalMtx.m);
+                AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
+                AEGfxMeshFree(mesh);
+            }
+        };
+
+    DrawBorderPiece(x, y, w, kPanelBorderThickness);
+    DrawBorderPiece(x, y + h - kPanelBorderThickness, w, kPanelBorderThickness);
+    DrawBorderPiece(x, y, kPanelBorderThickness, h);
+    DrawBorderPiece(x + w - kPanelBorderThickness, y, kPanelBorderThickness, h);
+
+    AEGfxSetTransparency(1.0f);
+}
+
+#pragma endregion
+
+#pragma region UIDrawing
 
 void Scene_MainMenu::DrawUI() const
 {
-    if (m_uiFont < 0) return;
+    if (m_uiFont < 0)
+        return;
 
-    const float screenW = (float)AEGfxGetWindowWidth();
     const float screenH = (float)AEGfxGetWindowHeight();
-    const float centerX = screenW * 0.5f;
-
-    const float titleY = screenH * 0.28f;
-    const float playY = screenH * 0.42f;
-    const float levelSelectY = playY + 50.0f;
-    const float settingsY = levelSelectY + 50.0f;
-    const float quitY = settingsY + 50.0f;
-    const float controlsY = screenH * 0.68f;
-
-    const float bright = 1.0f;
-    const float dim = 0.35f;
-    const float info = 0.7f;
+    const float titleY = screenH * kTitleYRatio;
+    const float controlsY = screenH * kControlsYRatio;
 
     auto Print = [&](const char* text, float px, float py, float shade, float scale = 1.0f)
         {
@@ -250,59 +390,86 @@ void Scene_MainMenu::DrawUI() const
             );
         };
 
-    // Title
-    const char* title = "MERGE DEFENDERS";
-    Print(title, GetCenteredX(title, 1.4f), titleY, bright, 1.4f);
+    int mouseX = 0;
+    int mouseY = 0;
+    AEInputGetCursorPosition(&mouseX, &mouseY);
 
-    // Buttons
+    const ButtonRect playRect = GetPlayButtonRect();
+    const ButtonRect settingsRect = GetSettingsButtonRect();
+    const ButtonRect quitRect = GetQuitButtonRect();
+
+    const bool playHover =
+        IsPointInRect((float)mouseX, (float)mouseY, playRect.x, playRect.y, playRect.w, playRect.h);
+    const bool settingsHover =
+        IsPointInRect((float)mouseX, (float)mouseY, settingsRect.x, settingsRect.y, settingsRect.w, settingsRect.h);
+    const bool quitHover =
+        IsPointInRect((float)mouseX, (float)mouseY, quitRect.x, quitRect.y, quitRect.w, quitRect.h);
+
+    Print("MERGE DEFENDERS", GetCenteredX("MERGE DEFENDERS", kTitleScale), titleY, kBright, kTitleScale);
+
+    DrawPanelPx(playRect.x, playRect.y, playRect.w, playRect.h,
+        playHover ? 0.35f : 0.12f,
+        playHover ? 0.35f : 0.12f,
+        playHover ? 0.42f : 0.18f,
+        1.0f);
+
+    DrawPanelPx(settingsRect.x, settingsRect.y, settingsRect.w, settingsRect.h,
+        settingsHover ? 0.35f : 0.12f,
+        settingsHover ? 0.35f : 0.12f,
+        settingsHover ? 0.42f : 0.18f,
+        1.0f);
+
+    DrawPanelPx(quitRect.x, quitRect.y, quitRect.w, quitRect.h,
+        quitHover ? 0.35f : 0.12f,
+        quitHover ? 0.35f : 0.12f,
+        quitHover ? 0.42f : 0.18f,
+        1.0f);
+
     const char* playText = "PLAY";
-    const char* levelSelectText = "LEVEL SELECT";
     const char* settingsText = "SETTINGS";
     const char* quitText = "QUIT";
 
-    float playX = GetCenteredX(playText, 1.0f);
-    float levelSelectX = GetCenteredX(levelSelectText, 1.0f);
-    float settingsX = GetCenteredX(settingsText, 1.0f);
-    float quitX = GetCenteredX(quitText, 1.0f);
+    const float playTextX = GetCenteredX(playText, kBaseTextScale);
+    const float settingsTextX = GetCenteredX(settingsText, kBaseTextScale);
+    const float quitTextX = GetCenteredX(quitText, kBaseTextScale);
 
-    Print(playText, playX, playY,
-        selectedOption == MenuOption::Play ? bright : dim, 1.0f);
+    // Baseline positions tied directly to each box.
+    const float playTextY = playRect.y + kTextBaselineInsetY;
+    const float settingsTextY = settingsRect.y + kTextBaselineInsetY;
+    const float quitTextY = quitRect.y + kTextBaselineInsetY;
 
-    Print(levelSelectText, levelSelectX, levelSelectY,
-        selectedOption == MenuOption::LevelSelect ? bright : dim, 1.0f);
+    Print(playText, playTextX, playTextY,
+        (selectedOption == MenuOption::Play || playHover) ? kBright : kDim, kBaseTextScale);
 
-    Print(settingsText, settingsX, settingsY,
-        selectedOption == MenuOption::Settings ? bright : dim, 1.0f);
+    Print(settingsText, settingsTextX, settingsTextY,
+        (selectedOption == MenuOption::Settings || settingsHover) ? kBright : kDim, kBaseTextScale);
 
-    Print(quitText, quitX, quitY,
-        selectedOption == MenuOption::Quit ? bright : dim, 1.0f);
+    Print(quitText, quitTextX, quitTextY,
+        (selectedOption == MenuOption::Quit || quitHover) ? kBright : kDim, kBaseTextScale);
 
-    // Arrow
-    const float arrowOffset = 34.0f;
     if (selectedOption == MenuOption::Play)
-        Print(">", playX - arrowOffset, playY, bright, 1.0f);
-    else if (selectedOption == MenuOption::LevelSelect)
-        Print(">", levelSelectX - arrowOffset, levelSelectY, bright, 1.0f);
+    {
+        Print(">", playRect.x - kArrowOffsetX, playTextY, kBright, kBaseTextScale);
+    }
     else if (selectedOption == MenuOption::Settings)
-        Print(">", settingsX - arrowOffset, settingsY, bright, 1.0f);
+    {
+        Print(">", settingsRect.x - kArrowOffsetX, settingsTextY, kBright, kBaseTextScale);
+    }
     else
-        Print(">", quitX - arrowOffset, quitY, bright, 1.0f);
+    {
+        Print(">", quitRect.x - kArrowOffsetX, quitTextY, kBright, kBaseTextScale);
+    }
 
-    // Controls
-    const char* controls = "CONTROLS:";
-    float controlsX = GetCenteredX(controls, 0.9f);
-    Print(controls, controlsX, controlsY, info, 0.9f);
-
-    const char* line1 = "W / UP    - Move";
-    const char* line2 = "S / DOWN  - Move";
-    const char* line3 = "ENTER     - Select";
+    Print("CONTROLS:", GetCenteredX("CONTROLS:", kControlsScale), controlsY, kInfo, kControlsScale);
 
     float y = controlsY + 35.0f;
-    Print(line1, GetCenteredX(line1, 0.8f), y, info, 0.8f);
+    Print("W / UP    - Move", GetCenteredX("W / UP    - Move", kControlsLineScale), y, kInfo, kControlsLineScale);
 
     y += 28.0f;
-    Print(line2, GetCenteredX(line2, 0.8f), y, info, 0.8f);
+    Print("S / DOWN  - Move", GetCenteredX("S / DOWN  - Move", kControlsLineScale), y, kInfo, kControlsLineScale);
 
     y += 28.0f;
-    Print(line3, GetCenteredX(line3, 0.8f), y, info, 0.8f);
+    Print("ENTER     - Select", GetCenteredX("ENTER     - Select", kControlsLineScale), y, kInfo, kControlsLineScale);
 }
+
+#pragma endregion
