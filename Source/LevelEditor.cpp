@@ -51,6 +51,7 @@ void LevelEditor::Init(int w, int h)
     saveFileName = "level_01";
     m_isTypingFileName = false;
     m_fileNameBeforeTyping = saveFileName;
+    m_showUI = true;
 }
 
 void LevelEditor::Shutdown()
@@ -241,6 +242,12 @@ void LevelEditor::Update(float /*dt*/)
     {
         HandleFileNameTyping();
         return;
+    }
+
+    // Toggle UI visibility
+    if (AEInputCheckTriggered(AEVK_TAB))
+    {
+        m_showUI = !m_showUI;
     }
 
     // Paint
@@ -459,7 +466,10 @@ void LevelEditor::Draw()
     if (m_grid->ScreenToGrid(mx, my, c))
         m_grid->DrawTileTinted(c, 1, 1, 1, 0.75f);
 
-    DrawUI();
+    if (m_showUI)
+    {
+        DrawUI();
+    }
 }
 
 void LevelEditor::DrawUI() const
@@ -545,6 +555,7 @@ void LevelEditor::DrawUI() const
     }
 
     // Controls
+    PrintLine("(TAB) Toggle UI", info);
     PrintLine("(Q/E) Cycle brush", info);
     PrintLine("(LMB) Paint", info);
     PrintLine("(RMB) Erase", info);

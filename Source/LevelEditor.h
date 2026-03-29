@@ -24,6 +24,8 @@ private:
     GridSystem::Grid* m_grid = nullptr;
     LevelData m_level;
 
+    bool m_showUI = true;
+
     ActiveLayer m_layer = ActiveLayer::MapLayer;
 
     int m_currentTileId = 1;

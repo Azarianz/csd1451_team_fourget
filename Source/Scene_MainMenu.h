@@ -28,6 +28,7 @@ private:
 
     MenuOption selectedOption = MenuOption::Play;
     int m_uiFont = -1;
+    float m_bounceTimer = 0.0f;
 
     void UpdateMouseInput();
     void MoveUp();

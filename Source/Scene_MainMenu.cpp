@@ -1,4 +1,4 @@
-#include "Scene_MainMenu.h"
+﻿#include "Scene_MainMenu.h"
 #include "SceneManager.h"
 #include "SceneID.h"
 #include "AEEngine.h"
@@ -6,6 +6,7 @@
 #include "GameSettings.h"
 
 #include <cstring>
+#include <cmath>
 
 namespace
 {
@@ -20,27 +21,30 @@ namespace
 
     constexpr float kApproxCharWidth = 22.0f;
 
-    constexpr float kTitleYRatio = 0.24f;
-    constexpr float kControlsYRatio = 0.72f;
+    constexpr float kTitleYRatio = 0.15f;
+    constexpr float kControlsYRatio = 0.68f;
 
     // Fixed menu layout
-    constexpr float kButtonStartY = 380.0f;
-    constexpr float kButtonSpacing = 62.0f;
-    constexpr float kButtonHeight = 40.0f;
-    constexpr float kButtonPadX = 18.0f;
+    constexpr float kButtonStartY = 200.0f;
+    constexpr float kButtonSpacing = 110.0f;
+    constexpr float kButtonHeight = 100.0f;
+    constexpr float kButtonPadX = 96.0f;
 
-    // IMPORTANT:
-    // AEGfxPrint Y behaves more like a baseline than a top-left corner.
-    // So to make text appear visually centered inside a 40px box,
-    // we place the text baseline lower than the box midpoint.
-    constexpr float kTextBaselineInsetY = 30.0f;
+    // FIX: vertically center text inside button — ~58% down accounts for font baseline in a 100px button
+    constexpr float kTextBaselineInsetY = kButtonHeight * 0.58f;
 
     constexpr float kPanelBorderThickness = 2.0f;
-    constexpr float kArrowOffsetX = 28.0f;
+    constexpr float kArrowOffsetX = 36.0f;
+
+    constexpr float kBounceSpeed = 7.0f;
+    constexpr float kBounceAmplitude = 5.0f;
 
     constexpr float kBright = 1.0f;
     constexpr float kDim = 0.35f;
     constexpr float kInfo = 0.7f;
+
+    // FIX: increased estimate so copyright right-align math doesn't clip off screen
+    constexpr float kFooterCharWidth = 16.0f;
 }
 
 #pragma region Main
@@ -55,8 +59,10 @@ void Scene_MainMenu::Init()
     }
 }
 
-void Scene_MainMenu::Update(float /*dt*/)
+void Scene_MainMenu::Update(float dt)
 {
+    m_bounceTimer += dt;
+
     UpdateMouseInput();
 
     if (AEInputCheckTriggered(AEVK_W) || AEInputCheckTriggered(AEVK_UP))
@@ -236,8 +242,9 @@ bool Scene_MainMenu::IsPointInRect(float mx, float my, float x, float y, float w
 
 Scene_MainMenu::ButtonRect Scene_MainMenu::GetPlayButtonRect() const
 {
-    const char* text = "PLAY";
-    const float textW = (float)std::strlen(text) * kApproxCharWidth;
+    // FIX: all buttons use "SETTINGS" (widest label) for width so all three are equal
+    const char* widestText = "SETTINGS";
+    const float textW = (float)std::strlen(widestText) * kApproxCharWidth;
     const float screenW = (float)AEGfxGetWindowWidth();
 
     ButtonRect rect;
@@ -250,8 +257,9 @@ Scene_MainMenu::ButtonRect Scene_MainMenu::GetPlayButtonRect() const
 
 Scene_MainMenu::ButtonRect Scene_MainMenu::GetSettingsButtonRect() const
 {
-    const char* text = "SETTINGS";
-    const float textW = (float)std::strlen(text) * kApproxCharWidth;
+    // FIX: all buttons use "SETTINGS" (widest label) for width so all three are equal
+    const char* widestText = "SETTINGS";
+    const float textW = (float)std::strlen(widestText) * kApproxCharWidth;
     const float screenW = (float)AEGfxGetWindowWidth();
 
     ButtonRect rect;
@@ -264,8 +272,9 @@ Scene_MainMenu::ButtonRect Scene_MainMenu::GetSettingsButtonRect() const
 
 Scene_MainMenu::ButtonRect Scene_MainMenu::GetQuitButtonRect() const
 {
-    const char* text = "QUIT";
-    const float textW = (float)std::strlen(text) * kApproxCharWidth;
+    // FIX: all buttons use "SETTINGS" (widest label) for width so all three are equal
+    const char* widestText = "SETTINGS";
+    const float textW = (float)std::strlen(widestText) * kApproxCharWidth;
     const float screenW = (float)AEGfxGetWindowWidth();
 
     ButtonRect rect;
@@ -407,36 +416,47 @@ void Scene_MainMenu::DrawUI() const
 
     Print("MERGE DEFENDERS", GetCenteredX("MERGE DEFENDERS", kTitleScale), titleY, kBright, kTitleScale);
 
-    DrawPanelPx(playRect.x, playRect.y, playRect.w, playRect.h,
-        playHover ? 0.35f : 0.12f,
-        playHover ? 0.35f : 0.12f,
-        playHover ? 0.42f : 0.18f,
-        1.0f);
+    // Bounce: selected button moves up and down on a sine wave.
+    // Subtracting from Y moves the button upward (screen-space Y increases downward).
+    const float bounceOffset = sinf(m_bounceTimer * kBounceSpeed) * kBounceAmplitude;
 
-    DrawPanelPx(settingsRect.x, settingsRect.y, settingsRect.w, settingsRect.h,
-        settingsHover ? 0.35f : 0.12f,
-        settingsHover ? 0.35f : 0.12f,
-        settingsHover ? 0.42f : 0.18f,
-        1.0f);
+    // Per-button Y offsets: only the selected button bounces.
+    const float playOffsetY = (selectedOption == MenuOption::Play) ? -bounceOffset : 0.0f;
+    const float settingsOffsetY = (selectedOption == MenuOption::Settings) ? -bounceOffset : 0.0f;
+    const float quitOffsetY = (selectedOption == MenuOption::Quit) ? -bounceOffset : 0.0f;
 
-    DrawPanelPx(quitRect.x, quitRect.y, quitRect.w, quitRect.h,
-        quitHover ? 0.35f : 0.12f,
-        quitHover ? 0.35f : 0.12f,
-        quitHover ? 0.42f : 0.18f,
-        1.0f);
+    // Resolve panel colours (C++14-compatible, no tuple/structured bindings)
+    struct RGB { float r, g, b; };
+    auto PanelColour = [&](MenuOption opt, bool hover) -> RGB
+        {
+            if (selectedOption == opt)
+                return { 0.12f, 0.20f, 0.58f };   // blue-purple highlight
+            if (hover)
+                return { 0.35f, 0.35f, 0.42f };   // hover tint
+            return { 0.12f, 0.12f, 0.18f };        // default dark
+        };
+
+    RGB pc = PanelColour(MenuOption::Play, playHover);
+    RGB sc = PanelColour(MenuOption::Settings, settingsHover);
+    RGB qc = PanelColour(MenuOption::Quit, quitHover);
+
+    DrawPanelPx(playRect.x, playRect.y + playOffsetY, playRect.w, playRect.h, pc.r, pc.g, pc.b, 1.0f);
+    DrawPanelPx(settingsRect.x, settingsRect.y + settingsOffsetY, settingsRect.w, settingsRect.h, sc.r, sc.g, sc.b, 1.0f);
+    DrawPanelPx(quitRect.x, quitRect.y + quitOffsetY, quitRect.w, quitRect.h, qc.r, qc.g, qc.b, 1.0f);
 
     const char* playText = "PLAY";
     const char* settingsText = "SETTINGS";
     const char* quitText = "QUIT";
 
+    // FIX: text is centered horizontally on screen (which matches the centered buttons)
     const float playTextX = GetCenteredX(playText, kBaseTextScale);
     const float settingsTextX = GetCenteredX(settingsText, kBaseTextScale);
     const float quitTextX = GetCenteredX(quitText, kBaseTextScale);
 
-    // Baseline positions tied directly to each box.
-    const float playTextY = playRect.y + kTextBaselineInsetY;
-    const float settingsTextY = settingsRect.y + kTextBaselineInsetY;
-    const float quitTextY = quitRect.y + kTextBaselineInsetY;
+    // FIX: baseline inset now uses kTextBaselineInsetY = kButtonHeight * 0.58f for vertical centering
+    const float playTextY = playRect.y + kTextBaselineInsetY + playOffsetY;
+    const float settingsTextY = settingsRect.y + kTextBaselineInsetY + settingsOffsetY;
+    const float quitTextY = quitRect.y + kTextBaselineInsetY + quitOffsetY;
 
     Print(playText, playTextX, playTextY,
         (selectedOption == MenuOption::Play || playHover) ? kBright : kDim, kBaseTextScale);
@@ -470,6 +490,27 @@ void Scene_MainMenu::DrawUI() const
 
     y += 28.0f;
     Print("ENTER     - Select", GetCenteredX("ENTER     - Select", kControlsLineScale), y, kInfo, kControlsLineScale);
+
+    // Footer
+    constexpr float kFooterScale = 0.7f;
+    constexpr float kFooterMarginX = 12.0f;
+    constexpr float kFooterMarginY = 22.0f;
+
+    const float footerScreenW = (float)AEGfxGetWindowWidth();
+    const float footerScreenH = (float)AEGfxGetWindowHeight();
+    const float footerY = footerScreenH - kFooterMarginY;
+
+    Print("MERGE DEFENDERS v1.0", kFooterMarginX, footerY, kInfo, kFooterScale);
+
+    // FIX: clamp copyright so it never overflows either edge of the screen
+    const char* copyright = "Copyright 2024 DigiPen Institute of Technology";
+    const float copyrightW = (float)std::strlen(copyright) * kFooterCharWidth * kFooterScale;
+    const float copyrightX = footerScreenW - copyrightW - kFooterMarginX;
+    const float copyrightXClamped = (copyrightX < kFooterMarginX) ? kFooterMarginX : copyrightX;
+    const float copyrightXFinal = (copyrightXClamped + copyrightW > footerScreenW - kFooterMarginX)
+        ? footerScreenW - copyrightW - kFooterMarginX
+        : copyrightXClamped;
+    Print(copyright, copyrightXFinal, footerY, kInfo, kFooterScale);
 }
 
 #pragma endregion

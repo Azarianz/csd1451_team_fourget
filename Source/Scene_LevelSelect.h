@@ -1,3 +1,4 @@
+// Scene_LevelSelect.h
 #pragma once
 #include "Scene.h"
 #include "AEEngine.h"
@@ -15,12 +16,13 @@ public:
 private:
     struct LevelButton
     {
-        std::string fileName;   // e.g. "level_01.txt"
-        std::string displayName; // e.g. "level_01"
+        std::string fileName;
+        std::string displayName;
         float x = 0.0f;
         float y = 0.0f;
         float w = 0.0f;
         float h = 0.0f;
+        AEGfxTexture* thumbnail = nullptr;
     };
 
 private:
@@ -28,13 +30,18 @@ private:
     MenuState m_state = MenuState::SelectingLevel;
 
     int m_pendingLevelIndex = -1;
-    int m_selectedDifficulty = 0; // 0 = Easy, 1 = Hard
+    int m_selectedDifficulty = 0;
+
+    int m_columns = 2; // For grid layout
+
     void LoadLevelList();
     void BuildButtonLayout();
     void UpdateMouseInput();
 
     void MoveUp();
     void MoveDown();
+    void MoveLeft();
+    void MoveRight();
     void ConfirmSelection();
     void SelectLevel(size_t index);
 
@@ -49,4 +56,5 @@ private:
     std::vector<LevelButton> m_buttons;
     int m_selectedIndex = 0;
     s8 m_uiFont = -1;
+    AEGfxVertexList* m_imageQuad = nullptr;
 };
