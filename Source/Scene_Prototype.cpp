@@ -433,9 +433,17 @@ void Scene_Prototype::DrawUI()
         AEGfxPrint(m_uiFont, buf, -0.2f, 0.90f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f);
     }
 
+    // Get screen dimensions for dynamic positioning
+    float screenW = (float)AEGfxGetWindowWidth();
+    float screenH = (float)AEGfxGetWindowHeight();
+
     // --- 4. GAME SPEED INDICATOR (FLAG) ---
     sprintf_s(buf, "SPEED: ");
-    AEGfxPrint(m_uiFont, buf, 0.65f, 0.75f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+    // Define dynamic normalized coordinates (NDC) for the text
+    float speedTextNdcX = 0.65f;
+    float speedTextNdcY = 0.75f;
+    AEGfxPrint(m_uiFont, buf, speedTextNdcX, speedTextNdcY, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 
     int flagIndex = 0; // White Flag (1.0x)
     if (gameSpeedMultiplier == 2.0f) flagIndex = 1; // Green Flag (2.0x)
@@ -452,7 +460,11 @@ void Scene_Prototype::DrawUI()
         AEMtx33 scaleM, rotM, transM, transform;
         AEMtx33Scale(&scaleM, 40.0f, 40.0f);
         AEMtx33Rot(&rotM, 0.0f);
-        AEMtx33Trans(&transM, 730.0f, 350.0f);
+
+        // Increased the X multiplier from 0.82f to 0.88f to add a larger gap
+        float flagWorldX = (screenW * 0.5f) * 0.88f;
+        float flagWorldY = (screenH * 0.5f) * 0.78f;
+        AEMtx33Trans(&transM, flagWorldX, flagWorldY);
 
         AEMtx33Concat(&transform, &rotM, &scaleM);
         AEMtx33Concat(&transform, &transM, &transform);
@@ -463,8 +475,6 @@ void Scene_Prototype::DrawUI()
 
     // --- 5. PAUSE BUTTON ---
     const char* pauseLabel = m_paused ? "RESUME" : "PAUSE";
-    float screenW = (float)AEGfxGetWindowWidth();
-    float screenH = (float)AEGfxGetWindowHeight();
     float pauseScreenX = screenW * 0.88f;
     float pauseScreenY = screenH * 0.08f;
 
@@ -473,7 +483,6 @@ void Scene_Prototype::DrawUI()
         1.0f - (pauseScreenY / screenH) * 2.0f,
         1.0f, 1.0f, 1.0f, 0.2f, 1.0f);
 }
-
 // --------------------------------------------------------
 //  IsPauseButtonClicked
 //  Checks whether the mouse click is inside the pause button.
@@ -774,7 +783,7 @@ void Scene_Prototype::Init()
         baseName = levelFile.substr(lastSlash + 1, lastDot - lastSlash - 1);
     }
 
-    std::string waveFilePath = "Assets/" + baseName;
+    std::string waveFilePath = "Assets/Waves/" + baseName;
     if (GameSettings::currentDifficulty == GameSettings::Difficulty::Easy) {
         waveFilePath += "_easy.txt";
     }
