@@ -23,6 +23,7 @@ namespace TowerHandler {
         bool isRefreshButton;
         int defIndex = 0;
         bool isEmpty = false;
+        bool isLevelTwo = false;
     };
 
     class Shop {
@@ -58,8 +59,11 @@ namespace TowerHandler {
         void RefundTower(int slotIdx, int paidCost)
         {
             m_points += paidCost;
-            if (m_purchaseCount > 0)
-                m_purchaseCount--;
+            if (slotIdx >= 0 && slotIdx < TOWER_SLOTS && !slots[slotIdx].isLevelTwo)
+            {
+                if (m_purchaseCount > 0)
+                    m_purchaseCount--;
+            }
             RestoreSlot(slotIdx);
         }
 
@@ -71,11 +75,12 @@ namespace TowerHandler {
         s8  m_uiFont = -1;
         const int TOWER_COST = 25;
         const int REFRESH_COST = 25;
+        const int LEVEL2_TOWER_COST = 175;
         int m_purchaseCount = 0;
         int GetCurrentTowerCost() const;
 
-        static const int TOTAL_SLOTS = 5;
-        static const int TOWER_SLOTS = 4;
+        static const int TOTAL_SLOTS = 7;
+        static const int TOWER_SLOTS = 6;
 
         ShopSlot slots[TOTAL_SLOTS] = {};
 
@@ -104,12 +109,15 @@ namespace TowerHandler {
 
         std::unordered_map<int, int> m_towerDefIndex;
 
-        void DrawPoints() const;
+        void DrawPoints()    const;
         void DrawSlotCosts() const;
+
         void DrawSpriteAtTex(float cx, float cy, float size,
             int col, int row,
             AEGfxTexture* tex,
-            int sheetCols, int sheetRows) const;
+            int sheetCols, int sheetRows,
+            float r = 1.0f, float g = 1.0f, float b = 1.0f) const;
+
         SpriteUV GetUVFrom(int col, int row, int sheetCols, int sheetRows) const;
     };
 
