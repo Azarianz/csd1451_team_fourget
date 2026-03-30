@@ -58,6 +58,13 @@ namespace ParticleSystem
             minLife = 0.2f;  maxLife = 0.4f;
             break;
 
+        case BurstSize::MEDIUM:
+            count = 18;
+            minSize = 10.0f;  maxSize = 20.0f;
+            minSpeed = 60.0f; maxSpeed = 140.0f;
+            minLife = 0.3f;  maxLife = 0.6f;
+            break;
+
         case BurstSize::LARGE:
             count = 30;
             minSize = 15.0f;  maxSize = 25.0f;
@@ -65,12 +72,12 @@ namespace ParticleSystem
             minLife = 0.4f;  maxLife = 0.8f;
             break;
 
-        case BurstSize::MEDIUM:
         default:
-            count = 18;
-            minSize = 10.0f;  maxSize = 20.0f;
-            minSpeed = 60.0f; maxSpeed = 140.0f;
-            minLife = 0.3f;  maxLife = 0.6f;
+			// Invalid burst size, spawn no particles
+            count = 0;
+            minSize = 0.0f;  maxSize = 0.0f;
+            minSpeed = 0.0f; maxSpeed = 0.0f;
+            minLife = 0.0f;  maxLife = 0.0f;
             break;
         }
 
