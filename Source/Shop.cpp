@@ -156,7 +156,26 @@ namespace TowerHandler {
         float mouseX, mouseY;
         Utility::GetWorldMousePos(mouseX, mouseY);
 
-        m_pulseTimer += (float)AEFrameRateControllerGetFrameTime();
+        float dt = (float)AEFrameRateControllerGetFrameTime();
+        m_pulseTimer += dt;
+
+        // Tick screen shake
+        if (m_shakeTimer > 0.0f)
+        {
+            m_shakeTimer -= dt;
+            if (m_shakeTimer <= 0.0f)
+            {
+                m_shakeTimer = 0.0f;
+                m_shakeOffsetX = 0.0f;
+                m_shakeOffsetY = 0.0f;
+            }
+            else
+            {
+                float progress = m_shakeTimer / SHAKE_DURATION; // 1→0 as shake dies
+                m_shakeOffsetX = sinf(m_pulseTimer * 40.0f) * SHAKE_MAGNITUDE * progress;
+                m_shakeOffsetY = sinf(m_pulseTimer * 40.0f + 1.5708f) * SHAKE_MAGNITUDE * progress * 0.5f;
+            }
+        }
 
         // Debug: add points
         if (AEInputCheckTriggered(AEVK_M))
@@ -209,6 +228,7 @@ namespace TowerHandler {
                     if (m_points < REFRESH_COST)
                     {
                         PRINT("Not enough points to refresh! Need %d\n", REFRESH_COST);
+                        TriggerShake();
                         return;
                     }
                     m_points -= REFRESH_COST;
@@ -224,6 +244,7 @@ namespace TowerHandler {
                 if (m_points < cost)
                 {
                     PRINT("Not enough points! Need %d\n", cost);
+                    TriggerShake();
                     return;
                 }
 
@@ -283,7 +304,7 @@ namespace TowerHandler {
             for (int i = 0; i < TOTAL_SLOTS; ++i)
             {
                 bool gold = !slots[i].isRefreshButton && slots[i].isLevelTwo;
-                DrawSpriteAtTex(slots[i].x, slots[i].y, slots[i].size,
+                DrawSpriteAtTex(slots[i].x + m_shakeOffsetX, slots[i].y + m_shakeOffsetY, slots[i].size,
                     0, 0, pSlotTex, 1, 1,
                     gold ? GOLD_R : 1.0f,
                     gold ? GOLD_G : 1.0f,
@@ -302,7 +323,7 @@ namespace TowerHandler {
             int row = 0;
 
             // Tower sprite always renders at full white — gold tint is on the box only
-            DrawSpriteAtTex(slots[i].x, slots[i].y, slots[i].size * 0.55f,
+            DrawSpriteAtTex(slots[i].x + m_shakeOffsetX, slots[i].y + m_shakeOffsetY, slots[i].size * 0.55f,
                 col, row, pSpritesheet, SHEET_COLS, SHEET_ROWS);
         }
 
@@ -310,13 +331,14 @@ namespace TowerHandler {
         for (int i = 0; i < TOTAL_SLOTS; ++i)
         {
             if (!slots[i].isRefreshButton) continue;
-            DrawSpriteAtTex(slots[i].x, slots[i].y, slots[i].size * 0.65f,
+            DrawSpriteAtTex(slots[i].x + m_shakeOffsetX, slots[i].y + m_shakeOffsetY, slots[i].size * 0.65f,
                 REFRESH_ICON_COL, REFRESH_ICON_ROW,
                 pRefreshSheet, REFRESH_SHEET_COLS, REFRESH_SHEET_ROWS);
         }
 
         DrawSlotCosts();
         DrawPoints();
+        DrawLowPointsWarning();
     }
 
     //  DrawSlotCosts
@@ -363,6 +385,38 @@ namespace TowerHandler {
             sprintf_s(buf, "%d", cost);
             AEGfxPrint(m_uiFont, buf, normX, normY, 0.55f, cr, cg, cb, 1.0f);
         }
+    }
+
+    //  DrawLowPointsWarning
+    //  Shows a flashing "LOW ON POINTS!" banner at screen centre
+    //  whenever the player has fewer than 25 points.
+    void Shop::DrawLowPointsWarning() const
+    {
+        if (m_points >= 25) return;
+        if (m_uiFont < 0)   return;
+
+        // Flash: visible for ~0.6 s out of every 1.0 s cycle
+        float cycle = fmodf(m_pulseTimer, 1.0f);
+        if (cycle > 0.6f) return;
+
+        // Intensity pulses from 1 → 0.5 across the visible window
+        float intensity = 0.5f + 0.5f * (1.0f - cycle / 0.6f);
+
+        const float screenW = (float)AEGfxGetWindowWidth();
+        const float screenH = (float)AEGfxGetWindowHeight();
+
+        const char* msg = "LOW ON POINTS!";
+        const float scale = 1.4f;
+        const float charW = 22.0f * scale;
+        float textPixelWidth = (float)strlen(msg) * charW;
+        float px = screenW * 0.5f - textPixelWidth * 0.5f;
+        float py = screenH * 0.42f; // slightly above centre
+
+        float normX = (px / screenW) * 2.0f - 1.0f;
+        float normY = 1.0f - (py / screenH) * 2.0f;
+
+        // Bright red, fading with pulse
+        AEGfxPrint(m_uiFont, msg, normX, normY, scale, intensity, 0.1f, 0.1f, 1.0f);
     }
 
     //  DrawPoints

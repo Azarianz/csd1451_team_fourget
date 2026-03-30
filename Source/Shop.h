@@ -91,6 +91,14 @@ namespace TowerHandler {
         float m_pulseTimer = 0.0f;
         int   m_draggedSlot = -1;
 
+        // Screen shake
+        float m_shakeTimer = 0.0f;
+        float m_shakeOffsetX = 0.0f;
+        float m_shakeOffsetY = 0.0f;
+        static constexpr float SHAKE_DURATION = 0.45f;
+        static constexpr float SHAKE_MAGNITUDE = 10.0f;
+        void TriggerShake() { m_shakeTimer = SHAKE_DURATION; }
+
         AEGfxVertexList* pCircleMesh = nullptr;
         AEGfxTexture* pSpritesheet = nullptr;
         AEGfxTexture* pSlotTex = nullptr;
@@ -109,8 +117,9 @@ namespace TowerHandler {
 
         std::unordered_map<int, int> m_towerDefIndex;
 
-        void DrawPoints()    const;
-        void DrawSlotCosts() const;
+        void DrawPoints()           const;
+        void DrawSlotCosts()        const;
+        void DrawLowPointsWarning() const;
 
         void DrawSpriteAtTex(float cx, float cy, float size,
             int col, int row,
