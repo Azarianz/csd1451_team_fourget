@@ -27,6 +27,7 @@ private:
 
     // Helpers
     void HandleInput(float dt);
+    void HandleMouseInput();
     void DrawUI()      const;
     void ApplyVolume() const;
 

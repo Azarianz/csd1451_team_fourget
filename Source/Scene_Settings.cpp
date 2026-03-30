@@ -130,6 +130,106 @@ void Scene_Settings::HandleInput(float dt)
 void Scene_Settings::Update(float dt)
 {
     HandleInput(dt);
+    HandleMouseInput();
+}
+
+void Scene_Settings::HandleMouseInput()
+{
+    int rawMX = 0, rawMY = 0;
+    AEInputGetCursorPosition(&rawMX, &rawMY);
+    const float mx = (float)rawMX;
+    const float my = (float)rawMY;
+
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    // ---------------------------------------------------------------
+    //  TUNE THESE if clicks feel off
+    // ---------------------------------------------------------------
+    const float firstRowY = screenH * 0.35f; // move up/down to shift row hit zones
+    const float rowStepY = 60.0f;           // gap between rows, must match DrawUI
+    const float rowH = 34.0f;           // height of each click zone
+
+    const float valueStartX = screenW * 0.48f; // where the value string starts, must match DrawUI
+    const float charW_left = 22.0f;           // px per glyph used for the LEFT  < arrow position
+    const float charW_right = 5.0f;           // px per glyph used for the RIGHT > arrow position (smaller = arrow moves right)
+    const float arrowHalfW = 28.0f;           // half-width of each arrow's click zone (bigger = more forgiving)
+
+    const float labelL = screenW * 0.18f;       // left edge of label (RESOLUTION / VOLUME) click zone
+    const float labelR = screenW * 0.90f;       // right edge of label click zone
+    // ---------------------------------------------------------------
+
+    const int rowCount = (int)SettingRow::COUNT;
+
+    for (int i = 0; i < rowCount; ++i)
+    {
+        float rowTop = firstRowY + i * rowStepY;
+        float rowBot = rowTop + rowH;
+        if (my < rowTop || my > rowBot) continue;
+
+        // Build the same string DrawUI prints so we know the real length
+        char valueBuf[64] = {};
+        if (i == (int)SettingRow::Resolution)
+        {
+            sprintf_s(valueBuf, "< %s >",
+                GameSettings::RESOLUTIONS[GameSettings::resolutionIndex].label);
+        }
+        else
+        {
+            const int barLen = 10;
+            const int filled = (GameSettings::masterVolume * barLen) / 100;
+            char bar[20] = "[";
+            for (int b = 0; b < barLen; ++b)
+                strcat_s(bar, b < filled ? "|" : " ");
+            strcat_s(bar, "]");
+            sprintf_s(valueBuf, "< %d%% %s >", GameSettings::masterVolume, bar);
+        }
+
+        int   len = (int)strlen(valueBuf);
+        // < is the first character of the string
+        float leftCX = valueStartX + charW_left * 0.5f;
+        // > is the last character — uses charW_right so it lands further right
+        float rightCX = valueStartX + (len - 0.5f) * charW_right;
+
+        bool inLabel = (mx >= labelL && mx <= labelR);
+        bool inLeft = (mx >= leftCX - arrowHalfW && mx <= leftCX + arrowHalfW);
+        bool inRight = (mx >= rightCX - arrowHalfW && mx <= rightCX + arrowHalfW);
+
+        // Hover: select row when cursor is over any interactive zone
+        if (inLabel || inLeft || inRight)
+            m_selected = (SettingRow)i;
+
+        if (!AEInputCheckTriggered(AEVK_LBUTTON)) return;
+
+        int delta = 0;
+        if (inLeft)  delta = -1;
+        else if (inRight) delta = 1;
+        else if (inLabel) delta = 1; // label click cycles forward
+
+        if (delta == 0) return;
+
+        switch ((SettingRow)i)
+        {
+        case SettingRow::Resolution:
+            GameSettings::resolutionIndex =
+                (GameSettings::resolutionIndex + delta + GameSettings::RESOLUTION_COUNT)
+                % GameSettings::RESOLUTION_COUNT;
+            GameSettings::pendingRestart = true;
+            GameSettings::Save();
+            break;
+
+        case SettingRow::Volume:
+            GameSettings::masterVolume += delta * 5;
+            if (GameSettings::masterVolume < 0)   GameSettings::masterVolume = 0;
+            if (GameSettings::masterVolume > 100) GameSettings::masterVolume = 100;
+            GameSettings::Save();
+            ApplyVolume();
+            break;
+
+        default: break;
+        }
+        return;
+    }
 }
 
 // DrawUI

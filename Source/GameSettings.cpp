@@ -11,7 +11,7 @@ namespace GameSettings
     const int RESOLUTION_COUNT = 3;
 
     int  resolutionIndex = 1;
-    int  masterVolume = 80;
+    int  masterVolume = 30;
     bool pendingRestart = false;
     bool quitGame = false;
 
