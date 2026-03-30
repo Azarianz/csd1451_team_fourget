@@ -718,6 +718,11 @@ void Scene_Prototype::CleanupDeadEnemies()
             if (e && !e->escapedBase)
                 shop.AddPoints(e->GetPoints());
 
+			// Nulls bullet targets pointing to an enemy before 
+            // deleting it to prevent dangling pointers
+            for(auto& b : activeBullets)
+				if (b.target == 0) b.target = nullptr;
+
             delete e;
             enemies.erase(enemies.begin() + i);
         }

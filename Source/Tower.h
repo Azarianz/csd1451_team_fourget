@@ -216,13 +216,16 @@ namespace TowerHandler {
 
         void Update(float dt)
         {
-            // Re-aim toward target if still alive
-            if (target && target->health > 0.0f)
+			// If target is dead, stop homing and continue in same direction
+            if (target && target->health <= 0.0f)
+                target = nullptr;
+
+            if (target)
             {
                 float dx = target->x - x;
                 float dy = target->y - y;
                 float len = sqrtf(dx * dx + dy * dy);
-                if (len > 0.0001f)
+                if (len > 0.0f)
                 {
                     dirX = dx / len;
                     dirY = dy / len;
