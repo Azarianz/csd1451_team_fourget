@@ -167,23 +167,21 @@ void BuildMergeSystem::UpdateDragging(float worldX, float worldY,
     if (!activeTowers)
         return;
 
+    // While dragging, continuously move tower with mouse
+    if (lmbDown)
+    {
+        TowerHandler::DragAndDropOnce(worldX, worldY, *activeTowers);
+    }
+
     // When player releases mouse, try to snap dragged tower to valid cell
     if (justReleasedLmb && IsDraggingTower())
     {
         SnapDraggedTowerToGrid(mouseX, mouseY);
     }
-
-    // While dragging, continuously move tower with mouse
-    int draggedIndex = FindDraggedTowerIndex();
-    if (draggedIndex >= 0 && lmbDown)
-    {
-        (*activeTowers)[(size_t)draggedIndex].x = worldX;
-        (*activeTowers)[(size_t)draggedIndex].y = worldY;
-    }
 }
 
 /*
-===============================================================================
+=============================================   ==================================
 Rebuilds the occupancy array entirely from the current tower positions.
 
 Every tower's world position is converted into a grid cell, then that cell
@@ -535,6 +533,7 @@ bool BuildMergeSystem::SnapDraggedTowerToGrid(int mouseX, int mouseY)
     (*activeTowers)[(size_t)draggedIndex].y = wy;
     (*activeTowers)[(size_t)draggedIndex].isDragging = false;
     (*activeTowers)[(size_t)draggedIndex].isSelected = false;
+    (*activeTowers)[draggedIndex].isPlaced = true;  // using TS code
 
     // Update occupancy after placement
     RebuildOccupiedFromTowers();

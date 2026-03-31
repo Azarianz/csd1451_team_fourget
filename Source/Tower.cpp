@@ -700,11 +700,13 @@ namespace TowerHandler {
             t.x = mouseX + t.dragOffsetX;
             t.y = mouseY + t.dragOffsetY;
 
-            if (!AEInputCheckCurr(AEVK_LBUTTON))
-            {
-                t.isDragging = false;
-                t.isPlaced = true; // locked, not allowed to be dragged again
-            }
+            // NOTE: isDragging is controlled in BuildMergeSystem (SnapDraggedTowerToGrid)
+            // This logigc below no longer needed, and we have vars set in SnapDraggedTowerToGrid() func.
+            //if (!AEInputCheckCurr(AEVK_LBUTTON))
+            //{
+            //    t.isDragging = false;
+            //    t.isPlaced = true; // locked, not allowed to be dragged again
+            //}
         }
     }
 

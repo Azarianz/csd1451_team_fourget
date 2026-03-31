@@ -599,17 +599,8 @@ void Scene_Prototype::UpdateSelectionAndDragging(float worldX, float worldY, int
 
     shop.Update(activeTowers);
 
+    //Retrofitted code now inside here
     buildMergeSystem.UpdateDragging(worldX, worldY, lmbDown, justReleasedLmb, mouseX, mouseY);
-
-    // Mark towers as placed the moment the mouse is released
-    if (justReleasedLmb)
-    {
-        for (auto& t : activeTowers)
-        {
-            if (!t.isDragging && !t.isPlaced)
-                t.isPlaced = true;
-        }
-    }
 
     if (justPressedLmb && !buildMergeSystem.IsDraggingTower())
         TowerHandler::SelectTopmostTower(worldX, worldY, activeTowers);
