@@ -138,7 +138,7 @@ void Scene_Prototype::DrawWinPopup() const
     // dark fullscreen overlay
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetTransparency(0.60f);
+    AEGfxSetTransparency(0.95f);
     AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
     AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -159,27 +159,6 @@ void Scene_Prototype::DrawWinPopup() const
         AEGfxMeshDraw(overlayMesh, AE_GFX_MDM_TRIANGLES);
         AEGfxMeshFree(overlayMesh);
     }
-
-    // popup panel
-    //AEGfxSetTransparency(0.92f);
-
-    //AEGfxMeshStart();
-    //AEGfxTriAdd(-0.5f, -0.5f, 0xFF202020, 0.0f, 0.0f, 0.5f, -0.5f, 0xFF202020, 0.0f, 0.0f, 0.5f, 0.5f, 0xFF202020, 0.0f, 0.0f);
-    //AEGfxTriAdd(-0.5f, -0.5f, 0xFF202020, 0.0f, 0.0f, 0.5f, 0.5f, 0xFF202020, 0.0f, 0.0f, -0.5f, 0.5f, 0xFF202020, 0.0f, 0.0f);
-    //AEGfxVertexList* panelMesh = AEGfxMeshEnd();
-
-    //if (panelMesh)
-    //{
-    //    AEMtx33 scaleM, rotM, transM, finalMtx;
-    //    AEMtx33Scale(&scaleM, popupW, popupH);
-    //    AEMtx33Rot(&rotM, 0.0f);
-    //    AEMtx33Trans(&transM, centerX - screenW * 0.5f, screenH * 0.5f - centerY);
-    //    AEMtx33Concat(&finalMtx, &rotM, &scaleM);
-    //    AEMtx33Concat(&finalMtx, &transM, &finalMtx);
-    //    AEGfxSetTransform(finalMtx.m);
-    //    AEGfxMeshDraw(panelMesh, AE_GFX_MDM_TRIANGLES);
-    //    AEGfxMeshFree(panelMesh);
-    //}
 
     if (m_uiFont >= 0)
     {
@@ -337,7 +316,7 @@ void Scene_Prototype::DrawLosePopup() const
     // dark fullscreen overlay
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetTransparency(0.60f);
+    AEGfxSetTransparency(0.95f);
     AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
     AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
