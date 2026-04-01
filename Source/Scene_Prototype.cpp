@@ -161,25 +161,25 @@ void Scene_Prototype::DrawWinPopup() const
     }
 
     // popup panel
-    AEGfxSetTransparency(0.92f);
+    //AEGfxSetTransparency(0.92f);
 
-    AEGfxMeshStart();
-    AEGfxTriAdd(-0.5f, -0.5f, 0xFF202020, 0.0f, 0.0f, 0.5f, -0.5f, 0xFF202020, 0.0f, 0.0f, 0.5f, 0.5f, 0xFF202020, 0.0f, 0.0f);
-    AEGfxTriAdd(-0.5f, -0.5f, 0xFF202020, 0.0f, 0.0f, 0.5f, 0.5f, 0xFF202020, 0.0f, 0.0f, -0.5f, 0.5f, 0xFF202020, 0.0f, 0.0f);
-    AEGfxVertexList* panelMesh = AEGfxMeshEnd();
+    //AEGfxMeshStart();
+    //AEGfxTriAdd(-0.5f, -0.5f, 0xFF202020, 0.0f, 0.0f, 0.5f, -0.5f, 0xFF202020, 0.0f, 0.0f, 0.5f, 0.5f, 0xFF202020, 0.0f, 0.0f);
+    //AEGfxTriAdd(-0.5f, -0.5f, 0xFF202020, 0.0f, 0.0f, 0.5f, 0.5f, 0xFF202020, 0.0f, 0.0f, -0.5f, 0.5f, 0xFF202020, 0.0f, 0.0f);
+    //AEGfxVertexList* panelMesh = AEGfxMeshEnd();
 
-    if (panelMesh)
-    {
-        AEMtx33 scaleM, rotM, transM, finalMtx;
-        AEMtx33Scale(&scaleM, popupW, popupH);
-        AEMtx33Rot(&rotM, 0.0f);
-        AEMtx33Trans(&transM, centerX - screenW * 0.5f, screenH * 0.5f - centerY);
-        AEMtx33Concat(&finalMtx, &rotM, &scaleM);
-        AEMtx33Concat(&finalMtx, &transM, &finalMtx);
-        AEGfxSetTransform(finalMtx.m);
-        AEGfxMeshDraw(panelMesh, AE_GFX_MDM_TRIANGLES);
-        AEGfxMeshFree(panelMesh);
-    }
+    //if (panelMesh)
+    //{
+    //    AEMtx33 scaleM, rotM, transM, finalMtx;
+    //    AEMtx33Scale(&scaleM, popupW, popupH);
+    //    AEMtx33Rot(&rotM, 0.0f);
+    //    AEMtx33Trans(&transM, centerX - screenW * 0.5f, screenH * 0.5f - centerY);
+    //    AEMtx33Concat(&finalMtx, &rotM, &scaleM);
+    //    AEMtx33Concat(&finalMtx, &transM, &finalMtx);
+    //    AEGfxSetTransform(finalMtx.m);
+    //    AEGfxMeshDraw(panelMesh, AE_GFX_MDM_TRIANGLES);
+    //    AEGfxMeshFree(panelMesh);
+    //}
 
     if (m_uiFont >= 0)
     {
@@ -220,6 +220,183 @@ void Scene_Prototype::DrawWinPopup() const
             hoverNext ? bright : dim,
             hoverNext ? bright : dim,
             hoverNext ? bright : dim,
+            1.0f
+        );
+
+        AEGfxPrint(
+            m_uiFont,
+            menuText,
+            ToNdcX(menuTextX),
+            ToNdcY(menuTextY),
+            optionScale,
+            hoverMenu ? bright : dim,
+            hoverMenu ? bright : dim,
+            hoverMenu ? bright : dim,
+            1.0f
+        );
+    }
+}
+#pragma endregion
+#pragma region Lose Popup
+void Scene_Prototype::OpenLosePopup()
+{
+    gameOver = true;
+    m_paused = true;
+
+    if (m_bgmLoaded)
+        AEAudioPauseGroup(m_bgmGroup);
+}
+
+bool Scene_Prototype::IsInRetryButton(int mouseX, int mouseY) const
+{
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    const float popupW = 520.0f;
+    const float popupH = 250.0f;
+    const float left = (screenW - popupW) * 0.5f;
+    const float top = (screenH - popupH) * 0.5f;
+    const float centerX = left + popupW * 0.5f;
+
+    const float buttonW = 190.0f;
+    const float buttonH = 24.0f;
+    const float buttonX = centerX - buttonW * 0.5f;
+    const float buttonY = top + 118.0f;
+
+    return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
+        (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
+}
+
+void Scene_Prototype::UpdateLosePopup(int mouseX, int mouseY)
+{
+    if (!gameOver)
+        return;
+
+    if (AEInputCheckTriggered(AEVK_LBUTTON))
+    {
+        if (IsInRetryButton(mouseX, mouseY))
+        {
+            SceneManager::I().SwitchTo(SceneID::Prototype);
+            return;
+        }
+
+        if (IsInMainMenuButton(mouseX, mouseY))
+        {
+            SceneManager::I().SwitchTo(SceneID::MainMenu);
+            return;
+        }
+    }
+
+    if (AEInputCheckTriggered(AEVK_RETURN) || AEInputCheckTriggered(AEVK_SPACE))
+    {
+        SceneManager::I().SwitchTo(SceneID::Prototype);
+        return;
+    }
+
+    if (AEInputCheckTriggered(AEVK_ESCAPE))
+    {
+        SceneManager::I().SwitchTo(SceneID::MainMenu);
+    }
+}
+
+void Scene_Prototype::DrawLosePopup() const
+{
+    if (!gameOver)
+        return;
+
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    const float popupW = 520.0f;
+    const float popupH = 250.0f;
+    const float left = (screenW - popupW) * 0.5f;
+    const float top = (screenH - popupH) * 0.5f;
+    const float centerX = left + popupW * 0.5f;
+
+    int mouseX = 0;
+    int mouseY = 0;
+    AEInputGetCursorPosition(&mouseX, &mouseY);
+
+    const bool hoverRetry = IsInRetryButton(mouseX, mouseY);
+    const bool hoverMenu = IsInMainMenuButton(mouseX, mouseY);
+
+    auto ToNdcX = [screenW](float px) { return (px / screenW) * 2.0f - 1.0f; };
+    auto ToNdcY = [screenH](float py) { return 1.0f - (py / screenH) * 2.0f; };
+
+    auto GetCenteredX = [](const char* text, float scale, float areaCenterX)
+        {
+            const float charWidthPx = 22.0f * scale;
+            const float textWidth = (float)std::strlen(text) * charWidthPx;
+            return areaCenterX - textWidth * 0.5f;
+        };
+
+    const float nextY = top + 118.0f;
+    const float menuY = top + 172.0f;
+
+    // dark fullscreen overlay
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(0.60f);
+    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+
+    AEGfxMeshStart();
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFF000000, 0.0f, 0.0f, 0.5f, -0.5f, 0xFF000000, 0.0f, 0.0f, 0.5f, 0.5f, 0xFF000000, 0.0f, 0.0f);
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFF000000, 0.0f, 0.0f, 0.5f, 0.5f, 0xFF000000, 0.0f, 0.0f, -0.5f, 0.5f, 0xFF000000, 0.0f, 0.0f);
+    AEGfxVertexList* overlayMesh = AEGfxMeshEnd();
+
+    if (overlayMesh)
+    {
+        AEMtx33 scaleM, rotM, transM, finalMtx;
+        AEMtx33Scale(&scaleM, screenW, screenH);
+        AEMtx33Rot(&rotM, 0.0f);
+        AEMtx33Trans(&transM, 0.0f, 0.0f);
+        AEMtx33Concat(&finalMtx, &rotM, &scaleM);
+        AEMtx33Concat(&finalMtx, &transM, &finalMtx);
+        AEGfxSetTransform(finalMtx.m);
+        AEGfxMeshDraw(overlayMesh, AE_GFX_MDM_TRIANGLES);
+        AEGfxMeshFree(overlayMesh);
+    }
+
+    if (m_uiFont >= 0)
+    {
+        const char* titleText = "GAME OVER";
+        const char* retryText = "RETRY";
+        const char* menuText = "MAIN MENU";
+
+        const float bright = 1.0f;
+        const float dim = 0.35f;
+
+        const float titleScale = 1.25f;
+        const float optionScale = 1.0f;
+
+        const float titleX = GetCenteredX(titleText, titleScale, centerX - 210);
+        const float titleY = top + 64.0f;
+
+        const float retryTextX = GetCenteredX(retryText, optionScale, centerX);
+        const float retryTextY = nextY + 6.0f;
+
+        const float menuTextX = GetCenteredX(menuText, optionScale, centerX);
+        const float menuTextY = menuY + 6.0f;
+
+        AEGfxPrint(
+            gameOverFont >= 0 ? gameOverFont : m_uiFont,
+            titleText,
+            ToNdcX(titleX),
+            ToNdcY(titleY),
+            titleScale,
+            1.0f, 0.1f, 0.1f, 1.0f
+        );
+
+        AEGfxPrint(
+            m_uiFont,
+            retryText,
+            ToNdcX(retryTextX),
+            ToNdcY(retryTextY),
+            optionScale,
+            hoverRetry ? bright : dim,
+            hoverRetry ? bright : dim,
+            hoverRetry ? bright : dim,
             1.0f
         );
 
@@ -655,9 +832,7 @@ void Scene_Prototype::UpdateBaseCollision()
 
             if (base.TakeDamage(base.details.contactDamage))
             {
-                gameOver = true;
-                if (m_bgmLoaded)
-                    AEAudioPauseGroup(m_bgmGroup);
+                OpenLosePopup();
             }
         }
     }
@@ -818,11 +993,9 @@ void Scene_Prototype::Init()
 
 void Scene_Prototype::Update(float dt)
 {
-    // Prevents bullet teleporting when window is dragged or focus is lost.
     const float MAX_DT = 1.0f / 60.0f;
     if (dt > MAX_DT) dt = MAX_DT;
 
-    if (gameOver) return;
     if (!grid) return;
 
     UpdateTutorialPopup();
@@ -835,6 +1008,12 @@ void Scene_Prototype::Update(float dt)
     if (m_stageWon)
     {
         UpdateWinPopup(mouseX, mouseY);
+        return;
+    }
+
+    if (gameOver)
+    {
+        UpdateLosePopup(mouseX, mouseY);
         return;
     }
 
@@ -904,14 +1083,8 @@ void Scene_Prototype::Draw()
     if (m_stageWon)
         DrawWinPopup();
 
-    if (gameOver && gameOverFont >= 0)
-    {
-        AEGfxPrint(gameOverFont, "GAME OVER",
-            -0.4f, 0.0f,
-            1.2f,
-            1.0f, 0.1f, 0.1f,
-            1.0f);
-    }
+    if (gameOver)
+        DrawLosePopup();
 }
 
 void Scene_Prototype::Exit()

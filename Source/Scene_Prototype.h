@@ -51,6 +51,11 @@ private:
     bool IsInNextStageButton(int mouseX, int mouseY) const;
     bool IsInMainMenuButton(int mouseX, int mouseY) const;
 
+    // Lose Popup
+    void OpenLosePopup();
+    void UpdateLosePopup(int mouseX, int mouseY);
+    void DrawLosePopup() const;
+    bool IsInRetryButton(int mouseX, int mouseY) const;
 private:
     TutorialPopup m_tutorialPopup;
     bool IsTutorialLevel() const;
