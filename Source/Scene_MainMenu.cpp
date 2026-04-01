@@ -25,9 +25,9 @@ namespace
     constexpr float kControlsYRatio = 0.68f;
 
     // Fixed menu layout
-    constexpr float kButtonStartY = 200.0f;
-    constexpr float kButtonSpacing = 110.0f;
-    constexpr float kButtonHeight = 100.0f;
+    constexpr float kButtonStartY = 180.0f;
+    constexpr float kButtonSpacing = 90.0f;
+    constexpr float kButtonHeight = 82.0f;
     constexpr float kButtonPadX = 96.0f;
 
     // FIX: vertically center text inside button — ~58% down accounts for font baseline in a 100px button
@@ -122,34 +122,39 @@ void Scene_MainMenu::UpdateMouseInput()
 
     const ButtonRect playRect = GetPlayButtonRect();
     const ButtonRect settingsRect = GetSettingsButtonRect();
+    const ButtonRect controlsRect = GetControlsButtonRect();
+    const ButtonRect creditsRect = GetCreditsButtonRect();
     const ButtonRect quitRect = GetQuitButtonRect();
 
     if (IsPointInRect((float)mouseX, (float)mouseY, playRect.x, playRect.y, playRect.w, playRect.h))
     {
         selectedOption = MenuOption::Play;
-
         if (AEInputCheckTriggered(AEVK_LBUTTON))
-        {
             HandlePlay();
-        }
+    }
+    else if (IsPointInRect((float)mouseX, (float)mouseY, controlsRect.x, controlsRect.y, controlsRect.w, controlsRect.h))
+    {
+        selectedOption = MenuOption::Controls;
+        if (AEInputCheckTriggered(AEVK_LBUTTON))
+            HandleControls();
+    }
+    else if (IsPointInRect((float)mouseX, (float)mouseY, creditsRect.x, creditsRect.y, creditsRect.w, creditsRect.h))
+    {
+        selectedOption = MenuOption::Credits;
+        if (AEInputCheckTriggered(AEVK_LBUTTON))
+            HandleCredits();
     }
     else if (IsPointInRect((float)mouseX, (float)mouseY, settingsRect.x, settingsRect.y, settingsRect.w, settingsRect.h))
     {
         selectedOption = MenuOption::Settings;
-
         if (AEInputCheckTriggered(AEVK_LBUTTON))
-        {
             HandleSettings();
-        }
     }
     else if (IsPointInRect((float)mouseX, (float)mouseY, quitRect.x, quitRect.y, quitRect.w, quitRect.h))
     {
         selectedOption = MenuOption::Quit;
-
         if (AEInputCheckTriggered(AEVK_LBUTTON))
-        {
             HandleQuit();
-        }
     }
 }
 
@@ -157,17 +162,11 @@ void Scene_MainMenu::MoveUp()
 {
     switch (selectedOption)
     {
-    case MenuOption::Play:
-        selectedOption = MenuOption::Quit;
-        break;
-
-    case MenuOption::Settings:
-        selectedOption = MenuOption::Play;
-        break;
-
-    case MenuOption::Quit:
-        selectedOption = MenuOption::Settings;
-        break;
+    case MenuOption::Play:     selectedOption = MenuOption::Quit;     break;
+    case MenuOption::Controls: selectedOption = MenuOption::Play;     break;
+    case MenuOption::Credits:  selectedOption = MenuOption::Controls; break;
+    case MenuOption::Settings: selectedOption = MenuOption::Credits;  break;
+    case MenuOption::Quit:     selectedOption = MenuOption::Settings; break;
     }
 }
 
@@ -175,17 +174,11 @@ void Scene_MainMenu::MoveDown()
 {
     switch (selectedOption)
     {
-    case MenuOption::Play:
-        selectedOption = MenuOption::Settings;
-        break;
-
-    case MenuOption::Settings:
-        selectedOption = MenuOption::Quit;
-        break;
-
-    case MenuOption::Quit:
-        selectedOption = MenuOption::Play;
-        break;
+    case MenuOption::Play:     selectedOption = MenuOption::Controls; break;
+    case MenuOption::Controls: selectedOption = MenuOption::Credits;  break;
+    case MenuOption::Credits:  selectedOption = MenuOption::Settings; break;
+    case MenuOption::Settings: selectedOption = MenuOption::Quit;     break;
+    case MenuOption::Quit:     selectedOption = MenuOption::Play;     break;
     }
 }
 
@@ -193,20 +186,12 @@ void Scene_MainMenu::ConfirmSelection()
 {
     switch (selectedOption)
     {
-    case MenuOption::Play:
-        HandlePlay();
-        break;
-
-    case MenuOption::Settings:
-        HandleSettings();
-        break;
-
-    case MenuOption::Quit:
-        HandleQuit();
-        break;
-
-    default:
-        break;
+    case MenuOption::Play:     HandlePlay();     break;
+    case MenuOption::Settings: HandleSettings(); break;
+    case MenuOption::Controls: HandleControls(); break;
+    case MenuOption::Credits:  HandleCredits();  break;
+    case MenuOption::Quit:     HandleQuit();     break;
+    default: break;
     }
 }
 
@@ -223,6 +208,15 @@ void Scene_MainMenu::HandleSettings()
 void Scene_MainMenu::HandleQuit()
 {
     GameSettings::quitGame = true;
+}
+void Scene_MainMenu::HandleControls()
+{
+    SceneManager::I().SwitchTo(SceneID::Controls);
+}
+
+void Scene_MainMenu::HandleCredits()
+{
+    SceneManager::I().SwitchTo(SceneID::Credits);
 }
 
 #pragma endregion
@@ -257,7 +251,7 @@ bool Scene_MainMenu::IsPointInRect(float mx, float my, float x, float y, float w
 Scene_MainMenu::ButtonRect Scene_MainMenu::GetPlayButtonRect() const
 {
     // FIX: all buttons use "SETTINGS" (widest label) for width so all three are equal
-    const char* widestText = "SETTINGS";
+    const char* widestText = "CONTROLS";
     const float textW = (float)std::strlen(widestText) * kApproxCharWidth;
     const float screenW = (float)AEGfxGetWindowWidth();
 
@@ -272,7 +266,7 @@ Scene_MainMenu::ButtonRect Scene_MainMenu::GetPlayButtonRect() const
 Scene_MainMenu::ButtonRect Scene_MainMenu::GetSettingsButtonRect() const
 {
     // FIX: all buttons use "SETTINGS" (widest label) for width so all three are equal
-    const char* widestText = "SETTINGS";
+    const char* widestText = "CONTROLS";
     const float textW = (float)std::strlen(widestText) * kApproxCharWidth;
     const float screenW = (float)AEGfxGetWindowWidth();
 
@@ -280,14 +274,44 @@ Scene_MainMenu::ButtonRect Scene_MainMenu::GetSettingsButtonRect() const
     rect.w = textW + (kButtonPadX * 2.0f);
     rect.h = kButtonHeight;
     rect.x = screenW * 0.5f - rect.w * 0.5f;
-    rect.y = kButtonStartY + kButtonSpacing;
+    rect.y = kButtonStartY + (kButtonSpacing * 3.0f); // moved down to 4th button
     return rect;
 }
 
 Scene_MainMenu::ButtonRect Scene_MainMenu::GetQuitButtonRect() const
 {
     // FIX: all buttons use "SETTINGS" (widest label) for width so all three are equal
-    const char* widestText = "SETTINGS";
+    const char* widestText = "CONTROLS";
+    const float textW = (float)std::strlen(widestText) * kApproxCharWidth;
+    const float screenW = (float)AEGfxGetWindowWidth();
+
+    ButtonRect rect;
+    rect.w = textW + (kButtonPadX * 2.0f);
+    rect.h = kButtonHeight;
+    rect.x = screenW * 0.5f - rect.w * 0.5f;
+    rect.y = kButtonStartY + (kButtonSpacing * 4.0f);
+    return rect;
+}
+
+Scene_MainMenu::ButtonRect Scene_MainMenu::GetControlsButtonRect() const
+{
+    // FIX: all buttons use "SETTINGS" (widest label) for width so all three are equal
+    const char* widestText = "CONTROLS";
+    const float textW = (float)std::strlen(widestText) * kApproxCharWidth;
+    const float screenW = (float)AEGfxGetWindowWidth();
+
+    ButtonRect rect;
+    rect.w = textW + (kButtonPadX * 2.0f);
+    rect.h = kButtonHeight;
+    rect.x = screenW * 0.5f - rect.w * 0.5f;
+    rect.y = kButtonStartY + (kButtonSpacing * 1.0f);
+    return rect;
+}
+
+Scene_MainMenu::ButtonRect Scene_MainMenu::GetCreditsButtonRect() const
+{
+    // FIX: all buttons use "SETTINGS" (widest label) for width so all three are equal
+    const char* widestText = "CONTROLS";
     const float textW = (float)std::strlen(widestText) * kApproxCharWidth;
     const float screenW = (float)AEGfxGetWindowWidth();
 
@@ -399,7 +423,6 @@ void Scene_MainMenu::DrawUI() const
 
     const float screenH = (float)AEGfxGetWindowHeight();
     const float titleY = screenH * kTitleYRatio;
-    const float controlsY = screenH * kControlsYRatio;
 
     auto Print = [&](const char* text, float px, float py, float shade, float scale = 1.0f)
         {
@@ -418,11 +441,17 @@ void Scene_MainMenu::DrawUI() const
     AEInputGetCursorPosition(&mouseX, &mouseY);
 
     const ButtonRect playRect = GetPlayButtonRect();
+    const ButtonRect controlsRect = GetControlsButtonRect();
+    const ButtonRect creditsRect = GetCreditsButtonRect();
     const ButtonRect settingsRect = GetSettingsButtonRect();
     const ButtonRect quitRect = GetQuitButtonRect();
 
     const bool playHover =
         IsPointInRect((float)mouseX, (float)mouseY, playRect.x, playRect.y, playRect.w, playRect.h);
+    const bool controlsHover =
+        IsPointInRect((float)mouseX, (float)mouseY, controlsRect.x, controlsRect.y, controlsRect.w, controlsRect.h);
+    const bool creditsHover =
+        IsPointInRect((float)mouseX, (float)mouseY, creditsRect.x, creditsRect.y, creditsRect.w, creditsRect.h);
     const bool settingsHover =
         IsPointInRect((float)mouseX, (float)mouseY, settingsRect.x, settingsRect.y, settingsRect.w, settingsRect.h);
     const bool quitHover =
@@ -430,50 +459,62 @@ void Scene_MainMenu::DrawUI() const
 
     Print("MERGE DEFENDERS", GetCenteredX("MERGE DEFENDERS", kTitleScale), titleY, kBright, kTitleScale);
 
-    // Bounce: selected button moves up and down on a sine wave.
-    // Subtracting from Y moves the button upward (screen-space Y increases downward).
     const float bounceOffset = sinf(m_bounceTimer * kBounceSpeed) * kBounceAmplitude;
 
-    // Per-button Y offsets: only the selected button bounces.
     const float playOffsetY = (selectedOption == MenuOption::Play) ? -bounceOffset : 0.0f;
+    const float controlsOffsetY = (selectedOption == MenuOption::Controls) ? -bounceOffset : 0.0f;
+    const float creditsOffsetY = (selectedOption == MenuOption::Credits) ? -bounceOffset : 0.0f;
     const float settingsOffsetY = (selectedOption == MenuOption::Settings) ? -bounceOffset : 0.0f;
     const float quitOffsetY = (selectedOption == MenuOption::Quit) ? -bounceOffset : 0.0f;
 
-    // Resolve panel colours (C++14-compatible, no tuple/structured bindings)
     struct RGB { float r, g, b; };
     auto PanelColour = [&](MenuOption opt, bool hover) -> RGB
         {
             if (selectedOption == opt)
-                return { 0.12f, 0.20f, 0.58f };   // blue-purple highlight
+                return { 0.12f, 0.20f, 0.58f };
             if (hover)
-                return { 0.35f, 0.35f, 0.42f };   // hover tint
-            return { 0.12f, 0.12f, 0.18f };        // default dark
+                return { 0.35f, 0.35f, 0.42f };
+            return { 0.12f, 0.12f, 0.18f };
         };
 
     RGB pc = PanelColour(MenuOption::Play, playHover);
+    RGB coc = PanelColour(MenuOption::Controls, controlsHover);
+    RGB crc = PanelColour(MenuOption::Credits, creditsHover);
     RGB sc = PanelColour(MenuOption::Settings, settingsHover);
     RGB qc = PanelColour(MenuOption::Quit, quitHover);
 
     DrawPanelPx(playRect.x, playRect.y + playOffsetY, playRect.w, playRect.h, pc.r, pc.g, pc.b, 1.0f);
+    DrawPanelPx(controlsRect.x, controlsRect.y + controlsOffsetY, controlsRect.w, controlsRect.h, coc.r, coc.g, coc.b, 1.0f);
+    DrawPanelPx(creditsRect.x, creditsRect.y + creditsOffsetY, creditsRect.w, creditsRect.h, crc.r, crc.g, crc.b, 1.0f);
     DrawPanelPx(settingsRect.x, settingsRect.y + settingsOffsetY, settingsRect.w, settingsRect.h, sc.r, sc.g, sc.b, 1.0f);
     DrawPanelPx(quitRect.x, quitRect.y + quitOffsetY, quitRect.w, quitRect.h, qc.r, qc.g, qc.b, 1.0f);
 
     const char* playText = "PLAY";
+    const char* controlsText = "CONTROLS";
+    const char* creditsText = "CREDITS";
     const char* settingsText = "SETTINGS";
     const char* quitText = "QUIT";
 
-    // FIX: text is centered horizontally on screen (which matches the centered buttons)
     const float playTextX = GetCenteredX(playText, kBaseTextScale);
+    const float controlsTextX = GetCenteredX(controlsText, kBaseTextScale);
+    const float creditsTextX = GetCenteredX(creditsText, kBaseTextScale);
     const float settingsTextX = GetCenteredX(settingsText, kBaseTextScale);
     const float quitTextX = GetCenteredX(quitText, kBaseTextScale);
 
-    // FIX: baseline inset now uses kTextBaselineInsetY = kButtonHeight * 0.58f for vertical centering
     const float playTextY = playRect.y + kTextBaselineInsetY + playOffsetY;
+    const float controlsTextY = controlsRect.y + kTextBaselineInsetY + controlsOffsetY;
+    const float creditsTextY = creditsRect.y + kTextBaselineInsetY + creditsOffsetY;
     const float settingsTextY = settingsRect.y + kTextBaselineInsetY + settingsOffsetY;
     const float quitTextY = quitRect.y + kTextBaselineInsetY + quitOffsetY;
 
     Print(playText, playTextX, playTextY,
         (selectedOption == MenuOption::Play || playHover) ? kBright : kDim, kBaseTextScale);
+
+    Print(controlsText, controlsTextX, controlsTextY,
+        (selectedOption == MenuOption::Controls || controlsHover) ? kBright : kDim, kBaseTextScale);
+
+    Print(creditsText, creditsTextX, creditsTextY,
+        (selectedOption == MenuOption::Credits || creditsHover) ? kBright : kDim, kBaseTextScale);
 
     Print(settingsText, settingsTextX, settingsTextY,
         (selectedOption == MenuOption::Settings || settingsHover) ? kBright : kDim, kBaseTextScale);
@@ -482,30 +523,16 @@ void Scene_MainMenu::DrawUI() const
         (selectedOption == MenuOption::Quit || quitHover) ? kBright : kDim, kBaseTextScale);
 
     if (selectedOption == MenuOption::Play)
-    {
         Print(">", playRect.x - kArrowOffsetX, playTextY, kBright, kBaseTextScale);
-    }
+    else if (selectedOption == MenuOption::Controls)
+        Print(">", controlsRect.x - kArrowOffsetX, controlsTextY, kBright, kBaseTextScale);
+    else if (selectedOption == MenuOption::Credits)
+        Print(">", creditsRect.x - kArrowOffsetX, creditsTextY, kBright, kBaseTextScale);
     else if (selectedOption == MenuOption::Settings)
-    {
         Print(">", settingsRect.x - kArrowOffsetX, settingsTextY, kBright, kBaseTextScale);
-    }
     else
-    {
         Print(">", quitRect.x - kArrowOffsetX, quitTextY, kBright, kBaseTextScale);
-    }
 
-    Print("CONTROLS:", GetCenteredX("CONTROLS:", kControlsScale), controlsY, kInfo, kControlsScale);
-
-    float y = controlsY + 35.0f;
-    Print("W / UP    - Move", GetCenteredX("W / UP    - Move", kControlsLineScale), y, kInfo, kControlsLineScale);
-
-    y += 28.0f;
-    Print("S / DOWN  - Move", GetCenteredX("S / DOWN  - Move", kControlsLineScale), y, kInfo, kControlsLineScale);
-
-    y += 28.0f;
-    Print("ENTER     - Select", GetCenteredX("ENTER     - Select", kControlsLineScale), y, kInfo, kControlsLineScale);
-
-    // Footer
     constexpr float kFooterScale = 0.7f;
     constexpr float kFooterMarginX = 12.0f;
     constexpr float kFooterMarginY = 22.0f;
@@ -516,7 +543,6 @@ void Scene_MainMenu::DrawUI() const
 
     Print("MERGE DEFENDERS v1.0", kFooterMarginX, footerY, kInfo, kFooterScale);
 
-    // FIX: clamp copyright so it never overflows either edge of the screen
     const char* copyright = "Copyright 2024 DigiPen Institute of Technology";
     const float copyrightW = (float)std::strlen(copyright) * kFooterCharWidth * kFooterScale;
     const float copyrightX = footerScreenW - copyrightW - kFooterMarginX;

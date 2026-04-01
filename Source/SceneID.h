@@ -13,4 +13,6 @@ enum class SceneID
     Prototype,
     Settings,
     LevelSelect,
+    Controls,
+    Credits,
 };

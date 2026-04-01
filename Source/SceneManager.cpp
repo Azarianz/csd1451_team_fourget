@@ -10,6 +10,8 @@
 #include "Scene_Prototype.h"
 #include "Scene_MainMenu.h"
 #include "Scene_Settings.h"
+#include "Scene_Controls.h"
+#include "Scene_Credits.h"
 #include "Scene_LevelSelect.h"
 
 SceneManager& SceneManager::I()
@@ -77,6 +79,8 @@ Scene* SceneManager::CreateScene(SceneID id)
         case SceneID::EnemyTest:    return new Scene_Enemy();
         case SceneID::Prototype:    return new Scene_Prototype();
         case SceneID::LevelSelect:  return new Scene_LevelSelect();
+        case SceneID::Credits:     return new Scene_Credits();
+        case SceneID::Controls:     return new Scene_Controls();
         default:                    return nullptr;
     }
 }

@@ -16,6 +16,8 @@ private:
     {
         Play,
         Settings,
+        Controls,
+        Credits,
         Quit
     };
 
@@ -44,6 +46,8 @@ private:
     void HandlePlay();
     void HandleSettings();
     void HandleQuit();
+    void HandleControls();
+    void HandleCredits();
 
     float ScreenToNormX(float px) const;
     float ScreenToNormY(float py) const;
@@ -53,6 +57,8 @@ private:
     ButtonRect GetPlayButtonRect() const;
     ButtonRect GetSettingsButtonRect() const;
     ButtonRect GetQuitButtonRect() const;
+    ButtonRect GetControlsButtonRect() const;
+    ButtonRect GetCreditsButtonRect() const;
 
     void DrawUI() const;
     void DrawPanelPx(float x, float y, float w, float h,
