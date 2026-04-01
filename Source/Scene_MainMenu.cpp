@@ -57,6 +57,14 @@ void Scene_MainMenu::Init()
     {
         m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
     }
+
+    m_bgm = AEAudioLoadMusic("Assets/bouken.mp3");
+    m_bgmGroup = AEAudioCreateGroup();
+    m_bgmLoaded = true;
+
+    float normalised = GameSettings::masterVolume / 100.0f;
+    AEAudioPlay(m_bgm, m_bgmGroup, 1.0f, 1.0f, -1);
+    AEAudioSetGroupVolume(m_bgmGroup, normalised);
 }
 
 void Scene_MainMenu::Update(float dt)
@@ -93,6 +101,12 @@ void Scene_MainMenu::Exit()
     {
         AEGfxDestroyFont(m_uiFont);
         m_uiFont = -1;
+    }
+
+    if (m_bgmLoaded)
+    {
+        AEAudioStopGroup(m_bgmGroup);
+        m_bgmLoaded = false;
     }
 }
 

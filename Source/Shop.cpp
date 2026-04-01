@@ -374,8 +374,8 @@ namespace TowerHandler {
                 cr = 1.0f; cg = 1.0f; cb = 0.0f; // yellow
             }
 
-            float worldX = slots[i].x + offsetX;
-            float worldY = slots[i].y + offsetY;
+            float worldX = slots[i].x + offsetX + m_shakeOffsetX;
+            float worldY = slots[i].y + offsetY + m_shakeOffsetY;
             float screenX = worldX + screenW * 0.5f;
             float screenY = screenH * 0.5f - worldY;
             float normX = (screenX / screenW) * 2.0f - 1.0f;
@@ -388,11 +388,10 @@ namespace TowerHandler {
     }
 
     //  DrawLowPointsWarning
-    //  Shows a flashing "LOW ON POINTS!" banner at screen centre
-    //  whenever the player has fewer than 25 points.
+    //  Shows a flashing "NOT ENOUGH POINTS!" banner at screen centre
     void Shop::DrawLowPointsWarning() const
     {
-        if (m_points >= 25) return;
+        if (m_shakeTimer <= 0.0f) return;
         if (m_uiFont < 0)   return;
 
         // Flash: visible for ~0.6 s out of every 1.0 s cycle
@@ -405,7 +404,7 @@ namespace TowerHandler {
         const float screenW = (float)AEGfxGetWindowWidth();
         const float screenH = (float)AEGfxGetWindowHeight();
 
-        const char* msg = "LOW ON POINTS!";
+        const char* msg = "NOT ENOUGH POINTS!";
         const float scale = 1.4f;
         const float charW = 22.0f * scale;
         float textPixelWidth = (float)strlen(msg) * charW;

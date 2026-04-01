@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Scene.h"
+#include "AEEngine.h"
 
 class Scene_MainMenu : public Scene
 {
@@ -29,6 +30,11 @@ private:
     MenuOption selectedOption = MenuOption::Play;
     int m_uiFont = -1;
     float m_bounceTimer = 0.0f;
+
+    // Background music
+    AEAudio      m_bgm;
+    AEAudioGroup m_bgmGroup;
+    bool         m_bgmLoaded = false;
 
     void UpdateMouseInput();
     void MoveUp();

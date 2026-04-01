@@ -143,9 +143,6 @@ void Scene_Settings::HandleMouseInput()
     const float screenW = (float)AEGfxGetWindowWidth();
     const float screenH = (float)AEGfxGetWindowHeight();
 
-    // ---------------------------------------------------------------
-    //  TUNE THESE if clicks feel off
-    // ---------------------------------------------------------------
     const float firstRowY = screenH * 0.35f; // move up/down to shift row hit zones
     const float rowStepY = 60.0f;           // gap between rows, must match DrawUI
     const float rowH = 34.0f;           // height of each click zone
@@ -157,7 +154,21 @@ void Scene_Settings::HandleMouseInput()
 
     const float labelL = screenW * 0.18f;       // left edge of label (RESOLUTION / VOLUME) click zone
     const float labelR = screenW * 0.90f;       // right edge of label click zone
-    // ---------------------------------------------------------------
+
+    // Back button
+    const float backY = screenH * 0.72f;
+    const float backH = 36.0f;
+    const float backL = screenW * 0.30f;
+    const float backR = screenW * 0.70f;
+
+    if (AEInputCheckTriggered(AEVK_LBUTTON))
+    {
+        if (mx >= backL && mx <= backR && my >= backY && my <= backY + backH)
+        {
+            SceneManager::I().SwitchTo(SceneID::MainMenu);
+            return;
+        }
+    }
 
     const int rowCount = (int)SettingRow::COUNT;
 
