@@ -320,9 +320,8 @@ namespace TowerHandler {
 
             const TowerDef& def = TOWER_DEFS[slots[i].defIndex];
             int col = TowerHandler::TOWER_SPRITE_COLS[(int)def.type];
-            int row = 0;
+            int row = slots[i].isLevelTwo ? 1 : 0;
 
-            // Tower sprite always renders at full white — gold tint is on the box only
             DrawSpriteAtTex(slots[i].x + m_shakeOffsetX, slots[i].y + m_shakeOffsetY, slots[i].size * 0.55f,
                 col, row, pSpritesheet, SHEET_COLS, SHEET_ROWS);
         }
