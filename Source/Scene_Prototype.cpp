@@ -653,6 +653,12 @@ void Scene_Prototype::UpdateBaseCollision()
             e->health = 0.0f;
             e->escapedBase = true;
 
+			// Null any bullet targets pointing to this enemy to prevent dangling pointers
+            for (auto& b : activeBullets)
+            {
+                if (b.target == e) b.target = nullptr;
+            }
+
             if (base.TakeDamage(base.details.contactDamage))
             {
                 gameOver = true;
@@ -855,9 +861,9 @@ void Scene_Prototype::Update(float dt)
     float scaled_dt = dt * gameSpeedMultiplier;
 
     UpdateEnemies(scaled_dt);
-    TowerHandler::UpdateTowerLogic(scaled_dt, activeTowers, enemies, activeBullets);
     UpdateBaseCollision();
     CleanupDeadEnemies();
+    TowerHandler::UpdateTowerLogic(scaled_dt, activeTowers, enemies, activeBullets);
     UpdateReturningTowers(scaled_dt);
     ParticleSystem::Update(scaled_dt);
 

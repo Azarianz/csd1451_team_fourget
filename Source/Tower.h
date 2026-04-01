@@ -210,12 +210,20 @@ namespace TowerHandler {
 
         float dirX = 0.0f;  // normalized movement direction
         float dirY = 0.0f;
+		float lifeTime = 5.0f; // seconds until auto-expire (safety in case it misses and flies off)
 
         Enemy* target = nullptr; // homing target (nulled when enemy dies)
         bool   shouldRemove = false;
 
         void Update(float dt)
         {
+			lifeTime -= dt;
+            if (lifeTime <= 0.0f)
+            {
+                shouldRemove = true;
+                return;
+			}
+
 			// If target is dead, stop homing and continue in same direction
             if (target && target->health <= 0.0f)
                 target = nullptr;
