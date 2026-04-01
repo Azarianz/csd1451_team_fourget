@@ -237,6 +237,7 @@ void Scene_Prototype::DrawWinPopup() const
     }
 }
 #pragma endregion
+
 #pragma region Lose Popup
 void Scene_Prototype::OpenLosePopup()
 {
@@ -453,6 +454,80 @@ void Scene_Prototype::UpdateTutorialPopup()
         m_paused = false;
         if (m_bgmLoaded)
             AEAudioResumeGroup(m_bgmGroup);
+    }
+}
+#pragma endregion
+
+#pragma region Codex
+void Scene_Prototype::UpdateCodex()
+{
+    // Toggle open
+    if (AEInputCheckTriggered(AEVK_M))
+    {
+        m_showCodex = !m_showCodex;
+
+        m_paused = m_showCodex;
+
+        if (m_bgmLoaded)
+        {
+            if (m_showCodex)
+                AEAudioPauseGroup(m_bgmGroup);
+            else
+                AEAudioResumeGroup(m_bgmGroup);
+        }
+    }
+
+    // Close with ESC
+    if (m_showCodex && AEInputCheckTriggered(AEVK_ESCAPE))
+    {
+        m_showCodex = false;
+        m_paused = false;
+
+        if (m_bgmLoaded)
+            AEAudioResumeGroup(m_bgmGroup);
+    }
+}
+
+void Scene_Prototype::DrawCodex() const
+{
+    if (!m_showCodex || !m_codexTex)
+        return;
+
+    float screenW = (float)AEGfxGetWindowWidth();
+    float screenH = (float)AEGfxGetWindowHeight();
+
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxTextureSet(m_codexTex, 0, 0);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+
+    AEMtx33 scaleM, rotM, transM, finalMtx;
+
+    AEMtx33Scale(&scaleM, screenW, screenH);
+    AEMtx33Rot(&rotM, 0.0f);
+    AEMtx33Trans(&transM, 0.0f, 0.0f);
+
+    AEMtx33Concat(&finalMtx, &rotM, &scaleM);
+    AEMtx33Concat(&finalMtx, &transM, &finalMtx);
+
+    AEGfxSetTransform(finalMtx.m);
+
+    // Fullscreen quad
+    AEGfxMeshStart();
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+        0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f,
+        0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
+
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+        0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+
+    AEGfxVertexList* mesh = AEGfxMeshEnd();
+
+    if (mesh)
+    {
+        AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
+        AEGfxMeshFree(mesh);
     }
 }
 #pragma endregion
@@ -765,7 +840,7 @@ void Scene_Prototype::HandleUserInputs(float worldX, float worldY, int mouseX, i
 //  UpdateSelectionAndDragging
 //  Handles mouse interactions with towers.
 //  - Updates shop UI interactions
-//  - Processes tower dragging and placement
+//  - Processes tower dragging and placement    
 //  - Selects the topmost tower on click
 // --------------------------------------------------------
 void Scene_Prototype::UpdateSelectionAndDragging(float worldX, float worldY, int mouseX, int mouseY)
@@ -977,6 +1052,10 @@ void Scene_Prototype::Init()
         }
     }
 
+    //Codex assets
+    m_codexTex = AEGfxTextureLoad("Assets/codex.png");
+
+	//Tutorial assets
     m_spriteSheet = AEGfxTextureLoad("Assets/rawspritesheet.png");
     m_flagMeshes[0] = CreateFlagMesh(9, 17);
     m_flagMeshes[1] = CreateFlagMesh(6, 17);
@@ -1006,6 +1085,10 @@ void Scene_Prototype::Update(float dt)
 
     UpdateTutorialPopup();
     if (m_tutorialPopup.IsActive())
+        return;
+
+    UpdateCodex();
+    if (m_showCodex)
         return;
 
     int mouseX = 0, mouseY = 0;
@@ -1052,6 +1135,8 @@ void Scene_Prototype::Update(float dt)
         UpdateWinPopup(mouseX, mouseY);
         return;
     }
+
+
 }
 
 void Scene_Prototype::Draw()
@@ -1086,6 +1171,8 @@ void Scene_Prototype::Draw()
 
     m_tutorialPopup.Draw(m_uiFont);
 
+    DrawCodex();
+
     if (m_stageWon)
         DrawWinPopup();
 
@@ -1095,6 +1182,12 @@ void Scene_Prototype::Draw()
 
 void Scene_Prototype::Exit()
 {
+    if (m_codexTex)
+    {
+        AEGfxTextureUnload(m_codexTex);
+        m_codexTex = nullptr;
+    }
+
     m_tutorialPopup.Shutdown();
     shop.Exit();
 

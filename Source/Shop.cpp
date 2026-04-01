@@ -102,13 +102,13 @@ namespace TowerHandler {
 
         pCircleMesh = BuildCircleMesh(64);
         pSpritesheet = AEGfxTextureLoad("Assets/spritesheet.png");
-        pRefreshSheet = AEGfxTextureLoad("Assets/refresh_overlay.png");
+        pRefreshSheet = AEGfxTextureLoad("Assets/refresh_icon.png");
         pSlotTex = AEGfxTextureLoad("Assets/item_window.png");
 
         if (!pSlotTex) PRINT("Shop Init: Failed to load Assets/item_window.png!\n");
         if (!pCircleMesh)  PRINT("Shop Init: Failed to create circle mesh!\n");
         if (!pSpritesheet) PRINT("Shop Init: Failed to load Assets/spritesheet.png!\n");
-        if (!pRefreshSheet) PRINT("Refresh Init: Failed to load Assets/refresh_overlay.png!\n");
+        if (!pRefreshSheet) PRINT("Refresh Init: Failed to load Assets/refresh_icon.png!\n");
 
         int fontSize = (int)(24.0f * m_uiScale);
         if (fontSize < 10) fontSize = 10;
@@ -331,8 +331,9 @@ namespace TowerHandler {
         {
             if (!slots[i].isRefreshButton) continue;
             DrawSpriteAtTex(slots[i].x + m_shakeOffsetX, slots[i].y + m_shakeOffsetY, slots[i].size * 0.65f,
-                REFRESH_ICON_COL, REFRESH_ICON_ROW,
-                pRefreshSheet, REFRESH_SHEET_COLS, REFRESH_SHEET_ROWS);
+                0, 0,                 // always 0,0
+                pRefreshSheet,
+                1, 1);                // IMPORTANT: full texture
         }
 
         DrawSlotCosts();

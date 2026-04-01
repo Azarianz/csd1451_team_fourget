@@ -57,9 +57,17 @@ private:
     void DrawLosePopup() const;
     bool IsInRetryButton(int mouseX, int mouseY) const;
 private:
+    //Tutorial Popup
     TutorialPopup m_tutorialPopup;
     bool IsTutorialLevel() const;
     void UpdateTutorialPopup();
+
+    // Codex (Codex)
+    bool m_showCodex = false;
+    AEGfxTexture* m_codexTex = nullptr;
+    void UpdateCodex();
+    void DrawCodex() const;
+
 
     std::string levelFile;
     LevelLoader level;

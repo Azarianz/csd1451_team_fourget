@@ -104,10 +104,10 @@ namespace TowerHandler {
         AEGfxTexture* pSlotTex = nullptr;
 
         AEGfxTexture* pRefreshSheet = nullptr;
-        static const int REFRESH_SHEET_COLS = 11; 
-        static const int REFRESH_SHEET_ROWS = 11; 
-        static const int REFRESH_ICON_COL = 10; 
-        static const int REFRESH_ICON_ROW = 1;
+        //static const int REFRESH_SHEET_COLS = 11; 
+        //static const int REFRESH_SHEET_ROWS = 11; 
+        //static const int REFRESH_ICON_COL = 10; 
+        //static const int REFRESH_ICON_ROW = 1;
 
         static const int SHEET_COLS = 13;
         static const int SHEET_ROWS = 10;
