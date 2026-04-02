@@ -26,8 +26,22 @@ public:
     bool IsFinished() const;
 
 private:
+    struct ButtonRect
+    {
+        float x = 0.0f;
+        float y = 0.0f;
+        float w = 0.0f;
+        float h = 0.0f;
+    };
+
     void LoadSlides();
     void UnloadSlides();
+
+    bool IsPointInRect(float mx, float my, float x, float y, float w, float h) const;
+    ButtonRect GetLeftArrowRect() const;
+    ButtonRect GetRightArrowRect() const;
+    void UpdateMouseInput();
+    void DrawNavButtons(int fontId) const;
 
 private:
     bool m_enabled = false;

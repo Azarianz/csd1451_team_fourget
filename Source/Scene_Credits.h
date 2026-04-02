@@ -13,10 +13,25 @@ public:
     void Exit() override;
 
 private:
+    struct ButtonRect
+    {
+        float x = 0.0f;
+        float y = 0.0f;
+        float w = 0.0f;
+        float h = 0.0f;
+    };
+
     void NextPage();
     void PrevPage();
     void DrawImagePage();
     void DrawTextPage();
+    void DrawNavButtons() const;
+    void UpdateMouseInput();
+
+    bool IsPointInRect(float mx, float my, float x, float y, float w, float h) const;
+
+    ButtonRect GetLeftArrowRect() const;
+    ButtonRect GetRightArrowRect() const;
 
     int m_uiFont = -1;
     int m_page = 0;

@@ -1,5 +1,6 @@
 #include "TutorialPopup.h"
 #include "AEInput.h"
+#include "AEMath.h"
 
 namespace
 {
@@ -15,21 +16,6 @@ namespace
             -0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
             0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f,
             -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
-        return AEGfxMeshEnd();
-    }
-
-    AEGfxVertexList* CreateColorQuad(unsigned int color)
-    {
-        AEGfxMeshStart();
-        AEGfxTriAdd(
-            -0.5f, -0.5f, color, 0.0f, 0.0f,
-            0.5f, -0.5f, color, 0.0f, 0.0f,
-            0.5f, 0.5f, color, 0.0f, 0.0f);
-
-        AEGfxTriAdd(
-            -0.5f, -0.5f, color, 0.0f, 0.0f,
-            0.5f, 0.5f, color, 0.0f, 0.0f,
-            -0.5f, 0.5f, color, 0.0f, 0.0f);
         return AEGfxMeshEnd();
     }
 }
@@ -98,10 +84,70 @@ void TutorialPopup::Reset()
     m_currentSlide = 0;
 }
 
+bool TutorialPopup::IsPointInRect(float mx, float my, float x, float y, float w, float h) const
+{
+    return (mx >= x && mx <= x + w &&
+        my >= y && my <= y + h);
+}
+
+TutorialPopup::ButtonRect TutorialPopup::GetLeftArrowRect() const
+{
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    ButtonRect rect;
+    rect.w = 80.0f;
+    rect.h = 80.0f;
+    rect.x = 24.0f;
+    rect.y = screenH * 0.5f - rect.h * 0.5f;
+    return rect;
+}
+
+TutorialPopup::ButtonRect TutorialPopup::GetRightArrowRect() const
+{
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    ButtonRect rect;
+    rect.w = 80.0f;
+    rect.h = 80.0f;
+    rect.x = screenW - rect.w - 24.0f;
+    rect.y = screenH * 0.5f - rect.h * 0.5f;
+    return rect;
+}
+
+void TutorialPopup::UpdateMouseInput()
+{
+    int mouseX = 0;
+    int mouseY = 0;
+    AEInputGetCursorPosition(&mouseX, &mouseY);
+
+    const ButtonRect leftRect = GetLeftArrowRect();
+    const ButtonRect rightRect = GetRightArrowRect();
+
+    if (AEInputCheckTriggered(AEVK_LBUTTON))
+    {
+        if (IsPointInRect((float)mouseX, (float)mouseY, leftRect.x, leftRect.y, leftRect.w, leftRect.h))
+        {
+            if (m_currentSlide > 0)
+                --m_currentSlide;
+        }
+        else if (IsPointInRect((float)mouseX, (float)mouseY, rightRect.x, rightRect.y, rightRect.w, rightRect.h))
+        {
+            if (m_currentSlide < (int)m_slideTextures.size() - 1)
+                ++m_currentSlide;
+            else
+                Close();
+        }
+    }
+}
+
 void TutorialPopup::Update()
 {
     if (!m_active)
         return;
+
+    UpdateMouseInput();
 
     if (AEInputCheckTriggered(AEVK_RIGHT) ||
         AEInputCheckTriggered(AEVK_D) ||
@@ -133,6 +179,47 @@ void TutorialPopup::Update()
     }
 }
 
+void TutorialPopup::DrawNavButtons(int fontId) const
+{
+    if (fontId < 0)
+        return;
+
+    int mouseX = 0;
+    int mouseY = 0;
+    AEInputGetCursorPosition(&mouseX, &mouseY);
+
+    const ButtonRect leftRect = GetLeftArrowRect();
+    const ButtonRect rightRect = GetRightArrowRect();
+
+    const bool leftHover =
+        IsPointInRect((float)mouseX, (float)mouseY, leftRect.x, leftRect.y, leftRect.w, leftRect.h);
+    const bool rightHover =
+        IsPointInRect((float)mouseX, (float)mouseY, rightRect.x, rightRect.y, rightRect.w, rightRect.h);
+
+    const bool canGoLeft = (m_currentSlide > 0);
+    const bool canGoRight = (m_currentSlide < (int)m_slideTextures.size() - 1);
+
+    auto PrintPx = [&](const char* text, float px, float py, float shade, float scale)
+        {
+            const float nx = (px / (float)AEGfxGetWindowWidth()) * 2.0f - 1.0f;
+            const float ny = 1.0f - (py / (float)AEGfxGetWindowHeight()) * 2.0f;
+
+            AEGfxPrint(fontId, text, nx, ny, scale, shade, shade, shade, 1.0f);
+        };
+
+    PrintPx("<",
+        leftRect.x + 16.0f,
+        leftRect.y + 52.0f,
+        canGoLeft ? (leftHover ? 1.0f : 0.55f) : 0.20f,
+        1.8f);
+
+    PrintPx(">",
+        rightRect.x + 16.0f,
+        rightRect.y + 52.0f,
+        canGoRight ? (rightHover ? 1.0f : 0.55f) : 0.20f,
+        1.8f);
+}
+
 void TutorialPopup::Draw(int fontId) const
 {
     if (!m_active || m_slideTextures.empty() || !m_imageQuad)
@@ -141,16 +228,15 @@ void TutorialPopup::Draw(int fontId) const
     const float screenW = static_cast<float>(AEGfxGetWindowWidth());
     const float screenH = static_cast<float>(AEGfxGetWindowHeight());
 
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetTransparency(1.0f);
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
-
     AEGfxTexture* tex = m_slideTextures[(size_t)m_currentSlide];
     if (tex)
     {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxTextureSet(tex, 0, 0);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
         AEMtx33 scale, rot, trans, finalMtx;
         AEMtx33Scale(&scale, screenW, screenH);
@@ -164,6 +250,8 @@ void TutorialPopup::Draw(int fontId) const
         AEGfxMeshDraw(m_imageQuad, AE_GFX_MDM_TRIANGLES);
     }
 
+    DrawNavButtons(fontId);
+
     if (fontId >= 0)
     {
         char pageBuf[64];
@@ -171,27 +259,19 @@ void TutorialPopup::Draw(int fontId) const
             m_currentSlide + 1,
             (int)m_slideTextures.size());
 
-        auto ToNdcX = [screenW](float px) { return (px / screenW) * 2.0f - 1.0f; };
-        auto ToNdcY = [screenH](float py) { return 1.0f - (py / screenH) * 2.0f; };
+        const char* help = "LEFT/RIGHT or A/D to navigate   ESC = CLOSE";
 
-        const float textY1 = screenH * 0.86f;
-        const float textY2 = screenH * 0.92f;
+        float pageWidth = 0.0f, pageHeight = 0.0f;
+        AEGfxGetPrintSize(fontId, pageBuf, 1.0f, &pageWidth, &pageHeight);
 
-        AEGfxPrint(fontId, pageBuf,
-            ToNdcX(screenW * 0.43f), ToNdcY(textY1),
-            1.0f, 1, 1, 1, 1);
+        float helpWidth = 0.0f, helpHeight = 0.0f;
+        AEGfxGetPrintSize(fontId, help, 0.85f, &helpWidth, &helpHeight);
 
-        AEGfxPrint(fontId, "LEFT/A = PREV",
-            ToNdcX(screenW * 0.14f), ToNdcY(textY2),
-            0.85f, 1, 1, 1, 1);
+        const float pageX = -(pageWidth * 0.5f);
+        const float helpX = -(helpWidth * 0.5f);
 
-        AEGfxPrint(fontId, "RIGHT/D/ENTER/SPACE = NEXT",
-            ToNdcX(screenW * 0.35f), ToNdcY(textY2),
-            0.85f, 1, 1, 1, 1);
-
-        AEGfxPrint(fontId, "ESC = CLOSE",
-            ToNdcX(screenW * 0.80f), ToNdcY(textY2),
-            0.85f, 1, 1, 1, 1);
+        AEGfxPrint(fontId, pageBuf, pageX, 0.92f, 1.0f, 1, 1, 1, 1);
+        AEGfxPrint(fontId, help, helpX, 0.84f, 0.85f, 1, 1, 1, 1);
     }
 }
 
