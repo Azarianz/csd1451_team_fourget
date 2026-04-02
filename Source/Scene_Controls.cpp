@@ -16,7 +16,7 @@ void Scene_Controls::Init()
         "Assets/Tutorial/tutorial_04.png",
         "Assets/Tutorial/tutorial_05.png",
         "Assets/Tutorial/tutorial_06.png",
-        "Assets/Tutorial/codex.png"
+        "Assets/codex.png"
     };
 
     m_slides.clear();
