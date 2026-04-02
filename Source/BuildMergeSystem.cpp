@@ -360,30 +360,55 @@ bool BuildMergeSystem::TryMergeAtCell(int placedX, int placedY)
     if (!activeTowers)
         return false;
 
-    // Find the tower at the placed cell
+    // Find the placed tower
     int centerIndex = FindTowerIndexAtCell(placedX, placedY);
     if (centerIndex < 0)
         return false;
 
-    TowerHandler::TowerType type = (*activeTowers)[(size_t)centerIndex].details.towerType;
-    int towerLevel = (*activeTowers)[(size_t)centerIndex].details.level;
+    TowerHandler::Tower& centerTower = (*activeTowers)[(size_t)centerIndex];
+    TowerHandler::TowerType type = centerTower.details.towerType;
+    int towerLevel = centerTower.details.level;
 
-    // Base tower is excluded from merging
+    // Base tower cannot merge
     if (type == TowerHandler::BASE_TOWER)
         return false;
 
-    // Gather all connected matching towers
-    std::vector<GridSystem::GridCoord> cluster;
-    if (!FindConnectedCluster(placedX, placedY, type, towerLevel, cluster))
-        return false;
+    // --------------------------------------------------
+    // Predictable merge rule:
+    // ONLY merge exactly 3 towers in a straight line,
+    // and the placed tower must be the center.
+    //
+    // Priority:
+    // 1) Horizontal: left + center + right
+    // 2) Vertical:   up + center + down
+    // --------------------------------------------------
 
-    // Need at least 3 connected towers to merge
-    if (cluster.size() < 3)
-        return false;
+    std::vector<GridSystem::GridCoord> mergeCells;
 
-    // Collect indices of towers to remove (all except the placed/center tower)
+    // Horizontal 3-in-a-row
+    if (TowerMatchesAtCell(placedX - 1, placedY, type, towerLevel) &&
+        TowerMatchesAtCell(placedX + 1, placedY, type, towerLevel))
+    {
+        mergeCells.push_back({ placedX - 1, placedY });
+        mergeCells.push_back({ placedX,     placedY });
+        mergeCells.push_back({ placedX + 1, placedY });
+    }
+    // Vertical 3-in-a-row
+    else if (TowerMatchesAtCell(placedX, placedY - 1, type, towerLevel) &&
+        TowerMatchesAtCell(placedX, placedY + 1, type, towerLevel))
+    {
+        mergeCells.push_back({ placedX, placedY - 1 });
+        mergeCells.push_back({ placedX, placedY });
+        mergeCells.push_back({ placedX, placedY + 1 });
+    }
+    else
+    {
+        return false;
+    }
+
+    // Collect the two non-center towers to remove
     std::vector<int> toRemove;
-    for (const auto& cell : cluster)
+    for (const auto& cell : mergeCells)
     {
         if (cell.x == placedX && cell.y == placedY)
             continue;
@@ -393,23 +418,18 @@ bool BuildMergeSystem::TryMergeAtCell(int placedX, int placedY)
             toRemove.push_back(idx);
     }
 
-    // Safety check: if somehow only center tower exists, do not merge
-    if (toRemove.empty())
+    if (toRemove.size() != 2)
         return false;
 
-    // Upgrade the placed/center tower
+    // Upgrade the placed tower only
     (*activeTowers)[(size_t)centerIndex].LevelUp();
 
-    // Remove duplicates and sort indices so removal is safe
+    // Remove in descending order so indices stay valid
     std::sort(toRemove.begin(), toRemove.end());
-    toRemove.erase(std::unique(toRemove.begin(), toRemove.end()), toRemove.end());
-
-    // Remove from back to front to avoid vector index shifting issues
     for (int i = (int)toRemove.size() - 1; i >= 0; --i)
     {
         int idx = toRemove[(size_t)i];
 
-        // If a lower index is removed first, centerIndex shifts left
         if (idx < centerIndex)
             --centerIndex;
 
