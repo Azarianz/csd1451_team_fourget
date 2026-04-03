@@ -869,6 +869,7 @@ namespace TowerHandler {
             {
                 const LevelStats& ls = g_TowerLevelStats[(int)tower.details.towerType][tower.details.level - 1];
                 e->health -= tower.details.projectile.damage;
+                e->flashTimer = 0.2f;
                 e->slowMultiplier = 1.0f - ls.slowPercent;
                 e->slowTimer = ls.slowDuration;
                 tower.aoeHitList.push_back(e);
@@ -894,6 +895,8 @@ namespace TowerHandler {
                 if (CircleCircleCollision(b.x, b.y, b._sizeX, e->x, e->y, e->_sizeX))
                 {
                     e->health     -= b.damage;
+
+                    e->flashTimer = 0.2f;
 
                     // Spawn burst matching bullet color and tower type size
                     ParticleSystem::BurstSize burstSize = ParticleSystem::BurstSize::MEDIUM;

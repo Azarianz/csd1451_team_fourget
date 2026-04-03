@@ -15,10 +15,12 @@ struct Enemy : public GameObject
     float maxhealth = 1;
     float damage = 1;
 
+    float healthRegenRate = 0.0f;
+
     // Slow state
     float slowMultiplier = 1.0f;  // 1.0 = normal, 0.7 = 30% slowed
     float slowTimer = 0.0f;  // counts down, resets multiplier on expiry
-
+    float flashTimer = 0.0f;
     // Pathfinding Data
     int pathIndex = 0;
     bool reachedEnd = false;

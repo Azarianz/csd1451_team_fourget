@@ -93,6 +93,24 @@ void Enemy::Scale(int waveNumber)
 
 void Enemy::Update(float dt, const std::vector<Point>& path)
 {
+    if (health > 0.0f && health < maxhealth && healthRegenRate > 0.0f)
+    {
+        health += healthRegenRate * dt;
+        if (health > maxhealth)
+        {
+            health = maxhealth; // Clamp to prevent over-healing
+        }
+    }
+
+    if (flashTimer > 0.0f)
+    {
+        flashTimer -= dt;
+        if (flashTimer < 0.0f)
+        {
+            flashTimer = 0.0f;
+        }
+    }
+
     // Tick slow timer
     if (slowTimer > 0.0f)
     {
@@ -182,6 +200,7 @@ void Enemy::DrawHealthBar() const
     AEGfxSetTransform(transformFg.m);
     AEGfxMeshDraw(quad, AE_GFX_MDM_TRIANGLES);
 }
+
 void Enemy::Draw()
 {
     AEGfxVertexList* mesh = GetEnemyFrameMesh(spriteCol, spriteRow);
@@ -192,11 +211,23 @@ void Enemy::Draw()
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(color.a);
 
-    // Tint blue if slowed
-    if (slowTimer > 0.0f)
+    // Use a single if-else chain to prevent colors from overwriting each other
+    // (This also fixes the bug where the flashTimer was being overwritten by the old slowTimer check)
+    if (flashTimer > 0.0f)
+    {
+        // Tint red (similar to the slow tint) instead of a harsh solid flash
+        AEGfxSetColorToMultiply(1.0f, 0.4f, 0.4f, 1.0f);
+    }
+    else if (slowTimer > 0.0f)
+    {
+        // Tint blue if slowed
         AEGfxSetColorToMultiply(0.5f, 0.7f, 1.0f, 1.0f);
+    }
     else
+    {
+        // Normal color
         AEGfxSetColorToMultiply(color.r, color.g, color.b, 1.0f);
+    }
 
     AEMtx33 scaleM, rotM, transM, transform;
 
@@ -239,12 +270,14 @@ void GolemV1::Init()
 {
     Enemy::Init(60.0f, 60.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 300.0f, 40.0f, 50.0f);
     SetSprite(0, 4);
+    healthRegenRate = 7.5f;
 }
 
 void TitanV1::Init()
 {
     Enemy::Init(50.0f, 50.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 400.0f, 30.0f, 75.0f);
     SetSprite(0, 7);
+    healthRegenRate = 2.5f;
 }
 
 void Zombie::Init()
@@ -269,12 +302,14 @@ void Golem::Init()
 {
     Enemy::Init(60.0f, 60.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 500.0f, 60.0f, 50.0f);
     SetSprite(1, 4);
+    healthRegenRate = 15.0f;
 }
 
 void Titan::Init()
 {
     Enemy::Init(50.0f, 50.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 650.0f, 40.0f, 75.0f);
     SetSprite(1, 7);
+    healthRegenRate = 5.0f;
 }
 
 void wavestarter::Init()
