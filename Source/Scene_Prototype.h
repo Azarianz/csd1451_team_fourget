@@ -1,4 +1,3 @@
-// Scene_Prototype.h
 #pragma once
 #include "Scene.h"
 #include "GridSystem.h"
@@ -43,8 +42,7 @@ private:
     bool IsStageCleared() const;
     bool LoadNextLevel();
 
-
-	// Win Popup
+    // Win Popup
     void OpenWinPopup();
     void UpdateWinPopup(int mouseX, int mouseY);
     void DrawWinPopup() const;
@@ -56,18 +54,28 @@ private:
     void UpdateLosePopup(int mouseX, int mouseY);
     void DrawLosePopup() const;
     bool IsInRetryButton(int mouseX, int mouseY) const;
+
+    // Pause Popup
+    void OpenPausePopup();
+    void ClosePausePopup();
+    void UpdatePausePopup(int mouseX, int mouseY);
+    void DrawPausePopup() const;
+    bool IsInResumeButton(int mouseX, int mouseY) const;
+
 private:
-    //Tutorial Popup
+    //Debug Inputs
+    void HandleDebugInput();
+
+    // Tutorial Popup
     TutorialPopup m_tutorialPopup;
     bool IsTutorialLevel() const;
     void UpdateTutorialPopup();
 
-    // Codex (Codex)
+    // Codex
     bool m_showCodex = false;
     AEGfxTexture* m_codexTex = nullptr;
     void UpdateCodex();
     void DrawCodex() const;
-
 
     std::string levelFile;
     LevelLoader level;
@@ -76,6 +84,7 @@ private:
     int baseTowerIndex = -1;
     bool gameOver = false;
     bool m_stageWon = false;
+    bool m_pauseMenuOpen = false;
     s8 gameOverFont = -1;
 
     WaveManager waveManager;
