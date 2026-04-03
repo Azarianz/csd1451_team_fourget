@@ -63,12 +63,8 @@ void Scene_MainMenu::Init()
         m_bgTex = AEGfxTextureLoad("Assets/mainmenu_bg.png");
     }
 
-    m_bgm = AEAudioLoadMusic("Assets/bouken.mp3");
-    m_bgmGroup = AEAudioCreateGroup();
     m_bgmLoaded = true;
-
     float normalised = GameSettings::masterVolume / 100.0f;
-    AEAudioPlay(m_bgm, m_bgmGroup, 1.0f, 1.0f, -1);
     AEAudioSetGroupVolume(m_bgmGroup, normalised);
 }
 
@@ -117,7 +113,6 @@ void Scene_MainMenu::Exit()
 
     if (m_bgmLoaded)
     {
-        AEAudioStopGroup(m_bgmGroup);
         m_bgmLoaded = false;
     }
 }

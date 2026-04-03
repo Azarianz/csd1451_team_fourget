@@ -129,8 +129,16 @@ void Scene_Settings::HandleInput(float dt)
 
 void Scene_Settings::Update(float dt)
 {
+    int previousVolume = GameSettings::masterVolume;
+
     HandleInput(dt);
     HandleMouseInput();
+
+    if (GameSettings::masterVolume != previousVolume)
+    {
+        float normalizedVol = GameSettings::masterVolume / 100.0f;
+        SceneManager::I().SetBGMVolume(normalizedVol);
+    }
 }
 
 void Scene_Settings::HandleMouseInput()
