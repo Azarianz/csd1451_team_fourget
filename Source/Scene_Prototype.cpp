@@ -17,7 +17,7 @@ void Scene_Prototype::HandleDebugInput()
         PRINT("[DEBUG] +1000 GOLD\n");
     }
 
-    // F3 - Kill all enemies
+    // F2 - Kill all enemies
     if (AEInputCheckTriggered(AEVK_F2))
     {
         PRINT("[DEBUG] CLEAR ALL ENEMIES\n");
@@ -29,7 +29,7 @@ void Scene_Prototype::HandleDebugInput()
         }
     }
 
-    // F2 - Force win
+    // F3 - Force win
     if (AEInputCheckTriggered(AEVK_F3))
     {
         PRINT("[DEBUG] FORCE WIN\n");
