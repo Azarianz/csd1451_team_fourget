@@ -360,60 +360,77 @@ bool BuildMergeSystem::TryMergeAtCell(int placedX, int placedY)
     if (!activeTowers)
         return false;
 
-    // Find the placed tower
-    int centerIndex = FindTowerIndexAtCell(placedX, placedY);
-    if (centerIndex < 0)
+    int placedIndex = FindTowerIndexAtCell(placedX, placedY);
+    if (placedIndex < 0)
         return false;
 
-    TowerHandler::Tower& centerTower = (*activeTowers)[(size_t)centerIndex];
-    TowerHandler::TowerType type = centerTower.details.towerType;
-    int towerLevel = centerTower.details.level;
+    TowerHandler::Tower& placedTower = (*activeTowers)[(size_t)placedIndex];
+    TowerHandler::TowerType type = placedTower.details.towerType;
+    int towerLevel = placedTower.details.level;
 
-    // Base tower cannot merge
     if (type == TowerHandler::BASE_TOWER)
         return false;
 
-    // --------------------------------------------------
-    // Predictable merge rule:
-    // ONLY merge exactly 3 towers in a straight line,
-    // and the placed tower must be the center.
-    //
-    // Priority:
-    // 1) Horizontal: left + center + right
-    // 2) Vertical:   up + center + down
-    // --------------------------------------------------
-
-    std::vector<GridSystem::GridCoord> mergeCells;
-
-    // Horizontal 3-in-a-row
-    if (TowerMatchesAtCell(placedX - 1, placedY, type, towerLevel) &&
-        TowerMatchesAtCell(placedX + 1, placedY, type, towerLevel))
-    {
-        mergeCells.push_back({ placedX - 1, placedY });
-        mergeCells.push_back({ placedX,     placedY });
-        mergeCells.push_back({ placedX + 1, placedY });
-    }
-    // Vertical 3-in-a-row
-    else if (TowerMatchesAtCell(placedX, placedY - 1, type, towerLevel) &&
-        TowerMatchesAtCell(placedX, placedY + 1, type, towerLevel))
-    {
-        mergeCells.push_back({ placedX, placedY - 1 });
-        mergeCells.push_back({ placedX, placedY });
-        mergeCells.push_back({ placedX, placedY + 1 });
-    }
-    else
-    {
+    // Find full connected cluster of same type + same level
+    std::vector<GridSystem::GridCoord> cluster;
+    if (!FindConnectedCluster(placedX, placedY, type, towerLevel, cluster))
         return false;
-    }
 
-    // Collect the two non-center towers to remove
-    std::vector<int> toRemove;
-    for (const auto& cell : mergeCells)
+    if (cluster.size() < 3)
+        return false;
+
+    // Build candidate list excluding the placed tower
+    struct Candidate
     {
-        if (cell.x == placedX && cell.y == placedY)
+        GridSystem::GridCoord cell;
+        int distSq = 0;
+        int priority = 0;
+    };
+
+    std::vector<Candidate> candidates;
+    for (const auto& c : cluster)
+    {
+        if (c.x == placedX && c.y == placedY)
             continue;
 
-        int idx = FindTowerIndexAtCell(cell.x, cell.y);
+        int dx = c.x - placedX;
+        int dy = c.y - placedY;
+
+        Candidate cand;
+        cand.cell = c;
+        cand.distSq = dx * dx + dy * dy;
+
+        // Fixed tie-break priority for predictability:
+        // up, right, down, left, then diagonals / others by row/col fallback
+        if (dx == 0 && dy == -1) cand.priority = 0;      // up
+        else if (dx == 1 && dy == 0) cand.priority = 1;  // right
+        else if (dx == 0 && dy == 1) cand.priority = 2;  // down
+        else if (dx == -1 && dy == 0) cand.priority = 3; // left
+        else if (dx == 1 && dy == -1) cand.priority = 4;
+        else if (dx == 1 && dy == 1) cand.priority = 5;
+        else if (dx == -1 && dy == 1) cand.priority = 6;
+        else if (dx == -1 && dy == -1) cand.priority = 7;
+        else cand.priority = 100 + (c.y * 100) + c.x;
+
+        candidates.push_back(cand);
+    }
+
+    if (candidates.size() < 2)
+        return false;
+
+    std::sort(candidates.begin(), candidates.end(),
+        [](const Candidate& a, const Candidate& b)
+        {
+            if (a.distSq != b.distSq)
+                return a.distSq < b.distSq;
+            return a.priority < b.priority;
+        });
+
+    // Pick exactly 2 nearest neighbors + placed tower
+    std::vector<int> toRemove;
+    for (int i = 0; i < 2; ++i)
+    {
+        int idx = FindTowerIndexAtCell(candidates[(size_t)i].cell.x, candidates[(size_t)i].cell.y);
         if (idx >= 0)
             toRemove.push_back(idx);
     }
@@ -422,16 +439,16 @@ bool BuildMergeSystem::TryMergeAtCell(int placedX, int placedY)
         return false;
 
     // Upgrade the placed tower only
-    (*activeTowers)[(size_t)centerIndex].LevelUp();
+    (*activeTowers)[(size_t)placedIndex].LevelUp();
 
-    // Remove in descending order so indices stay valid
+    // Remove in descending order so indices remain valid
     std::sort(toRemove.begin(), toRemove.end());
     for (int i = (int)toRemove.size() - 1; i >= 0; --i)
     {
         int idx = toRemove[(size_t)i];
 
-        if (idx < centerIndex)
-            --centerIndex;
+        if (idx < placedIndex)
+            --placedIndex;
 
         RemoveTowerAtIndex(idx);
     }
