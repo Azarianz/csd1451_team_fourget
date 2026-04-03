@@ -2,6 +2,7 @@
 #include "AEInput.h"
 #include <cstdio>   // for sprintf_s
 #include <cctype>   // for std::tolower
+#include <fstream>
 
 // Helper Functions
 static float ScreenToNormX(float px)
@@ -228,6 +229,80 @@ void LevelEditor::HandleFileNameTyping()
     }
 }
 
+bool LevelEditor::ValidateLevelForExport(char* outReason, size_t outReasonSize) const
+{
+    int buildableCount = 0;
+    int spawnCount = 0;
+    int goalCount = 0;
+
+    for (int y = 0; y < m_level.height; ++y)
+    {
+        for (int x = 0; x < m_level.width; ++x)
+        {
+            RegionFlag f = (RegionFlag)m_level.region[m_level.Idx(x, y)];
+
+            if (f == RegionFlag::BUILDABLE)
+                ++buildableCount;
+            else if (f == RegionFlag::ENEMYSPAWN)
+                ++spawnCount;
+            else if (f == RegionFlag::ENEMYGOAL)
+                ++goalCount;
+        }
+    }
+
+    if (spawnCount <= 0)
+    {
+        sprintf_s(outReason, outReasonSize, "Export blocked: map needs at least 1 ENEMYSPAWN.");
+        return false;
+    }
+
+    if (goalCount <= 0)
+    {
+        sprintf_s(outReason, outReasonSize, "Export blocked: map needs at least 1 ENEMYGOAL.");
+        return false;
+    }
+
+    if (buildableCount <= 0)
+    {
+        sprintf_s(outReason, outReasonSize, "Export blocked: map needs at least 1 BUILDABLE tile.");
+        return false;
+    }
+
+    sprintf_s(outReason, outReasonSize, "OK");
+    return true;
+}
+
+bool LevelEditor::CopyFileContents(const std::string& srcPath, const std::string& dstPath) const
+{
+    std::ifstream in(srcPath, std::ios::binary);
+    if (!in.is_open())
+        return false;
+
+    std::ofstream out(dstPath, std::ios::binary);
+    if (!out.is_open())
+        return false;
+
+    out << in.rdbuf();
+    return out.good();
+}
+
+std::string LevelEditor::BuildExportBaseName() const
+{
+    std::string name = saveFileName;
+
+    if (name.empty())
+        name = "untitled";
+
+    size_t dot = name.rfind(".txt");
+    if (dot != std::string::npos && dot == name.length() - 4)
+        name.erase(dot);
+
+    if (name.rfind("level_", 0) != 0)
+        name = "level_" + name;
+
+    return name;
+}
+
 void LevelEditor::Update(float /*dt*/)
 {
     // Enter filename typing mode
@@ -259,29 +334,48 @@ void LevelEditor::Update(float /*dt*/)
     if (AEInputCheckTriggered(AEVK_F2)) m_layer = ActiveLayer::RegionLayer;
 
     // Save / Load using current typed file name
-    std::string fullName = saveFileName;
-    if (fullName.empty())
-        fullName = "untitled";
-
-    if (fullName.find(".txt") == std::string::npos)
-        fullName += ".txt";
-
-    std::string fullPath = "Assets/Levels/" + fullName;
+    std::string baseName = BuildExportBaseName();
+    std::string levelPath = "Assets/Levels/" + baseName + ".txt";
+    std::string easyWavePath = "Assets/Waves/" + baseName + "_easy.txt";
+    std::string hardWavePath = "Assets/Waves/" + baseName + "_hard.txt";
 
     if (AEInputCheckTriggered(AEVK_F3))
     {
-        if (m_level.Save(fullPath))
-            PRINT("Saved level: %s\n", fullPath.c_str());
+        char reason[256] = {};
+
+        if (!ValidateLevelForExport(reason, sizeof(reason)))
+        {
+            PRINT("%s\n", reason);
+        }
+        else if (!m_level.Save(levelPath))
+        {
+            PRINT("Failed to save level: %s\n", levelPath.c_str());
+        }
         else
-            PRINT("Failed to save level: %s\n", fullPath.c_str());
+        {
+            bool easyCopied = CopyFileContents("Assets/Waves/level_01_easy.txt", easyWavePath);
+            bool hardCopied = CopyFileContents("Assets/Waves/level_01_hard.txt", hardWavePath);
+
+            PRINT("Saved level: %s\n", levelPath.c_str());
+
+            if (easyCopied)
+                PRINT("Created easy waves: %s\n", easyWavePath.c_str());
+            else
+                PRINT("Failed to create easy waves from template: %s\n", easyWavePath.c_str());
+
+            if (hardCopied)
+                PRINT("Created hard waves: %s\n", hardWavePath.c_str());
+            else
+                PRINT("Failed to create hard waves from template: %s\n", hardWavePath.c_str());
+        }
     }
 
     if (AEInputCheckTriggered(AEVK_F4))
     {
-        if (m_level.Load(fullPath))
-            PRINT("Loaded level: %s\n", fullPath.c_str());
+        if (m_level.Load(levelPath))
+            PRINT("Loaded level: %s\n", levelPath.c_str());
         else
-            PRINT("Failed to load level: %s\n", fullPath.c_str());
+            PRINT("Failed to load level: %s\n", levelPath.c_str());
     }
 
     // Cycle brush
@@ -417,7 +511,7 @@ void LevelEditor::DrawMapTiles(float alphaMul) const
         for (int x = 0; x < m_level.width; ++x)
         {
             int id = m_level.map[m_level.Idx(x, y)];
-            if (id == 0) continue;
+            if (id <= 0 || id > m_maxTileId) continue;
 
             AEGfxVertexList* mesh = const_cast<LevelEditor*>(this)->GetTileMesh(id);
             if (!mesh) continue;
@@ -533,11 +627,11 @@ void LevelEditor::DrawUI() const
             const float charWidthPx = 20.0f * uiScale;
             const float textWidthPx = (float)std::strlen(buf) * charWidthPx;
 
-            const float previewGap = 10.0f;
+            const float previewGap = -42.0f;
             const float previewSize = 18.0f;
 
             const float previewX = px + textWidthPx + previewGap;
-            const float previewY = brushLineY + 3.0f;
+            const float previewY = brushLineY - 18.0f;
 
             DrawBrushPreview(previewX, previewY, previewSize);
         }
@@ -555,6 +649,7 @@ void LevelEditor::DrawUI() const
     }
 
     // Controls
+    PrintLine("(ESC) Back to Level Select", info);
     PrintLine("(TAB) Toggle UI", info);
     PrintLine("(Q/E) Cycle brush", info);
     PrintLine("(LMB) Paint", info);

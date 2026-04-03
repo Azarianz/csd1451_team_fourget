@@ -1,5 +1,6 @@
 // Scene_LevelSelect.cpp
 #include "Scene_LevelSelect.h"
+#include "Scene_LevelEditor.h"
 #include "SceneManager.h"
 #include "SceneID.h"
 #include "GameSettings.h"
@@ -7,6 +8,13 @@
 #include <algorithm>
 #include <cstring>
 #include <Windows.h>
+
+SceneID Scene_LevelSelect::s_returnScene = SceneID::MainMenu;
+
+void Scene_LevelSelect::SetReturnScene(SceneID id)
+{
+    s_returnScene = id;
+}
 
 float Scene_LevelSelect::ScreenToNormX(float px) const
 {
@@ -32,20 +40,86 @@ bool Scene_LevelSelect::IsPointInRect(float mx, float my, float x, float y, floa
     return (mx >= x && mx <= x + w && my >= y && my <= y + h);
 }
 
+int Scene_LevelSelect::GetLevelsPerPage() const
+{
+    return 4; // 2 columns x 2 rows
+}
+
+int Scene_LevelSelect::GetPageCount() const
+{
+    if (m_buttons.empty())
+        return 1;
+
+    if ((int)m_buttons.size() <= GetLevelsPerPage())
+        return 1;
+
+    return ((int)m_buttons.size() + GetLevelsPerPage() - 1) / GetLevelsPerPage();
+}
+
+int Scene_LevelSelect::GetCurrentPageStartIndex() const
+{
+    if ((int)m_buttons.size() <= GetLevelsPerPage())
+        return 0;
+
+    return m_currentPage * GetLevelsPerPage();
+}
+
+int Scene_LevelSelect::GetCurrentPageEndIndex() const
+{
+    if ((int)m_buttons.size() <= GetLevelsPerPage())
+        return (int)m_buttons.size();
+
+    int endIndex = GetCurrentPageStartIndex() + GetLevelsPerPage();
+    if (endIndex > (int)m_buttons.size())
+        endIndex = (int)m_buttons.size();
+    return endIndex;
+}
+
+void Scene_LevelSelect::PrevPage()
+{
+    if (GetPageCount() <= 1)
+        return;
+
+    if (m_currentPage > 0)
+        --m_currentPage;
+    else
+        m_currentPage = GetPageCount() - 1;
+
+    m_selectedIndex = GetCurrentPageStartIndex();
+}
+
+void Scene_LevelSelect::NextPage()
+{
+    if (GetPageCount() <= 1)
+        return;
+
+    if (m_currentPage < GetPageCount() - 1)
+        ++m_currentPage;
+    else
+        m_currentPage = 0;
+
+    m_selectedIndex = GetCurrentPageStartIndex();
+}
+
 void Scene_LevelSelect::Init()
 {
     m_selectedIndex = 0;
+    m_currentPage = 0;
     m_state = MenuState::SelectingLevel;
     m_pendingLevelIndex = -1;
     m_selectedDifficulty = 0;
-    m_columns = 2; // 2x3 Grid
+    m_columns = 2; // 2 columns
 
     if (m_uiFont < 0)
         m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
 
     AEGfxMeshStart();
-    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f, 0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
-    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f, 0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f, -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+        0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f,
+        0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+        0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
     m_imageQuad = AEGfxMeshEnd();
 
     LoadLevelList();
@@ -111,6 +185,12 @@ void Scene_LevelSelect::LoadLevelList()
     } while (FindNextFile(hFind, &findFileData) != 0);
 
     FindClose(hFind);
+
+    std::sort(m_buttons.begin(), m_buttons.end(),
+        [](const LevelButton& a, const LevelButton& b)
+        {
+            return a.displayName < b.displayName;
+        });
 }
 
 void Scene_LevelSelect::BuildButtonLayout()
@@ -118,22 +198,24 @@ void Scene_LevelSelect::BuildButtonLayout()
     const float screenW = (float)AEGfxGetWindowWidth();
     const float screenH = (float)AEGfxGetWindowHeight();
 
-    // Dynamically scale buttons to fill the screen perfectly
-    // Each button takes up 30% of the screen height, maintaining 16:9 ratio
-    const float buttonH = screenH * 0.30f;
+    // 4 stages per page max = 2 x 2 grid
+    const float buttonH = screenH * 0.26f;
     const float buttonW = buttonH * (16.0f / 9.0f);
 
-    const float spacingX = screenW * 0.06f; // 6% of screen width for horizontal gap
-    const float spacingY = buttonH * 0.35f; // Gap for text below the image
+    const float spacingX = screenW * 0.05f;
+    const float spacingY = buttonH * 0.22f;
 
     float totalGridW = m_columns * buttonW + (m_columns - 1) * spacingX;
     float startX = (screenW - totalGridW) * 0.5f;
-    float startY = screenH * 0.22f; // Start drawing just below the title area
+    float startY = screenH * 0.20f;
+
+    const int perPage = GetLevelsPerPage();
 
     for (size_t i = 0; i < m_buttons.size(); ++i)
     {
-        int col = i % m_columns;
-        int row = i / m_columns;
+        int localIndex = (int)i % perPage;
+        int col = localIndex % m_columns;
+        int row = localIndex / m_columns;
 
         LevelButton& b = m_buttons[i];
         b.w = buttonW;
@@ -147,11 +229,30 @@ void Scene_LevelSelect::Update(float /*dt*/)
 {
     UpdateMouseInput();
 
-    if (m_buttons.empty())
-        return;
-
     if (m_state == MenuState::SelectingLevel)
     {
+        if (AEInputCheckTriggered(AEVK_F5))
+        {
+            Scene_LevelEditor::SetReturnScene(SceneID::LevelSelect);
+            SceneManager::I().SwitchTo(SceneID::LevelEditor);
+            return;
+        }
+
+        if (m_buttons.empty())
+        {
+            if (AEInputCheckTriggered(AEVK_ESCAPE))
+                SceneManager::I().SwitchTo(s_returnScene);
+            return;
+        }
+
+        if (GetPageCount() > 1)
+        {
+            if (AEInputCheckTriggered(AEVK_Q))
+                PrevPage();
+            if (AEInputCheckTriggered(AEVK_E))
+                NextPage();
+        }
+
         if (AEInputCheckTriggered(AEVK_W) || AEInputCheckTriggered(AEVK_UP))
             MoveUp();
         if (AEInputCheckTriggered(AEVK_S) || AEInputCheckTriggered(AEVK_DOWN))
@@ -162,10 +263,10 @@ void Scene_LevelSelect::Update(float /*dt*/)
             MoveRight();
 
         if (AEInputCheckTriggered(AEVK_RETURN) || AEInputCheckTriggered(AEVK_SPACE))
-            SelectLevel(m_selectedIndex);
+            SelectLevel((size_t)m_selectedIndex);
 
         if (AEInputCheckTriggered(AEVK_ESCAPE))
-            SceneManager::I().SwitchTo(SceneID::MainMenu);
+            SceneManager::I().SwitchTo(s_returnScene);
     }
     else if (m_state == MenuState::SelectingDifficulty)
     {
@@ -193,21 +294,22 @@ void Scene_LevelSelect::UpdateMouseInput()
     int mouseX = 0, mouseY = 0;
     AEInputGetCursorPosition(&mouseX, &mouseY);
 
-
     if (m_state == MenuState::SelectingLevel)
     {
-        for (size_t i = 0; i < m_buttons.size(); ++i)
-        {
-            const LevelButton& b = m_buttons[i];
+        int startIndex = GetCurrentPageStartIndex();
+        int endIndex = GetCurrentPageEndIndex();
 
-            // Increased hit height to account for the text below the image
+        for (int i = startIndex; i < endIndex; ++i)
+        {
+            const LevelButton& b = m_buttons[(size_t)i];
+
             if (IsPointInRect((float)mouseX, (float)mouseY, b.x, b.y, b.w, b.h + 45.0f))
             {
-                m_selectedIndex = (int)i;
+                m_selectedIndex = i;
 
                 if (AEInputCheckTriggered(AEVK_LBUTTON))
                 {
-                    SelectLevel(i);
+                    SelectLevel((size_t)i);
                     return;
                 }
             }
@@ -240,35 +342,72 @@ void Scene_LevelSelect::UpdateMouseInput()
 void Scene_LevelSelect::MoveUp()
 {
     if (m_buttons.empty()) return;
-    m_selectedIndex -= m_columns;
-    if (m_selectedIndex < 0)
-        m_selectedIndex += (int)m_buttons.size(); // Wrap around roughly
-    if (m_selectedIndex >= (int)m_buttons.size())
-        m_selectedIndex = (int)m_buttons.size() - 1;
+
+    int startIndex = GetCurrentPageStartIndex();
+    int endIndex = GetCurrentPageEndIndex();
+    int countOnPage = endIndex - startIndex;
+    int localIndex = m_selectedIndex - startIndex;
+
+    localIndex -= m_columns;
+    if (localIndex < 0)
+    {
+        localIndex += countOnPage;
+        if (localIndex >= countOnPage)
+            localIndex = countOnPage - 1;
+    }
+
+    m_selectedIndex = startIndex + localIndex;
 }
 
 void Scene_LevelSelect::MoveDown()
 {
     if (m_buttons.empty()) return;
-    m_selectedIndex += m_columns;
-    if (m_selectedIndex >= (int)m_buttons.size())
-        m_selectedIndex %= m_columns; // Wrap to top
+
+    int startIndex = GetCurrentPageStartIndex();
+    int endIndex = GetCurrentPageEndIndex();
+    int countOnPage = endIndex - startIndex;
+    int localIndex = m_selectedIndex - startIndex;
+
+    localIndex += m_columns;
+    if (localIndex >= countOnPage)
+        localIndex %= m_columns;
+
+    if (localIndex >= countOnPage)
+        localIndex = countOnPage - 1;
+
+    m_selectedIndex = startIndex + localIndex;
 }
 
 void Scene_LevelSelect::MoveLeft()
 {
     if (m_buttons.empty()) return;
-    --m_selectedIndex;
-    if (m_selectedIndex < 0)
-        m_selectedIndex = (int)m_buttons.size() - 1;
+
+    int startIndex = GetCurrentPageStartIndex();
+    int endIndex = GetCurrentPageEndIndex();
+    int countOnPage = endIndex - startIndex;
+    int localIndex = m_selectedIndex - startIndex;
+
+    --localIndex;
+    if (localIndex < 0)
+        localIndex = countOnPage - 1;
+
+    m_selectedIndex = startIndex + localIndex;
 }
 
 void Scene_LevelSelect::MoveRight()
 {
     if (m_buttons.empty()) return;
-    ++m_selectedIndex;
-    if (m_selectedIndex >= (int)m_buttons.size())
-        m_selectedIndex = 0;
+
+    int startIndex = GetCurrentPageStartIndex();
+    int endIndex = GetCurrentPageEndIndex();
+    int countOnPage = endIndex - startIndex;
+    int localIndex = m_selectedIndex - startIndex;
+
+    ++localIndex;
+    if (localIndex >= countOnPage)
+        localIndex = 0;
+
+    m_selectedIndex = startIndex + localIndex;
 }
 
 void Scene_LevelSelect::SelectLevel(size_t index)
@@ -284,7 +423,7 @@ void Scene_LevelSelect::ConfirmSelection()
 {
     if (m_pendingLevelIndex < 0 || m_pendingLevelIndex >= (int)m_buttons.size()) return;
     GameSettings::currentDifficulty = (m_selectedDifficulty == 0) ? GameSettings::Difficulty::Easy : GameSettings::Difficulty::Hard;
-    GameSettings::selectedLevelFile = "Assets/Levels/" + m_buttons[m_pendingLevelIndex].fileName;
+    GameSettings::selectedLevelFile = "Assets/Levels/" + m_buttons[(size_t)m_pendingLevelIndex].fileName;
     SceneManager::I().SwitchTo(SceneID::Prototype);
 }
 
@@ -318,27 +457,40 @@ void Scene_LevelSelect::DrawUI() const
     {
         const char* none = "NO LEVEL TXT FILES FOUND IN Assets/Levels";
         Print(none, GetCenteredX(none, 0.9f), screenH * 0.42f, info, 0.9f);
-        const char* back = "ESC - Back";
+        const char* back = "ESC - BACK    F5 - LEVEL EDITOR";
         Print(back, GetCenteredX(back, 0.8f), screenH * 0.52f, info, 0.8f);
         return;
     }
 
-    const char* controls = "WASD/ARROWS - MOVE    ENTER - SELECT    ESC - BACK";
-    Print(controls, GetCenteredX(controls, 0.75f), infoY, info, 0.75f);
+    const char* controls = "WASD/ARROWS - MOVE    ENTER - SELECT    F5 - LEVEL EDITOR    ESC - BACK";
+    Print(controls, GetCenteredX(controls, 0.60f), infoY, info, 0.60f);
+
+    if (GetPageCount() > 1)
+    {
+        const char* pageControls = "Q/E - CHANGE PAGE";
+        Print(pageControls, GetCenteredX(pageControls, 0.55f), screenH * 0.92f, info, 0.55f);
+
+        char pageText[32];
+        sprintf_s(pageText, "PAGE %d / %d", m_currentPage + 1, GetPageCount());
+        Print(pageText, GetCenteredX(pageText, 0.65f), screenH * 0.87f, bright, 0.65f);
+    }
+
+    int startIndex = GetCurrentPageStartIndex();
+    int endIndex = GetCurrentPageEndIndex();
 
     // Draw Grid
-    for (size_t i = 0; i < m_buttons.size(); ++i)
+    for (int i = startIndex; i < endIndex; ++i)
     {
-        const LevelButton& b = m_buttons[i];
+        const LevelButton& b = m_buttons[(size_t)i];
 
         float colorShade = dim;
         if (m_state == MenuState::SelectingLevel)
-            colorShade = ((int)i == m_selectedIndex) ? bright : dim;
+            colorShade = (i == m_selectedIndex) ? bright : dim;
         else
             colorShade = 0.2f;
 
         // Border / Selection Highlight
-        if ((int)i == m_selectedIndex && m_state == MenuState::SelectingLevel)
+        if (i == m_selectedIndex && m_state == MenuState::SelectingLevel)
         {
             AEGfxSetRenderMode(AE_GFX_RM_COLOR);
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -388,10 +540,9 @@ void Scene_LevelSelect::DrawUI() const
         }
 
         // Display Name text below image
-        float textScale = (screenW > 1500.0f) ? 1.2f : 1.0f; // Scale text up on larger monitors
+        float textScale = (screenW > 1500.0f) ? 1.2f : 1.0f;
         float textX = b.x + b.w * 0.5f - ((float)std::strlen(b.displayName.c_str()) * 22.0f * textScale * 0.5f);
 
-        // Pushed the text dynamically down based on the button height
         Print(b.displayName.c_str(), textX, b.y + b.h + 35.0f, colorShade, textScale);
     }
 

@@ -18,6 +18,10 @@ namespace GameSettings
 
     extern std::string selectedLevelFile;
 
+    // Level load error state
+    extern bool levelLoadFailed;
+    extern std::string levelLoadError;
+
     inline std::string GetSettingsPath()
     {
         return "../../Assets/settings.txt";

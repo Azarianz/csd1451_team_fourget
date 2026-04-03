@@ -850,6 +850,9 @@ void Scene_Prototype::DestroyGrid()
 // --------------------------------------------------------
 bool Scene_Prototype::InitLevelAndGrid()
 {
+    GameSettings::levelLoadFailed = false;
+    GameSettings::levelLoadError = "";
+
     //Load Level File
     levelFile = GameSettings::selectedLevelFile;
 
@@ -866,6 +869,8 @@ bool Scene_Prototype::InitLevelAndGrid()
     if (!level.Init(levelFile.c_str()))
     {
         PRINT("FAILED to load level: %s\n", levelFile.c_str());
+        GameSettings::levelLoadFailed = true;
+        GameSettings::levelLoadError = "Failed to load level file.";
         return false;
     }
 
@@ -878,6 +883,8 @@ bool Scene_Prototype::InitLevelAndGrid()
     if (!level.BuildPath(*grid, path))
     {
         PRINT("FAILED to build enemy path from region flags.\n");
+        GameSettings::levelLoadFailed = true;
+        GameSettings::levelLoadError = "Invalid enemy path, spawn, or goal.";
         return false;
     }
 
@@ -1251,13 +1258,20 @@ void Scene_Prototype::Init()
 {
     DestroyGrid();
 
+    ResetRuntimeState();
+
     if (!InitLevelAndGrid())
     {
         PRINT("Scene_Prototype Init failed to load level.\n");
+
+        if (gameOverFont < 0)
+            gameOverFont = AEGfxCreateFont("Assets/buggy-font.ttf", 64);
+
+        if (m_uiFont < 0)
+            m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
+
         return;
     }
-
-    ResetRuntimeState();
 
     TowerHandler::LoadTowerAssets();
 
@@ -1329,6 +1343,15 @@ void Scene_Prototype::Update(float dt)
     const float MAX_DT = 1.0f / 60.0f;
     if (dt > MAX_DT) dt = MAX_DT;
 
+    if (GameSettings::levelLoadFailed)
+    {
+        if (AEInputCheckTriggered(AEVK_ESCAPE))
+        {
+            SceneManager::I().SwitchTo(SceneID::LevelSelect);
+        }
+        return;
+    }
+
     if (!grid) return;
 
     bool tutorialWasActive = m_tutorialPopup.IsActive();
@@ -1392,6 +1415,32 @@ void Scene_Prototype::Update(float dt)
 
 void Scene_Prototype::Draw()
 {
+    if (GameSettings::levelLoadFailed)
+    {
+        AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
+
+        if (m_uiFont < 0)
+            return;
+
+        const float screenW = (float)AEGfxGetWindowWidth();
+        const float screenH = (float)AEGfxGetWindowHeight();
+
+        auto PrintCentered = [&](const char* text, float py, float scale,
+            float r = 1.0f, float g = 1.0f, float b = 1.0f)
+            {
+                float px = screenW * 0.5f - (float)std::strlen(text) * 22.0f * scale * 0.5f;
+                float nx = (px / screenW) * 2.0f - 1.0f;
+                float ny = 1.0f - (py / screenH) * 2.0f;
+
+                AEGfxPrint(m_uiFont, text, nx, ny, scale, r, g, b, 1.0f);
+            };
+
+        PrintCentered("FAILED TO LOAD LEVEL", screenH * 0.40f, 1.1f, 1.0f, 0.2f, 0.2f);
+        PrintCentered(GameSettings::levelLoadError.c_str(), screenH * 0.50f, 0.8f, 1.0f, 1.0f, 1.0f);
+        PrintCentered("Press ESC to go back", screenH * 0.60f, 0.8f, 1.0f, 1.0f, 0.6f);
+        return;
+    }
+
     if (!grid) return;
 
     AEGfxSetBackgroundColor(0.05f, 0.05f, 0.05f);

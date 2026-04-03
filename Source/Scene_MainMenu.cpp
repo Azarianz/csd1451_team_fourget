@@ -4,6 +4,7 @@
 #include "AEEngine.h"
 #include "AEInput.h"
 #include "GameSettings.h"
+#include "Scene_LevelSelect.h"
 
 #include <cstring>
 #include <cmath>
@@ -204,6 +205,7 @@ void Scene_MainMenu::ConfirmSelection()
 
 void Scene_MainMenu::HandlePlay()
 {
+    Scene_LevelSelect::SetReturnScene(SceneID::MainMenu);
     SceneManager::I().SwitchTo(SceneID::LevelSelect);
 }
 

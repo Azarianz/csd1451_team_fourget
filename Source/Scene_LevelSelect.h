@@ -1,6 +1,7 @@
 // Scene_LevelSelect.h
 #pragma once
 #include "Scene.h"
+#include "SceneID.h"
 #include "AEEngine.h"
 #include <vector>
 #include <string>
@@ -12,6 +13,8 @@ public:
     void Update(float dt) override;
     void Draw() override;
     void Exit() override;
+
+    static void SetReturnScene(SceneID id);
 
 private:
     struct LevelButton
@@ -45,6 +48,13 @@ private:
     void ConfirmSelection();
     void SelectLevel(size_t index);
 
+    void PrevPage();
+    void NextPage();
+    int GetLevelsPerPage() const;
+    int GetPageCount() const;
+    int GetCurrentPageStartIndex() const;
+    int GetCurrentPageEndIndex() const;
+
     bool IsPointInRect(float mx, float my, float x, float y, float w, float h) const;
     float ScreenToNormX(float px) const;
     float ScreenToNormY(float py) const;
@@ -53,8 +63,11 @@ private:
     void DrawUI() const;
 
 private:
+    static SceneID s_returnScene;
+
     std::vector<LevelButton> m_buttons;
     int m_selectedIndex = 0;
+    int m_currentPage = 0;
     s8 m_uiFont = -1;
     AEGfxVertexList* m_imageQuad = nullptr;
 };

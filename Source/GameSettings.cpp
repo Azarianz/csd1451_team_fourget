@@ -16,4 +16,8 @@ namespace GameSettings
     bool quitGame = false;
 
     std::string selectedLevelFile = "";
+
+    // Level load error state
+    bool levelLoadFailed = false;
+    std::string levelLoadError = "";
 }

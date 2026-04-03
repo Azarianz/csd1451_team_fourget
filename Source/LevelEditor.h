@@ -55,4 +55,9 @@ private:
     void DrawMapTiles(float alphaMul) const;
     void DrawRegionNumbers() const;
     void DrawBrushPreview(float px, float py, float sizePx) const;
+
+    bool ValidateLevelForExport(char* outReason, size_t outReasonSize) const;
+
+    bool CopyFileContents(const std::string& srcPath, const std::string& dstPath) const;
+    std::string BuildExportBaseName() const;
 };

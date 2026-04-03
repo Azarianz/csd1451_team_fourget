@@ -7,7 +7,7 @@ BASIC_TOWER   1   200   1.25   15   400   0     0
 BASIC_TOWER   2   250   1.0    25   450   0     0
 BASIC_TOWER   3   300   0.8    40   500   0     0
 
-SNIPER_TOWER  1   300   2.8    40   600   0     0
+SNIPER_TOWER  1   350   2.8    40   600   0     0
 SNIPER_TOWER  2   400   2.25   60   700   0     0
 SNIPER_TOWER  3   500   1.8    85   800   0     0
 
