@@ -73,9 +73,9 @@ namespace TowerHandler {
     private:
         int m_points = 100;
         s8  m_uiFont = -1;
-        const int TOWER_COST = 25;
+        const int TOWER_COST = 40;
         const int REFRESH_COST = 25;
-        const int LEVEL2_TOWER_COST = 175;
+        const int LEVEL2_TOWER_COST = 150;
         int m_purchaseCount = 0;
         int GetCurrentTowerCost() const;
 

@@ -13,6 +13,7 @@ void Scene_Controls::Init()
     m_tutorialPopup.Reset();
     m_tutorialPopup.SetEnabled(true);
     m_tutorialPopup.SetSlides({
+        "Assets/controls.png",
         "Assets/Tutorial/tutorial_01.png",
         "Assets/Tutorial/tutorial_02.png",
         "Assets/Tutorial/tutorial_03.png",

@@ -490,7 +490,7 @@ void Scene_MainMenu::DrawUI() const
     DrawPanelPx(quitRect.x, quitRect.y + quitOffsetY, quitRect.w, quitRect.h, qc.r, qc.g, qc.b, 1.0f);
 
     const char* playText = "PLAY";
-    const char* controlsText = "CONTROLS";
+    const char* controlsText = "GUIDE";
     const char* creditsText = "CREDITS";
     const char* settingsText = "SETTINGS";
     const char* quitText = "QUIT";
@@ -541,16 +541,16 @@ void Scene_MainMenu::DrawUI() const
     const float footerScreenH = (float)AEGfxGetWindowHeight();
     const float footerY = footerScreenH - kFooterMarginY;
 
-    Print("MERGE DEFENDERS v1.0", kFooterMarginX, footerY, kInfo, kFooterScale);
+    //Print("MERGE DEFENDERS", kFooterMarginX, footerY, kInfo, kFooterScale);
 
-    const char* copyright = "Copyright 2024 DigiPen Institute of Technology";
+    const char* copyright = "Copyright 2026 DigiPen Institute of Technology";
     const float copyrightW = (float)std::strlen(copyright) * kFooterCharWidth * kFooterScale;
     const float copyrightX = footerScreenW - copyrightW - kFooterMarginX;
     const float copyrightXClamped = (copyrightX < kFooterMarginX) ? kFooterMarginX : copyrightX;
     const float copyrightXFinal = (copyrightXClamped + copyrightW > footerScreenW - kFooterMarginX)
         ? footerScreenW - copyrightW - kFooterMarginX
         : copyrightXClamped;
-    Print(copyright, copyrightXFinal, footerY, kInfo, kFooterScale);
+    //Print(copyright, copyrightXFinal, footerY, kInfo, kFooterScale);
 }
 
 #pragma endregion

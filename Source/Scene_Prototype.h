@@ -61,6 +61,7 @@ private:
     void UpdatePausePopup(int mouseX, int mouseY);
     void DrawPausePopup() const;
     bool IsInResumeButton(int mouseX, int mouseY) const;
+    bool IsInGuideButton(int mouseX, int mouseY) const;
 
 private:
     //Debug Inputs

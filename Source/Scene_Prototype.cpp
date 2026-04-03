@@ -83,11 +83,12 @@ bool Scene_Prototype::IsInMainMenuButton(int mouseX, int mouseY) const
     const float buttonW = 180.0f;
     const float buttonH = 24.0f;
     const float buttonX = centerX - buttonW * 0.5f;
-    const float buttonY = top + 172.0f; // match draw row
+    const float buttonY = top + 172.0f;
 
     return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
         (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
 }
+
 void Scene_Prototype::UpdateWinPopup(int mouseX, int mouseY)
 {
     if (!m_stageWon)
@@ -465,6 +466,26 @@ bool Scene_Prototype::IsInResumeButton(int mouseX, int mouseY) const
         (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
 }
 
+bool Scene_Prototype::IsInGuideButton(int mouseX, int mouseY) const
+{
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    const float popupW = 520.0f;
+    const float popupH = 250.0f;
+    const float left = (screenW - popupW) * 0.5f;
+    const float top = (screenH - popupH) * 0.5f;
+    const float centerX = left + popupW * 0.5f;
+
+    const float buttonW = 190.0f;
+    const float buttonH = 24.0f;
+    const float buttonX = centerX - buttonW * 0.5f;
+    const float buttonY = top + 145.0f;
+
+    return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
+        (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
+}
+
 void Scene_Prototype::UpdatePausePopup(int mouseX, int mouseY)
 {
     if (!m_pauseMenuOpen)
@@ -478,6 +499,13 @@ void Scene_Prototype::UpdatePausePopup(int mouseX, int mouseY)
             return;
         }
 
+        if (IsInGuideButton(mouseX, mouseY))
+        {
+            ClosePausePopup();
+            m_tutorialPopup.ForceStart();
+            return;
+        }
+
         if (IsInMainMenuButton(mouseX, mouseY))
         {
             SceneManager::I().SwitchTo(SceneID::MainMenu);
@@ -485,7 +513,7 @@ void Scene_Prototype::UpdatePausePopup(int mouseX, int mouseY)
         }
     }
 
-    if (AEInputCheckTriggered(AEVK_RETURN) || AEInputCheckTriggered(AEVK_SPACE) || AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_P))
+    if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_P))
     {
         ClosePausePopup();
         return;
@@ -511,6 +539,7 @@ void Scene_Prototype::DrawPausePopup() const
     AEInputGetCursorPosition(&mouseX, &mouseY);
 
     const bool hoverResume = IsInResumeButton(mouseX, mouseY);
+    const bool hoverGuide = IsInGuideButton(mouseX, mouseY);
     const bool hoverMenu = IsInMainMenuButton(mouseX, mouseY);
 
     auto ToNdcX = [screenW](float px) { return (px / screenW) * 2.0f - 1.0f; };
@@ -524,6 +553,7 @@ void Scene_Prototype::DrawPausePopup() const
         };
 
     const float resumeY = top + 118.0f;
+    const float guideY = top + 145.0f;
     const float menuY = top + 172.0f;
 
     // dark fullscreen overlay
@@ -559,6 +589,7 @@ void Scene_Prototype::DrawPausePopup() const
     {
         const char* titleText = "PAUSED";
         const char* resumeText = "RESUME";
+        const char* guideText = "GUIDE";
         const char* menuText = "MAIN MENU";
 
         const float bright = 1.0f;
@@ -572,6 +603,9 @@ void Scene_Prototype::DrawPausePopup() const
 
         const float resumeTextX = GetCenteredX(resumeText, optionScale, centerX);
         const float resumeTextY = resumeY + 6.0f;
+
+        const float guideTextX = GetCenteredX(guideText, optionScale, centerX);
+        const float guideTextY = guideY + 6.0f;
 
         const float menuTextX = GetCenteredX(menuText, optionScale, centerX);
         const float menuTextY = menuY + 6.0f;
@@ -594,6 +628,18 @@ void Scene_Prototype::DrawPausePopup() const
             hoverResume ? bright : dim,
             hoverResume ? bright : dim,
             hoverResume ? bright : dim,
+            1.0f
+        );
+
+        AEGfxPrint(
+            m_uiFont,
+            guideText,
+            ToNdcX(guideTextX),
+            ToNdcY(guideTextY),
+            optionScale,
+            hoverGuide ? bright : dim,
+            hoverGuide ? bright : dim,
+            hoverGuide ? bright : dim,
             1.0f
         );
 
@@ -888,9 +934,9 @@ void Scene_Prototype::DrawUI()
     // --- 4. GAME SPEED INDICATOR (FLAG) ---
     sprintf_s(buf, "SPEED: ");
 
-    // Define dynamic normalized coordinates (NDC) for the text
-    float speedTextNdcX = 0.65f;
-    float speedTextNdcY = 0.75f;
+    // moved up to where PAUSE used to be
+    float speedTextNdcX = 0.67f;
+    float speedTextNdcY = 0.82f;
     AEGfxPrint(m_uiFont, buf, speedTextNdcX, speedTextNdcY, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 
     int flagIndex = 0; // White Flag (1.0x)
@@ -909,9 +955,8 @@ void Scene_Prototype::DrawUI()
         AEMtx33Scale(&scaleM, 40.0f, 40.0f);
         AEMtx33Rot(&rotM, 0.0f);
 
-        // Increased the X multiplier from 0.82f to 0.88f to add a larger gap
         float flagWorldX = (screenW * 0.5f) * 0.88f;
-        float flagWorldY = (screenH * 0.5f) * 0.78f;
+        float flagWorldY = (screenH * 0.5f) * 0.84f;
         AEMtx33Trans(&transM, flagWorldX, flagWorldY);
 
         AEMtx33Concat(&transform, &rotM, &scaleM);
@@ -920,16 +965,6 @@ void Scene_Prototype::DrawUI()
         AEGfxSetTransform(transform.m);
         AEGfxMeshDraw(m_flagMeshes[flagIndex], AE_GFX_MDM_TRIANGLES);
     }
-
-    // --- 5. PAUSE BUTTON ---
-    const char* pauseLabel = m_paused ? "RESUME" : "PAUSE";
-    float pauseScreenX = screenW * 0.88f;
-    float pauseScreenY = screenH * 0.08f;
-
-    AEGfxPrint(m_uiFont, pauseLabel,
-        (pauseScreenX / screenW) * 2.0f - 1.0f,
-        1.0f - (pauseScreenY / screenH) * 2.0f,
-        1.0f, 1.0f, 1.0f, 0.2f, 1.0f);
 }
 // --------------------------------------------------------
 //  IsPauseButtonClicked
@@ -991,7 +1026,7 @@ void Scene_Prototype::HandleUserInputs(float worldX, float worldY, int mouseX, i
     //Pause Toggle
     bool openPause = false;
 
-    if (AEInputCheckTriggered(AEVK_P))
+    if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_P))
         openPause = true;
 
     if (AEInputCheckTriggered(AEVK_LBUTTON) && IsPauseButtonClicked(mouseX, mouseY))
@@ -1262,12 +1297,14 @@ void Scene_Prototype::Init()
     m_tutorialPopup.SetEnabled(IsTutorialLevel());
     PRINT("IsTutorialLevel: %d\n", IsTutorialLevel());
     m_tutorialPopup.SetSlides({
+        "Assets/controls.png",
         "Assets/Tutorial/tutorial_01.png",
         "Assets/Tutorial/tutorial_02.png",
         "Assets/Tutorial/tutorial_03.png",
         "Assets/Tutorial/tutorial_04.png",
         "Assets/Tutorial/tutorial_05.png",
         "Assets/Tutorial/tutorial_06.png",
+        "Assets/codex.png"
         });
 }
 
@@ -1278,8 +1315,9 @@ void Scene_Prototype::Update(float dt)
 
     if (!grid) return;
 
+    bool tutorialWasActive = m_tutorialPopup.IsActive();
     UpdateTutorialPopup();
-    if (m_tutorialPopup.IsActive())
+    if (tutorialWasActive || m_tutorialPopup.IsActive())
         return;
 
     UpdateCodex();

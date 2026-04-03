@@ -139,13 +139,13 @@ namespace TowerHandler {
         slots[idx1].isLevelTwo = true;
         slots[idx2].isLevelTwo = true;
 
-        m_purchaseCount = 0; // reset escalating cost back to 25
+        m_purchaseCount = 0; // reset escalating cost back to 440
     }
 
-    //  GetCurrentTowerCost  (level1 slots only, goes to 25→50→75→100)
+    //  GetCurrentTowerCost  (level1 slots only, goes to 40-→80→100)
     int Shop::GetCurrentTowerCost() const
     {
-        int cost = (m_purchaseCount + 1) * 25;
+        int cost = (m_purchaseCount + 1) * 40;
         if (cost > 100) cost = 100;
         return cost;
     }
@@ -177,9 +177,9 @@ namespace TowerHandler {
             }
         }
 
-        // Debug: add points
-        if (AEInputCheckTriggered(AEVK_M))
-            m_points += 100;
+        //// Debug: add points
+        //if (AEInputCheckTriggered(AEVK_M))
+        //    m_points += 100;
 
         // Track which slot (if any) has a tower currently being dragged
         m_draggedSlot = -1;
