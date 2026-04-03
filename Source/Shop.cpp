@@ -10,6 +10,7 @@ namespace TowerHandler {
         { { 0.7f, 0.2f, 0.9f, 1.0f }, 2, 0, SNIPER_TOWER }, // Purple = SNIPER
         { { 0.1f, 0.8f, 0.9f, 1.0f }, 4, 0, SLOW_TOWER },   // Cyan   = SLOW
         { { 1.0f, 0.5f, 0.1f, 1.0f }, 6, 0, RAPID_TOWER },  // Orange = RAPID
+        { { 1.0f, 0.2f, 0.2f, 1.0f }, 8, 0, BOMB_TOWER },   // Red    = BOMB
     };
 
     static AEGfxVertexList* BuildCircleMesh(int segments)
@@ -132,10 +133,20 @@ namespace TowerHandler {
             slots[i].isLevelTwo = false;
         }
 
-        // Pick 2 distinct slot indices to be level2
-        int idx1 = rand() % TOWER_SLOTS;
-        int idx2;
-        do { idx2 = rand() % TOWER_SLOTS; } while (idx2 == idx1);
+        // Pick 2 distinct NON-BOMB slot indices to be level2
+        int idx1 = -1;
+        int idx2 = -1;
+
+        do
+        {
+            idx1 = rand() % TOWER_SLOTS;
+        } while (TOWER_DEFS[slots[idx1].defIndex].type == BOMB_TOWER);
+
+        do
+        {
+            idx2 = rand() % TOWER_SLOTS;
+        } while (idx2 == idx1 || TOWER_DEFS[slots[idx2].defIndex].type == BOMB_TOWER);
+
         slots[idx1].isLevelTwo = true;
         slots[idx2].isLevelTwo = true;
 
@@ -238,8 +249,23 @@ namespace TowerHandler {
 
                 if (slots[i].isEmpty) return;
 
-                // Determine cost based on tier
-                int cost = slots[i].isLevelTwo ? LEVEL2_TOWER_COST : GetCurrentTowerCost();
+                const TowerDef& def = TOWER_DEFS[slots[i].defIndex];
+
+                // Determine cost based on tower type + tier
+                int cost = 0;
+
+                if (def.type == BOMB_TOWER)
+                {
+                    cost = BOMB_TOWER_COST;
+                }
+                else if (slots[i].isLevelTwo)
+                {
+                    cost = LEVEL2_TOWER_COST;
+                }
+                else
+                {
+                    cost = GetCurrentTowerCost();
+                }
 
                 if (m_points < cost)
                 {
@@ -249,8 +275,6 @@ namespace TowerHandler {
                 }
 
                 m_points -= cost;
-
-                const TowerDef& def = TOWER_DEFS[slots[i].defIndex];
 
                 ShopTower tempShop;
                 tempShop.ShopTowerInit(mouseX, mouseY, 55.0f, 55.0f, def.type);
@@ -269,7 +293,7 @@ namespace TowerHandler {
                 }
 
                 // Level2 slots produce a tower that is already levelled up
-                if (slots[i].isLevelTwo)
+                if (slots[i].isLevelTwo && def.type != BOMB_TOWER)
                     newTower.LevelUp();
 
                 m_towerDefIndex[newTower.details.ID] = slots[i].defIndex;
@@ -278,7 +302,7 @@ namespace TowerHandler {
                 slots[i].isEmpty = true;
 
                 // Only advance the increasing cost counter for level1 purchases
-                if (!slots[i].isLevelTwo)
+                if (!slots[i].isLevelTwo && def.type != BOMB_TOWER)
                     m_purchaseCount++;
 
                 break;
@@ -321,6 +345,8 @@ namespace TowerHandler {
             const TowerDef& def = TOWER_DEFS[slots[i].defIndex];
             int col = TowerHandler::TOWER_SPRITE_COLS[(int)def.type];
             int row = slots[i].isLevelTwo ? 1 : 0;
+            if (def.type == BOMB_TOWER)
+                row = 0;
 
             DrawSpriteAtTex(slots[i].x + m_shakeOffsetX, slots[i].y + m_shakeOffsetY, slots[i].size * 0.55f,
                 col, row, pSpritesheet, SHEET_COLS, SHEET_ROWS);
@@ -363,15 +389,25 @@ namespace TowerHandler {
                 cost = REFRESH_COST;
                 cr = 1.0f; cg = 1.0f; cb = 0.0f; // yellow
             }
-            else if (slots[i].isLevelTwo)
-            {
-                cost = LEVEL2_TOWER_COST;
-                cr = 1.0f; cg = 0.6f; cb = 0.1f; // orange-gold
-            }
             else
             {
-                cost = GetCurrentTowerCost();
-                cr = 1.0f; cg = 1.0f; cb = 0.0f; // yellow
+                const TowerDef& def = TOWER_DEFS[slots[i].defIndex];
+
+                if (def.type == BOMB_TOWER)
+                {
+                    cost = BOMB_TOWER_COST;
+                    cr = 1.0f; cg = 1.0f; cb = 0.0f; // yellow
+                }
+                else if (slots[i].isLevelTwo)
+                {
+                    cost = LEVEL2_TOWER_COST;
+                    cr = 1.0f; cg = 0.6f; cb = 0.1f; // orange-gold
+                }
+                else
+                {
+                    cost = GetCurrentTowerCost();
+                    cr = 1.0f; cg = 1.0f; cb = 0.0f; // yellow
+                }
             }
 
             float worldX = slots[i].x + offsetX + m_shakeOffsetX;

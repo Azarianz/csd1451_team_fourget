@@ -14,7 +14,7 @@ extern int nextTowerID;
 //  shop tower used to spawn new towers.
 // ============================================================
 namespace TowerHandler {
-    extern const int TOWER_SPRITE_COLS[5];  //AZA NEW ADDITION****
+    extern const int TOWER_SPRITE_COLS[6];  //AZA NEW ADDITION****
 
     // --------------------------------------------------------
     //  Enums
@@ -25,7 +25,8 @@ namespace TowerHandler {
         SNIPER_TOWER = 1,
         SLOW_TOWER = 2,
         RAPID_TOWER = 3,
-        BASE_TOWER = 4,
+        BOMB_TOWER = 4,
+        BASE_TOWER = 5,
     };
 
     // --------------------------------------------------------
@@ -49,7 +50,7 @@ namespace TowerHandler {
         float slowPercent = 0.0f;
         float slowDuration = 0.0f;
     };
-    extern LevelStats g_TowerLevelStats[5][3];
+    extern LevelStats g_TowerLevelStats[6][3];
     // Reads tower stats for all types and levels from Assets/tower_stats.txt
     bool LoadTowerStatsFromFile(const std::string& filePath);
 

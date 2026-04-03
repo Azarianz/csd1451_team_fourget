@@ -61,8 +61,11 @@ namespace TowerHandler {
             m_points += paidCost;
             if (slotIdx >= 0 && slotIdx < TOWER_SLOTS && !slots[slotIdx].isLevelTwo)
             {
-                if (m_purchaseCount > 0)
-                    m_purchaseCount--;
+                if (TOWER_DEFS[slots[slotIdx].defIndex].type != BOMB_TOWER)
+                {
+                    if (m_purchaseCount > 0)
+                        m_purchaseCount--;
+                }
             }
             RestoreSlot(slotIdx);
         }
@@ -76,6 +79,7 @@ namespace TowerHandler {
         const int TOWER_COST = 25;  //goes to 25→50→75→100
         const int REFRESH_COST = 40;
         const int LEVEL2_TOWER_COST = 125;
+        const int BOMB_TOWER_COST = 5;   
         int m_purchaseCount = 0;
         int GetCurrentTowerCost() const;
 
@@ -112,7 +116,7 @@ namespace TowerHandler {
         static const int SHEET_COLS = 13;
         static const int SHEET_ROWS = 10;
 
-        static const int TOWER_DEF_COUNT = 4;
+        static const int TOWER_DEF_COUNT = 5;
         static const TowerDef TOWER_DEFS[TOWER_DEF_COUNT];
 
         std::unordered_map<int, int> m_towerDefIndex;

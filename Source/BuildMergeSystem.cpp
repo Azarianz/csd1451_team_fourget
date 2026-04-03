@@ -368,7 +368,7 @@ bool BuildMergeSystem::TryMergeAtCell(int placedX, int placedY)
     TowerHandler::TowerType type = placedTower.details.towerType;
     int towerLevel = placedTower.details.level;
 
-    if (type == TowerHandler::BASE_TOWER)
+    if (type == TowerHandler::BASE_TOWER || type == TowerHandler::BOMB_TOWER)
         return false;
 
     // Find full connected cluster of same type + same level
@@ -490,6 +490,39 @@ void BuildMergeSystem::RemoveTowerAtIndex(int idx)
 
 /*
 ===============================================================================
+Returns a dragged tower back to its original shop slot.
+If the slot can no longer be found, destroys the tower instead.
+===============================================================================
+*/
+void BuildMergeSystem::ReturnDraggedTowerToShopOrDestroy(int draggedIndex)
+{
+    if (!activeTowers || !shop)
+        return;
+
+    if (draggedIndex < 0 || draggedIndex >= (int)activeTowers->size())
+        return;
+
+    float slotX = 0.f, slotY = 0.f;
+    int slotIdx = (*activeTowers)[(size_t)draggedIndex].sourceSlotIndex;
+
+    // Return dragged tower back to its shop slot if possible
+    if (shop->GetSlotCenter(slotIdx, slotX, slotY))
+    {
+        (*activeTowers)[(size_t)draggedIndex].isDragging = false;
+        (*activeTowers)[(size_t)draggedIndex].isReturning = true;
+        (*activeTowers)[(size_t)draggedIndex].returnTargetX = slotX;
+        (*activeTowers)[(size_t)draggedIndex].returnTargetY = slotY;
+    }
+    else
+    {
+        // If slot can't be found, remove tower completely
+        RemoveTowerAtIndex(draggedIndex);
+        RebuildOccupiedFromTowers();
+    }
+}
+
+/*
+===============================================================================
 Snaps the dragged tower onto the grid when the player releases the mouse.
 
 Cases:
@@ -512,53 +545,58 @@ bool BuildMergeSystem::SnapDraggedTowerToGrid(int mouseX, int mouseY)
     if (draggedIndex < 0)
         return false;
 
+    bool isBombTower = ((*activeTowers)[(size_t)draggedIndex].details.towerType == TowerHandler::BOMB_TOWER);
+
     GridSystem::GridCoord c;
 
     // Invalid drop location: outside grid or outside level bounds
     if (!grid->ScreenToGrid(mouseX, mouseY, c) || !InBounds(c.x, c.y))
     {
-        float slotX = 0.f, slotY = 0.f;
-        int slotIdx = (*activeTowers)[(size_t)draggedIndex].sourceSlotIndex;
-
-        // Return dragged tower back to its shop slot if possible
-        if (shop->GetSlotCenter(slotIdx, slotX, slotY))
-        {
-            (*activeTowers)[(size_t)draggedIndex].isDragging = false;
-            (*activeTowers)[(size_t)draggedIndex].isReturning = true;
-            (*activeTowers)[(size_t)draggedIndex].returnTargetX = slotX;
-            (*activeTowers)[(size_t)draggedIndex].returnTargetY = slotY;
-        }
-        else
-        {
-            // If slot can't be found, remove tower completely
-            RemoveTowerAtIndex(draggedIndex);
-            RebuildOccupiedFromTowers();
-        }
-
+        ReturnDraggedTowerToShopOrDestroy(draggedIndex);
         return false;
+    }
+
+    // Special bomb tower behaviour:
+    // - can only be used on an occupied buildable tile
+    // - destroys the tower already there
+    // - bomb tower is consumed too
+    if (isBombTower)
+    {
+        if (!IsBuildable(c.x, c.y))
+        {
+            ReturnDraggedTowerToShopOrDestroy(draggedIndex);
+            return false;
+        }
+
+        int targetIdx = FindTowerIndexAtCell(c.x, c.y);
+        if (targetIdx < 0)
+        {
+            ReturnDraggedTowerToShopOrDestroy(draggedIndex);
+            return false;
+        }
+
+        // Do not allow destroying the base tower
+        if ((*activeTowers)[(size_t)targetIdx].details.towerType == TowerHandler::BASE_TOWER)
+        {
+            ReturnDraggedTowerToShopOrDestroy(draggedIndex);
+            return false;
+        }
+
+        RemoveTowerAtIndex(targetIdx);
+
+        // If removed tower was before dragged tower, index shifts left by 1
+        if (targetIdx < draggedIndex)
+            --draggedIndex;
+
+        RemoveTowerAtIndex(draggedIndex);
+        RebuildOccupiedFromTowers();
+        return true;
     }
 
     // Invalid drop location: tile is blocked or occupied
     if (!IsPlaceable(c.x, c.y))
     {
-        float slotX = 0.f, slotY = 0.f;
-        int slotIdx = (*activeTowers)[(size_t)draggedIndex].sourceSlotIndex;
-
-        // Return to shop slot if available
-        if (shop->GetSlotCenter(slotIdx, slotX, slotY))
-        {
-            (*activeTowers)[(size_t)draggedIndex].isDragging = false;
-            (*activeTowers)[(size_t)draggedIndex].isReturning = true;
-            (*activeTowers)[(size_t)draggedIndex].returnTargetX = slotX;
-            (*activeTowers)[(size_t)draggedIndex].returnTargetY = slotY;
-        }
-        else
-        {
-            // Otherwise destroy tower
-            RemoveTowerAtIndex(draggedIndex);
-            RebuildOccupiedFromTowers();
-        }
-
+        ReturnDraggedTowerToShopOrDestroy(draggedIndex);
         return false;
     }
 

@@ -41,6 +41,7 @@ public:
     bool TowerMatchesAtCell(int x, int y, TowerHandler::TowerType type, int towerLevel) const;
     bool TryMergeAtCell(int placedX, int placedY);
     void RemoveTowerAtIndex(int idx);
+    void ReturnDraggedTowerToShopOrDestroy(int draggedIndex);
 
     bool FindConnectedCluster(int startX, int startY,
         TowerHandler::TowerType type, int towerLevel,

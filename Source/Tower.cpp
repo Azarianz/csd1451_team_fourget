@@ -15,12 +15,12 @@ namespace TowerHandler {
     // --------------------------------------------------------
     static AEGfxTexture* g_TowerSheet = nullptr;
     int nextTowerID = 0;
-    LevelStats g_TowerLevelStats[5][3] = {};
+    LevelStats g_TowerLevelStats[6][3] = {};
     BaseTowerStats g_BaseTowerStats{};
 
     // Maps TowerType enum value -> spritesheet column
-    // Order must match the TowerType enum: BASIC, SNIPER, SLOW, RAPID, BASE
-    const int TowerHandler::TOWER_SPRITE_COLS[5] = { 4, 6, 3, 5, 7 };
+    // Order must match the TowerType enum: BASIC, SNIPER, SLOW, RAPID, BOMB, BASE
+    const int TowerHandler::TOWER_SPRITE_COLS[6] = { 4, 6, 3, 5, 10, 7 };
 
     s8 Tower::g_StatsFont = -1;
 
@@ -44,7 +44,8 @@ namespace TowerHandler {
         else if (name == "SNIPER_TOWER") return 1;
         else if (name == "SLOW_TOWER")   return 2;
         else if (name == "RAPID_TOWER")  return 3;
-        else if (name == "BASE_TOWER")   return 4;
+        else if (name == "BOMB_TOWER")   return 4;
+        else if (name == "BASE_TOWER")   return 5;
         else return -1; // unknown type
     }
     // ============================================================
@@ -147,6 +148,10 @@ namespace TowerHandler {
         g_TowerLevelStats[RAPID_TOWER][1] = { 350.f, 0.7f, 16.f, 450.f, 0.f, 0.f };
         g_TowerLevelStats[RAPID_TOWER][2] = { 400.f, 0.5f, 24.f, 500.f, 0.f, 0.f };
 
+        g_TowerLevelStats[BOMB_TOWER][0] = { 0.f, 999999.f, 0.f, 0.f, 0.f, 0.f };
+        g_TowerLevelStats[BOMB_TOWER][1] = { 0.f, 999999.f, 0.f, 0.f, 0.f, 0.f };
+        g_TowerLevelStats[BOMB_TOWER][2] = { 0.f, 999999.f, 0.f, 0.f, 0.f, 0.f };
+
         g_TowerLevelStats[BASE_TOWER][0] = { 0.f, 999999.f, 0.f, 0.f, 0.f, 0.f };
         g_TowerLevelStats[BASE_TOWER][1] = { 0.f, 999999.f, 0.f, 0.f, 0.f, 0.f };
         g_TowerLevelStats[BASE_TOWER][2] = { 0.f, 999999.f, 0.f, 0.f, 0.f, 0.f };
@@ -208,6 +213,10 @@ namespace TowerHandler {
             color = { 1.0f, 1.0f, 1.0f, 1.0f };
             break;
  
+        case BOMB_TOWER:
+            color = { 1.0f, 0.25f, 0.25f, 1.0f };
+            break;
+ 
         case BASE_TOWER:
             color = { 0.2f, 0.9f, 0.9f, 1.0f };
             details.maxHealth = g_BaseTowerStats.health;
@@ -249,7 +258,7 @@ namespace TowerHandler {
         int typeIndex = (int)details.towerType;
         int levelIndex = details.level - 1;
 
-        if (typeIndex < 0 || typeIndex >= 5) return;
+        if (typeIndex < 0 || typeIndex >= 6) return;
         if (levelIndex < 0) levelIndex = 0;
         if (levelIndex > 2) levelIndex = 2;
 
@@ -445,6 +454,7 @@ namespace TowerHandler {
         case SNIPER_TOWER: typeName = "Sniper Tower"; break;
         case SLOW_TOWER:   typeName = "Slow Tower";   break;
         case RAPID_TOWER:  typeName = "Rapid Tower";  break;
+        case BOMB_TOWER:   typeName = "Bomb Tower";   break;
         case BASE_TOWER:   typeName = "Base Tower";   break;
         }
 
@@ -941,7 +951,7 @@ namespace TowerHandler {
 
         for (auto& t : towers)
         {
-            if (t.isDragging || t.IsBaseTower())
+            if (t.isDragging || t.IsBaseTower() || t.details.towerType == TowerHandler::BOMB_TOWER)
                 continue;
 
             if (t.details.towerType == TowerHandler::SLOW_TOWER)
