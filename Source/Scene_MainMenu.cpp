@@ -15,7 +15,7 @@ namespace
     constexpr float kBgB = 0.12f;
 
     constexpr float kBaseTextScale = 1.0f;
-    constexpr float kTitleScale = 1.4f;
+    constexpr float kTitleScale = 1.85f;
     constexpr float kControlsScale = 0.9f;
     constexpr float kControlsLineScale = 0.8f;
 
@@ -58,6 +58,11 @@ void Scene_MainMenu::Init()
         m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
     }
 
+    if (!m_bgTex)
+    {
+        m_bgTex = AEGfxTextureLoad("Assets/mainmenu_bg.png");
+    }
+
     m_bgm = AEAudioLoadMusic("Assets/bouken.mp3");
     m_bgmGroup = AEAudioCreateGroup();
     m_bgmLoaded = true;
@@ -92,6 +97,7 @@ void Scene_MainMenu::Update(float dt)
 void Scene_MainMenu::Draw()
 {
     AEGfxSetBackgroundColor(kBgR, kBgG, kBgB);
+    DrawBackground();
     DrawUI();
 }
 
@@ -101,6 +107,12 @@ void Scene_MainMenu::Exit()
     {
         AEGfxDestroyFont(m_uiFont);
         m_uiFont = -1;
+    }
+
+    if (m_bgTex)
+    {
+        AEGfxTextureUnload(m_bgTex);
+        m_bgTex = nullptr;
     }
 
     if (m_bgmLoaded)
@@ -410,6 +422,48 @@ void Scene_MainMenu::DrawPanelPx(float x, float y, float w, float h,
     DrawBorderPiece(x + w - kPanelBorderThickness, y, kPanelBorderThickness, h);
 
     AEGfxSetTransparency(1.0f);
+}
+
+void Scene_MainMenu::DrawBackground() const
+{
+    if (!m_bgTex)
+        return;
+
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxTextureSet(m_bgTex, 0, 0);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+
+    AEGfxMeshStart();
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+        0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f,
+        0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
+
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+        0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+
+    AEGfxVertexList* mesh = AEGfxMeshEnd();
+
+    if (mesh)
+    {
+        AEMtx33 scaleM, rotM, transM, finalMtx;
+        AEMtx33Scale(&scaleM, screenW, screenH);
+        AEMtx33Rot(&rotM, 0.0f);
+        AEMtx33Trans(&transM, 0.0f, 0.0f);
+
+        AEMtx33Concat(&finalMtx, &rotM, &scaleM);
+        AEMtx33Concat(&finalMtx, &transM, &finalMtx);
+
+        AEGfxSetTransform(finalMtx.m);
+        AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
+        AEGfxMeshFree(mesh);
+    }
 }
 
 #pragma endregion

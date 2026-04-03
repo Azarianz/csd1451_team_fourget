@@ -784,13 +784,23 @@ bool Scene_Prototype::LoadNextLevel()
     std::string nextLevel = levelFile;
 
     if (nextLevel.find("level_01.txt") != std::string::npos)
+    {
         nextLevel.replace(nextLevel.find("level_01.txt"), std::string("level_01.txt").length(), "level_02.txt");
+    }
     else if (nextLevel.find("level_02.txt") != std::string::npos)
+    {
         nextLevel.replace(nextLevel.find("level_02.txt"), std::string("level_02.txt").length(), "level_03.txt");
+    }
     else if (nextLevel.find("level_03.txt") != std::string::npos)
-        nextLevel.replace(nextLevel.find("level_03.txt"), std::string("level_03.txt").length(), "level_04.txt");
+    {
+        PRINT("Final stage cleared. Going to credits.\n");
+        SceneManager::I().SwitchTo(SceneID::Credits);
+        return true;
+    }
     else
+    {
         return false; // no next level configured
+    }
 
     GameSettings::selectedLevelFile = nextLevel;
     PRINT("Loading next level file: %s\n", GameSettings::selectedLevelFile.c_str());

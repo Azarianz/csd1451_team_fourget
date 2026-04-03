@@ -29,7 +29,14 @@ void Scene_Credits::Init()
 
     m_pages = {
         {
-            "---- Faculties & Advisors ----",
+            "THANKS FOR PLAYING!",
+            "",
+            "We appreciate you playing Merge Defenders",
+            "",
+            "Press A/D to view credits ->"
+        },
+        {
+            "FACULTIES & ADVISORS",
             "PRESIDENT",
             "Claude Comair",
             "",
@@ -59,6 +66,7 @@ void Scene_Credits::Init()
             "buggy-font.ttf - CodeMan38",
             "bouken.mp3 - MAKOOTO",
             "Tiny Battle 2D - Kenney Assets",
+            "Tiny Tower (Bomb Sprite) - Kenney Assets",
             "item_window.png - Asesprite",
             "refresh_icon.png - Asesprite",
             "tutorial_01 to tutorial_06 - Asesprite",
@@ -173,7 +181,7 @@ void Scene_Credits::Draw()
 {
     AEGfxSetBackgroundColor(0.08f, 0.08f, 0.12f);
 
-    if (m_page == 0)
+    if (m_page == 1)
         DrawImagePage();
     else
         DrawTextPage();
@@ -238,11 +246,19 @@ void Scene_Credits::DrawTextPage()
     if (m_uiFont < 0)
         return;
 
-    int textIndex = m_page - 1;
+    int textIndex = 0;
+
+    if (m_page == 0)
+        textIndex = 0;          // THANKS FOR PLAYING page
+    else if (m_page >= 2)
+        textIndex = m_page - 1; // skip over copyright image page at m_page == 1
+    else
+        return;
+
     if (textIndex < 0 || textIndex >= (int)m_pages.size())
         return;
 
-    float y = 300.0f;
+    float y = 220.0f;
     float screenH = (float)AEGfxGetWindowHeight();
 
     for (size_t i = 0; i < m_pages[textIndex].size(); ++i)

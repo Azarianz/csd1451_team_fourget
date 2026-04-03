@@ -38,6 +38,9 @@ private:
     AEAudioGroup m_bgmGroup;
     bool         m_bgmLoaded = false;
 
+    // Main menu background
+    AEGfxTexture* m_bgTex = nullptr;
+
     void UpdateMouseInput();
     void MoveUp();
     void MoveDown();
@@ -63,4 +66,5 @@ private:
     void DrawUI() const;
     void DrawPanelPx(float x, float y, float w, float h,
         float r, float g, float b, float a) const;
+    void DrawBackground() const;
 };
