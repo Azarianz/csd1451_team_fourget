@@ -159,7 +159,9 @@ namespace TowerHandler {
         g_BaseTowerStats = { 100.f, 10.f, 80.f, 80.f };
 
         // Override defaults with file values if the files exist.
-        if (LoadTowerStatsFromFile("Assets/tower_stats.txt"))
+        LoadTowerStatsFromFile("Assets/tower_stats.txt");
+        LoadBaseTowerStatsFromFile("Assets/base_tower_stats.txt");
+        /*if (LoadTowerStatsFromFile("Assets/tower_stats.txt"))
             PRINT("tower_stats.txt loaded successfully.\n");
         else
             PRINT("tower_stats.txt not found, using default stats.\n");
@@ -167,7 +169,7 @@ namespace TowerHandler {
         if (LoadBaseTowerStatsFromFile("Assets/base_tower_stats.txt"))
             PRINT("base_tower_stats.txt loaded successfully.\n");
         else
-            PRINT("base_tower_stats.txt not found, using default stats.\n");
+            PRINT("base_tower_stats.txt not found, using default stats.\n");*/
     }
 
     // ============================================================
