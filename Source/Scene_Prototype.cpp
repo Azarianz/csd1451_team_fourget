@@ -1,6 +1,7 @@
 // Scene_Prototype.cpp
 #include "Scene_Prototype.h"
 #include "SceneManager.h"
+#include "GameSettings.h"
 
 #include "AEEngine.h"
 #include "AEInput.h"
@@ -896,6 +897,9 @@ void Scene_Prototype::InitAudio()
 
     float vol = GameSettings::masterVolume / 100.0f;
     AEAudioSetGroupVolume(m_bgmGroup, vol);
+
+    m_sfxBoom = AEAudioLoadMusic("Assets/Boom.wav");
+    m_sfxGroup = AEAudioCreateGroup();
 }
 
 // --------------------------------------------------------
@@ -1144,6 +1148,8 @@ void Scene_Prototype::UpdateBaseCollision()
         {
             e->health = 0.0f;
             e->escapedBase = true;
+            float sfxVol = GameSettings::masterVolume / 100.0f;
+            AEAudioPlay(m_sfxBoom, m_sfxGroup, sfxVol, 1.0f, 0);
 
 			// Null any bullet targets pointing to this enemy to prevent dangling pointers
             for (auto& b : activeBullets)

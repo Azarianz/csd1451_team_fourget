@@ -2,6 +2,7 @@
 #include "Utility.h"
 #include <cstdlib>
 #include <cstdio>
+#include "GameSettings.h"
 
 namespace TowerHandler {
 
@@ -117,6 +118,8 @@ namespace TowerHandler {
         m_points = 300;
 
         RefreshSlots();
+        m_sfxRefresh = AEAudioLoadMusic("Assets/PowerUp.wav");
+        m_sfxGroup = AEAudioCreateGroup();
     }
 
     // ----------------------------------------------------------------
@@ -244,6 +247,8 @@ namespace TowerHandler {
                     }
                     m_points -= REFRESH_COST;
                     RefreshSlots();
+                    float sfxVol = GameSettings::masterVolume / 100.0f;
+                    AEAudioPlay(m_sfxRefresh, m_sfxGroup, sfxVol, 1.0f, 0);
                     return;
                 }
 

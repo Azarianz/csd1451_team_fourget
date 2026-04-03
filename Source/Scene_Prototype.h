@@ -88,6 +88,10 @@ private:
     bool m_pauseMenuOpen = false;
     s8 gameOverFont = -1;
 
+    //SFX
+    AEAudio m_sfxBoom = {};
+    AEAudioGroup m_sfxGroup = {};
+
     WaveManager waveManager;
     s8 m_uiFont = -1;
     void DrawUI();
