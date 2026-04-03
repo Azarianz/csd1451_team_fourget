@@ -219,19 +219,19 @@ void Enemy::Draw()
 
 void ZombieV1::Init()
 {
-    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 50.0f, 10.0f, 150.0f);
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 50.0f, 10.0f, 125.0f);
     SetSprite(0, 11);
 }
 
 void SkeletonV1::Init()
 {
-    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 30.0f, 5.0f, 250.0f);
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 30.0f, 5.0f, 200.0f);
     SetSprite(0, 5);
 }
 
 void TrollV1::Init()
 {
-    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 150.0f, 15.0f, 100.0f);
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 150.0f, 15.0f, 80.0f);
     SetSprite(0, 3);
 }
 
@@ -243,43 +243,43 @@ void GolemV1::Init()
 
 void TitanV1::Init()
 {
-    Enemy::Init(50.0f, 50.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 250.0f, 30.0f, 75.0f);
+    Enemy::Init(50.0f, 50.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 400.0f, 30.0f, 75.0f);
     SetSprite(0, 7);
 }
 
 void Zombie::Init()
 {
-    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 75.0f, 15.0f, 180.0f);
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 75.0f, 15.0f, 125.0f);
     SetSprite(1, 11);
 }
 
 void Skeleton::Init()
 {
-    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 50.0f, 10.0f, 300.0f);
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 50.0f, 10.0f, 200.0f);
     SetSprite(1, 5);
 }
 
 void Troll::Init()
 {
-    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 200.0f, 30.0f, 125.0f);
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 200.0f, 30.0f, 80.0f);
     SetSprite(1, 3);
 }
 
 void Golem::Init()
 {
-    Enemy::Init(60.0f, 60.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 500.0f, 60.0f, 65.0f);
+    Enemy::Init(60.0f, 60.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 500.0f, 60.0f, 50.0f);
     SetSprite(1, 4);
 }
 
 void Titan::Init()
 {
-    Enemy::Init(50.0f, 50.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 450.0f, 40.0f, 85.0f);
+    Enemy::Init(50.0f, 50.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 650.0f, 40.0f, 75.0f);
     SetSprite(1, 7);
 }
 
 void wavestarter::Init()
 {
-    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 50.0f, 10.0f, 150.0f);
+    Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 50.0f, 10.0f, 125.0f);
     SetSprite(3, 11);
 }
 

@@ -139,13 +139,13 @@ namespace TowerHandler {
         slots[idx1].isLevelTwo = true;
         slots[idx2].isLevelTwo = true;
 
-        m_purchaseCount = 0; // reset escalating cost back to 440
+        m_purchaseCount = 0; // reset escalating cost back to original TOWER_COST
     }
 
-    //  GetCurrentTowerCost  (level1 slots only, goes to 40-→80→100)
+    //  GetCurrentTowerCost  (level1 slots only)
     int Shop::GetCurrentTowerCost() const
     {
-        int cost = (m_purchaseCount + 1) * 40;
+        int cost = (m_purchaseCount + 1) * TOWER_COST;
         if (cost > 100) cost = 100;
         return cost;
     }

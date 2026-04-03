@@ -3,22 +3,22 @@
 # SLOW_PERCENT and SLOW_DURATION are only used by SLOW_TOWER
 # Other tower types should use 0 for both
 
-BASIC_TOWER   1   400   1.4   25   400   0     0
-BASIC_TOWER   2   500   1.1   45   450   0     0
-BASIC_TOWER   3   600   0.7   70   500   0     0
+BASIC_TOWER   1   200   1.25   15   400   0     0
+BASIC_TOWER   2   250   1.0    25   450   0     0
+BASIC_TOWER   3   300   0.8    40   500   0     0
 
-SNIPER_TOWER  1   600   2.8   70   600   0     0
-SNIPER_TOWER  2   750   2.3   100  700   0     0
-SNIPER_TOWER  3   900   1.8   150  800   0     0
+SNIPER_TOWER  1   300   2.8    40   600   0     0
+SNIPER_TOWER  2   400   2.25   60   700   0     0
+SNIPER_TOWER  3   500   1.8    85   800   0     0
 
-SLOW_TOWER    1   200   2.0   6    350   0.5   1.0
-SLOW_TOWER    2   250   1.6   10   380   0.5   1.5
-SLOW_TOWER    3   300   1.2   16   420   0.5   2.0
+SLOW_TOWER    1   150   2.0    2    300   0.5   1.0
+SLOW_TOWER    2   200   1.6    4    360   0.5   1.5
+SLOW_TOWER    3   250   1.2    6    420   0.5   2.0
 
-RAPID_TOWER   1   300   0.6   15   400   0     0
-RAPID_TOWER   2   350   0.4   19   450   0     0
-RAPID_TOWER   3   400   0.2   35   500   0     0
+RAPID_TOWER   1   180   0.4    5    450   0     0
+RAPID_TOWER   2   240   0.25   6    500   0     0
+RAPID_TOWER   3   300   0.15   8    600   0     0
 
-BASE_TOWER    1   0     999999   0   0   0     0
-BASE_TOWER    2   0     999999   0   0   0     0
-BASE_TOWER    3   0     999999   0   0   0     0
+BASE_TOWER    1   0     999999   0   0    0     0
+BASE_TOWER    2   0     999999   0   0    0     0
+BASE_TOWER    3   0     999999   0   0    0     0
