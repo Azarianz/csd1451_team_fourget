@@ -107,10 +107,12 @@ namespace TowerHandler {
         pRefreshSheet = AEGfxTextureLoad("Assets/refresh_icon.png");
         pSlotTex = AEGfxTextureLoad("Assets/item_window.png");
 
+        /*
         if (!pSlotTex) PRINT("Shop Init: Failed to load Assets/item_window.png!\n");
         if (!pCircleMesh)  PRINT("Shop Init: Failed to create circle mesh!\n");
         if (!pSpritesheet) PRINT("Shop Init: Failed to load Assets/spritesheet.png!\n");
         if (!pRefreshSheet) PRINT("Refresh Init: Failed to load Assets/refresh_icon.png!\n");
+        */
 
         int fontSize = (int)(24.0f * m_uiScale);
         if (fontSize < 10) fontSize = 10;
@@ -241,7 +243,7 @@ namespace TowerHandler {
                 {
                     if (m_points < REFRESH_COST)
                     {
-                        PRINT("Not enough points to refresh! Need %d\n", REFRESH_COST);
+                        // PRINT("Not enough points to refresh! Need %d\n", REFRESH_COST);
                         TriggerShake();
                         return;
                     }
@@ -274,7 +276,7 @@ namespace TowerHandler {
 
                 if (m_points < cost)
                 {
-                    PRINT("Not enough points! Need %d\n", cost);
+                    // PRINT("Not enough points! Need %d\n", cost);
                     TriggerShake();
                     return;
                 }
