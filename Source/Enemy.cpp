@@ -268,14 +268,14 @@ void TrollV1::Init()
 
 void GolemV1::Init()
 {
-    Enemy::Init(60.0f, 60.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 300.0f, 40.0f, 50.0f);
+    Enemy::Init(60.0f, 60.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 300.0f, 40.0f, 60.0f);
     SetSprite(0, 4);
     healthRegenRate = 7.5f;
 }
 
 void TitanV1::Init()
 {
-    Enemy::Init(50.0f, 50.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 400.0f, 30.0f, 75.0f);
+    Enemy::Init(50.0f, 50.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 400.0f, 30.0f, 80.0f);
     SetSprite(0, 7);
     healthRegenRate = 2.5f;
 }
@@ -300,14 +300,14 @@ void Troll::Init()
 
 void Golem::Init()
 {
-    Enemy::Init(60.0f, 60.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 500.0f, 60.0f, 50.0f);
+    Enemy::Init(60.0f, 60.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 500.0f, 60.0f, 60.0f);
     SetSprite(1, 4);
     healthRegenRate = 15.0f;
 }
 
 void Titan::Init()
 {
-    Enemy::Init(50.0f, 50.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 650.0f, 40.0f, 75.0f);
+    Enemy::Init(50.0f, 50.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 650.0f, 40.0f, 80.0f);
     SetSprite(1, 7);
     healthRegenRate = 5.0f;
 }

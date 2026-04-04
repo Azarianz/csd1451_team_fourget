@@ -11,9 +11,9 @@ SNIPER_TOWER  1   350   2.8    40   600   0     0
 SNIPER_TOWER  2   400   2.25   60   700   0     0
 SNIPER_TOWER  3   500   1.8    85   800   0     0
 
-SLOW_TOWER    1   150   2.0    2    300   0.5   1.0
-SLOW_TOWER    2   200   1.6    4    360   0.5   1.5
-SLOW_TOWER    3   250   1.2    6    420   0.5   2.0
+SLOW_TOWER    1   150   2.0    2    300   0.35   1.0
+SLOW_TOWER    2   200   1.6    4    360   0.35   1.5
+SLOW_TOWER    3   250   1.2    6    420   0.35   2.0
 
 RAPID_TOWER   1   180   0.4    5    450   0     0
 RAPID_TOWER   2   240   0.25   6    500   0     0
