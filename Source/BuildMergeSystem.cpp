@@ -569,7 +569,10 @@ bool BuildMergeSystem::SnapDraggedTowerToGrid(int mouseX, int mouseY)
         }
 
         int targetIdx = FindTowerIndexAtCell(c.x, c.y);
-        if (targetIdx < 0)
+
+        // If there is no tower there, or the only "tower there" is the dragged bomb itself,
+        // this is an invalid bomb drop and should return to shop.
+        if (targetIdx < 0 || targetIdx == draggedIndex)
         {
             ReturnDraggedTowerToShopOrDestroy(draggedIndex);
             return false;
@@ -721,34 +724,68 @@ Draws the build overlay.
 */
 void BuildMergeSystem::DrawOverlay()
 {
-    if (!grid || !level || !occupied)
+    if (!grid || !level || !occupied || !activeTowers)
         return;
 
     const size_t expected = (size_t)level->width * (size_t)level->height;
     if (expected == 0 || occupied->size() != expected)
         return;
 
+    int draggedIndex = FindDraggedTowerIndex();
+    const bool isBombTower =
+        (draggedIndex >= 0 &&
+            (*activeTowers)[(size_t)draggedIndex].details.towerType == TowerHandler::BOMB_TOWER);
+
     // Draw base grid first
     grid->Draw();
 
-    // Draw X markers on every non-placeable tile
+    auto IsBombValidCell = [&](int x, int y) -> bool
+        {
+            if (!IsBuildable(x, y))
+                return false;
+
+            int targetIdx = FindTowerIndexAtCell(x, y);
+            if (targetIdx < 0)
+                return false;
+
+            if ((*activeTowers)[(size_t)targetIdx].details.towerType == TowerHandler::BASE_TOWER)
+                return false;
+
+            return true;
+        };
+
+    // Draw X markers on invalid tiles
     for (int y = 0; y < level->height; ++y)
     {
         for (int x = 0; x < level->width; ++x)
         {
-            if (!IsPlaceable(x, y))
+            bool valid = false;
+
+            if (isBombTower)
+                valid = IsBombValidCell(x, y);
+            else
+                valid = IsPlaceable(x, y);
+
+            if (!valid)
                 DrawXAtCell(x, y, 0.75f);
         }
     }
 
-    // Highlight tile currently under the mouse cursor
+    // Highlight tile currently under mouse cursor
     int mx = 0, my = 0;
     AEInputGetCursorPosition(&mx, &my);
 
     GridSystem::GridCoord c;
     if (grid->ScreenToGrid(mx, my, c))
     {
-        if (IsPlaceable(c.x, c.y))
+        bool valid = false;
+
+        if (isBombTower)
+            valid = IsBombValidCell(c.x, c.y);
+        else
+            valid = IsPlaceable(c.x, c.y);
+
+        if (valid)
             grid->DrawTileTinted(c, 0.2f, 1.0f, 0.2f, 0.55f); // green
         else
             grid->DrawTileTinted(c, 1.0f, 0.2f, 0.2f, 0.55f); // red
