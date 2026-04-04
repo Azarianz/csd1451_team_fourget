@@ -40,6 +40,219 @@ void Scene_Prototype::HandleDebugInput()
 #pragma endregion
 
 #pragma region Helper Funcs
+#pragma region Quit Confirm Popup
+void Scene_Prototype::OpenQuitConfirmPopup()
+{
+    m_quitConfirmOpen = true;
+    m_paused = true;
+}
+
+void Scene_Prototype::CloseQuitConfirmPopup()
+{
+    m_quitConfirmOpen = false;
+}
+
+bool Scene_Prototype::IsInQuitYesButton(int mouseX, int mouseY) const
+{
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    const float popupW = 520.0f;
+    const float popupH = 250.0f;
+    const float left = (screenW - popupW) * 0.5f;
+    const float top = (screenH - popupH) * 0.5f;
+    const float centerX = left + popupW * 0.5f;
+
+    const float buttonW = 160.0f;
+    const float buttonH = 24.0f;
+    const float buttonX = centerX - buttonW * 0.5f;
+    const float buttonY = top + 145.0f;
+
+    return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
+        (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
+}
+
+bool Scene_Prototype::IsInQuitNoButton(int mouseX, int mouseY) const
+{
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    const float popupW = 520.0f;
+    const float popupH = 250.0f;
+    const float left = (screenW - popupW) * 0.5f;
+    const float top = (screenH - popupH) * 0.5f;
+    const float centerX = left + popupW * 0.5f;
+
+    const float buttonW = 120.0f;
+    const float buttonH = 24.0f;
+    const float buttonX = centerX - buttonW * 0.5f;
+    const float buttonY = top + 172.0f;
+
+    return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
+        (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
+}
+
+void Scene_Prototype::UpdateQuitConfirmPopup(int mouseX, int mouseY)
+{
+    if (!m_quitConfirmOpen)
+        return;
+
+    if (AEInputCheckTriggered(AEVK_LBUTTON))
+    {
+        if (IsInQuitYesButton(mouseX, mouseY))
+        {
+            SceneManager::I().SwitchTo(SceneID::MainMenu);
+            return;
+        }
+
+        if (IsInQuitNoButton(mouseX, mouseY))
+        {
+            CloseQuitConfirmPopup();
+            return;
+        }
+    }
+
+    if (AEInputCheckTriggered(AEVK_RETURN) || AEInputCheckTriggered(AEVK_SPACE))
+    {
+        SceneManager::I().SwitchTo(SceneID::MainMenu);
+        return;
+    }
+
+    if (AEInputCheckTriggered(AEVK_ESCAPE))
+    {
+        CloseQuitConfirmPopup();
+        return;
+    }
+}
+
+void Scene_Prototype::DrawQuitConfirmPopup() const
+{
+    if (!m_quitConfirmOpen)
+        return;
+
+    const float screenW = (float)AEGfxGetWindowWidth();
+    const float screenH = (float)AEGfxGetWindowHeight();
+
+    const float popupW = 520.0f;
+    const float popupH = 250.0f;
+    const float left = (screenW - popupW) * 0.5f;
+    const float top = (screenH - popupH) * 0.5f;
+    const float centerX = left + popupW * 0.5f;
+
+    int mouseX = 0;
+    int mouseY = 0;
+    AEInputGetCursorPosition(&mouseX, &mouseY);
+
+    const bool hoverYes = IsInQuitYesButton(mouseX, mouseY);
+    const bool hoverNo = IsInQuitNoButton(mouseX, mouseY);
+
+    auto ToNdcX = [screenW](float px) { return (px / screenW) * 2.0f - 1.0f; };
+    auto ToNdcY = [screenH](float py) { return 1.0f - (py / screenH) * 2.0f; };
+
+    auto GetCenteredX = [](const char* text, float scale, float areaCenterX)
+        {
+            const float charWidthPx = 22.0f * scale;
+            const float textWidth = (float)std::strlen(text) * charWidthPx;
+            return areaCenterX - textWidth * 0.5f;
+        };
+
+    const float msgY = top + 100.0f;
+    const float yesY = top + 155.0f;
+    const float noY = top + 195.0f;
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(0.95f);
+    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+
+    AEGfxMeshStart();
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFF000000, 0.0f, 0.0f,
+        0.5f, -0.5f, 0xFF000000, 0.0f, 0.0f,
+        0.5f, 0.5f, 0xFF000000, 0.0f, 0.0f);
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFF000000, 0.0f, 0.0f,
+        0.5f, 0.5f, 0xFF000000, 0.0f, 0.0f,
+        -0.5f, 0.5f, 0xFF000000, 0.0f, 0.0f);
+    AEGfxVertexList* overlayMesh = AEGfxMeshEnd();
+
+    if (overlayMesh)
+    {
+        AEMtx33 scaleM, rotM, transM, finalMtx;
+        AEMtx33Scale(&scaleM, screenW, screenH);
+        AEMtx33Rot(&rotM, 0.0f);
+        AEMtx33Trans(&transM, 0.0f, 0.0f);
+        AEMtx33Concat(&finalMtx, &rotM, &scaleM);
+        AEMtx33Concat(&finalMtx, &transM, &finalMtx);
+        AEGfxSetTransform(finalMtx.m);
+        AEGfxMeshDraw(overlayMesh, AE_GFX_MDM_TRIANGLES);
+        AEGfxMeshFree(overlayMesh);
+    }
+
+    if (m_uiFont >= 0)
+    {
+        const char* titleText = "CONFIRM";
+        const char* msgText = "ARE YOU SURE YOU WANT TO LEAVE THE GAME?";
+        const char* yesText = "YES";
+        const char* noText = "NO";
+
+        const float bright = 1.0f;
+        const float dim = 0.35f;
+
+        const float titleScale = 0.75f;
+        const float optionScale = 1.0f;
+
+        const float titleX = GetCenteredX(titleText, titleScale, centerX - 100.0f);
+        const float titleY = top + 64.0f;
+
+        const float msgTextX = GetCenteredX(msgText, optionScale, centerX);
+        const float yesTextX = GetCenteredX(yesText, optionScale, centerX);
+        const float noTextX = GetCenteredX(noText, optionScale, centerX);
+
+        AEGfxPrint(
+            gameOverFont >= 0 ? gameOverFont : m_uiFont,
+            titleText,
+            ToNdcX(titleX),
+            ToNdcY(titleY),
+            titleScale,
+            1.0f, 1.0f, 0.2f, 1.0f
+        );
+
+        AEGfxPrint(
+            m_uiFont,
+            msgText,
+            ToNdcX(msgTextX),
+            ToNdcY(msgY),
+            optionScale,
+            1.0f, 1.0f, 1.0f, 1.0f
+        );
+
+        AEGfxPrint(
+            m_uiFont,
+            yesText,
+            ToNdcX(yesTextX),
+            ToNdcY(yesY),
+            optionScale,
+            hoverYes ? bright : dim,
+            hoverYes ? bright : dim,
+            hoverYes ? bright : dim,
+            1.0f
+        );
+
+        AEGfxPrint(
+            m_uiFont,
+            noText,
+            ToNdcX(noTextX),
+            ToNdcY(noY),
+            optionScale,
+            hoverNo ? bright : dim,
+            hoverNo ? bright : dim,
+            hoverNo ? bright : dim,
+            1.0f
+        );
+    }
+}
+#pragma endregion
+
 #pragma region Win Popup
 void Scene_Prototype::OpenWinPopup()
 {
@@ -505,7 +718,7 @@ void Scene_Prototype::UpdatePausePopup(int mouseX, int mouseY)
 
         if (IsInMainMenuButton(mouseX, mouseY))
         {
-            SceneManager::I().SwitchTo(SceneID::MainMenu);
+            OpenQuitConfirmPopup();
             return;
         }
     }
@@ -1031,6 +1244,8 @@ void Scene_Prototype::ResetRuntimeState()
     m_pauseMenuOpen = false;
     m_paused = false;
     gameSpeedMultiplier = 1.0f;
+
+    m_quitConfirmOpen = false;
 }
 
 // --------------------------------------------------------
@@ -1368,13 +1583,19 @@ void Scene_Prototype::Update(float dt)
         return;
     }
 
-    if (gameOver)
+    else if (gameOver)
     {
         UpdateLosePopup(mouseX, mouseY);
         return;
     }
 
-    if (m_pauseMenuOpen)
+    else if (m_quitConfirmOpen)
+    {
+        UpdateQuitConfirmPopup(mouseX, mouseY);
+        return;
+    }
+
+    else if (m_pauseMenuOpen)
     {
         UpdatePausePopup(mouseX, mouseY);
         return;
@@ -1477,6 +1698,9 @@ void Scene_Prototype::Draw()
 
     if (m_pauseMenuOpen)
         DrawPausePopup();
+
+    if (m_quitConfirmOpen)
+        DrawQuitConfirmPopup();
 }
 
 void Scene_Prototype::Exit()

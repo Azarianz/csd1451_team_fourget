@@ -18,4 +18,10 @@ private:
 
     LevelEditor editor;
     bool initialized = false;
+    bool m_leaveConfirmOpen = false;
+
+    void UpdateLeaveConfirm();
+    void DrawLeaveConfirm() const;
+    bool IsInLeaveYesButton(int mouseX, int mouseY) const;
+    bool IsInLeaveNoButton(int mouseX, int mouseY) const;
 };

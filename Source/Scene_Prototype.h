@@ -63,6 +63,14 @@ private:
     bool IsInResumeButton(int mouseX, int mouseY) const;
     bool IsInGuideButton(int mouseX, int mouseY) const;
 
+    // Quit Confirm Popup
+    void OpenQuitConfirmPopup();
+    void CloseQuitConfirmPopup();
+    void UpdateQuitConfirmPopup(int mouseX, int mouseY);
+    void DrawQuitConfirmPopup() const;
+    bool IsInQuitYesButton(int mouseX, int mouseY) const;
+    bool IsInQuitNoButton(int mouseX, int mouseY) const;
+
 private:
     //Debug Inputs
     void HandleDebugInput();
@@ -86,6 +94,7 @@ private:
     bool gameOver = false;
     bool m_stageWon = false;
     bool m_pauseMenuOpen = false;
+    bool m_quitConfirmOpen = false;
     s8 gameOverFont = -1;
 
     //SFX
