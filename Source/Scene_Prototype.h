@@ -71,6 +71,8 @@ private:
     bool IsInQuitYesButton(int mouseX, int mouseY) const;
     bool IsInQuitNoButton(int mouseX, int mouseY) const;
 
+    bool IsBlockingPopupOpen() const;
+
 private:
     //Debug Inputs
     void HandleDebugInput();

@@ -40,6 +40,14 @@ void Scene_Prototype::HandleDebugInput()
 #pragma endregion
 
 #pragma region Helper Funcs
+bool Scene_Prototype::IsBlockingPopupOpen() const
+{
+    return m_stageWon
+        || gameOver
+        || m_quitConfirmOpen
+        || m_pauseMenuOpen;
+}
+
 #pragma region Quit Confirm Popup
 void Scene_Prototype::OpenQuitConfirmPopup()
 {
@@ -643,6 +651,11 @@ void Scene_Prototype::OpenPausePopup()
     m_pauseMenuOpen = true;
     m_paused = true;
 
+    if (m_tutorialPopup.IsActive())
+        m_tutorialPopup.Close();
+
+    m_showCodex = false;
+
     if (m_bgmLoaded)
         AEAudioPauseGroup(m_bgmGroup);
 }
@@ -879,16 +892,18 @@ void Scene_Prototype::UpdateTutorialPopup()
 {
     bool wasActive = m_tutorialPopup.IsActive();
 
-    // Manual reopen from any scene
-    if (AEInputCheckTriggered(AEVK_T) && !m_tutorialPopup.IsActive())
+    // Do not allow tutorial to open while any hard popup or codex is open
+    if (!IsBlockingPopupOpen() && !m_showCodex)
     {
-        m_tutorialPopup.ForceStart();
-    }
+        if (AEInputCheckTriggered(AEVK_T) && !m_tutorialPopup.IsActive())
+        {
+            m_tutorialPopup.ForceStart();
+        }
 
-    // Auto-open once at start for tutorial level
-    if (IsTutorialLevel() && !m_tutorialPopup.HasStarted())
-    {
-        m_tutorialPopup.Start();
+        if (IsTutorialLevel() && !m_tutorialPopup.HasStarted())
+        {
+            m_tutorialPopup.Start();
+        }
     }
 
     m_tutorialPopup.Update();
@@ -913,23 +928,25 @@ void Scene_Prototype::UpdateTutorialPopup()
 #pragma region Codex
 void Scene_Prototype::UpdateCodex()
 {
-    // Toggle open
-    if (AEInputCheckTriggered(AEVK_TAB))
+    // Do not allow codex to open while any hard popup or tutorial is open
+    if (!IsBlockingPopupOpen() && !m_tutorialPopup.IsActive())
     {
-        m_showCodex = !m_showCodex;
-
-        m_paused = m_showCodex;
-
-        if (m_bgmLoaded)
+        if (AEInputCheckTriggered(AEVK_TAB))
         {
-            if (m_showCodex)
-                AEAudioPauseGroup(m_bgmGroup);
-            else
-                AEAudioResumeGroup(m_bgmGroup);
+            m_showCodex = !m_showCodex;
+
+            m_paused = m_showCodex;
+
+            if (m_bgmLoaded)
+            {
+                if (m_showCodex)
+                    AEAudioPauseGroup(m_bgmGroup);
+                else
+                    AEAudioResumeGroup(m_bgmGroup);
+            }
         }
     }
 
-    // Close with ESC
     if (m_showCodex && AEInputCheckTriggered(AEVK_ESCAPE))
     {
         m_showCodex = false;
@@ -1565,15 +1582,6 @@ void Scene_Prototype::Update(float dt)
 
     if (!grid) return;
 
-    bool tutorialWasActive = m_tutorialPopup.IsActive();
-    UpdateTutorialPopup();
-    if (tutorialWasActive || m_tutorialPopup.IsActive())
-        return;
-
-    UpdateCodex();
-    if (m_showCodex)
-        return;
-
     int mouseX = 0, mouseY = 0;
     AEInputGetCursorPosition(&mouseX, &mouseY);
 
@@ -1582,24 +1590,31 @@ void Scene_Prototype::Update(float dt)
         UpdateWinPopup(mouseX, mouseY);
         return;
     }
-
     else if (gameOver)
     {
         UpdateLosePopup(mouseX, mouseY);
         return;
     }
-
     else if (m_quitConfirmOpen)
     {
         UpdateQuitConfirmPopup(mouseX, mouseY);
         return;
     }
-
     else if (m_pauseMenuOpen)
     {
         UpdatePausePopup(mouseX, mouseY);
         return;
     }
+
+    // tutorial / codex only when no higher-priority popup is open
+    bool tutorialWasActive = m_tutorialPopup.IsActive();
+    UpdateTutorialPopup();
+    if (tutorialWasActive || m_tutorialPopup.IsActive())
+        return;
+
+    UpdateCodex();
+    if (m_showCodex)
+        return;
 
     // DEBUG INPUTS
     HandleDebugInput();
@@ -1686,21 +1701,21 @@ void Scene_Prototype::Draw()
 
     Graphics::RenderAll();
 
-    m_tutorialPopup.Draw(m_uiFont);
-
-    DrawCodex();
+    // Only draw tutorial/codex when no blocking popup is covering them
+    if (!IsBlockingPopupOpen())
+    {
+        m_tutorialPopup.Draw(m_uiFont);
+        DrawCodex();
+    }
 
     if (m_stageWon)
         DrawWinPopup();
-
-    if (gameOver)
+    else if (gameOver)
         DrawLosePopup();
-
-    if (m_pauseMenuOpen)
-        DrawPausePopup();
-
-    if (m_quitConfirmOpen)
+    else if (m_quitConfirmOpen)
         DrawQuitConfirmPopup();
+    else if (m_pauseMenuOpen)
+        DrawPausePopup();
 }
 
 void Scene_Prototype::Exit()
