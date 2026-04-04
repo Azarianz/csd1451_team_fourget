@@ -49,7 +49,7 @@ void GameObject::Init(float startX, float startY, float sX, float sY, Color c)
     mesh = nullptr; // don't build here
 }
 
-void GameObject::Update(float dt)
+void GameObject::Update(float /*dt*/)
 {
 }
 

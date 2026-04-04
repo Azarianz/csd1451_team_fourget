@@ -102,7 +102,7 @@ void Scene_MainMenu::Exit()
 {
     if (m_uiFont >= 0)
     {
-        AEGfxDestroyFont(m_uiFont);
+        AEGfxDestroyFont((s8)m_uiFont);
         m_uiFont = -1;
     }
 
@@ -478,7 +478,7 @@ void Scene_MainMenu::DrawUI() const
     auto Print = [&](const char* text, float px, float py, float shade, float scale = 1.0f)
         {
             AEGfxPrint(
-                m_uiFont,
+                (s8)m_uiFont,
                 text,
                 ScreenToNormX(px),
                 ScreenToNormY(py),
@@ -583,25 +583,6 @@ void Scene_MainMenu::DrawUI() const
         Print(">", settingsRect.x - kArrowOffsetX, settingsTextY, kBright, kBaseTextScale);
     else
         Print(">", quitRect.x - kArrowOffsetX, quitTextY, kBright, kBaseTextScale);
-
-    constexpr float kFooterScale = 0.7f;
-    constexpr float kFooterMarginX = 12.0f;
-    constexpr float kFooterMarginY = 22.0f;
-
-    const float footerScreenW = (float)AEGfxGetWindowWidth();
-    const float footerScreenH = (float)AEGfxGetWindowHeight();
-    const float footerY = footerScreenH - kFooterMarginY;
-
-    //Print("MERGE DEFENDERS", kFooterMarginX, footerY, kInfo, kFooterScale);
-
-    const char* copyright = "Copyright 2026 DigiPen Institute of Technology";
-    const float copyrightW = (float)std::strlen(copyright) * kFooterCharWidth * kFooterScale;
-    const float copyrightX = footerScreenW - copyrightW - kFooterMarginX;
-    const float copyrightXClamped = (copyrightX < kFooterMarginX) ? kFooterMarginX : copyrightX;
-    const float copyrightXFinal = (copyrightXClamped + copyrightW > footerScreenW - kFooterMarginX)
-        ? footerScreenW - copyrightW - kFooterMarginX
-        : copyrightXClamped;
-    //Print(copyright, copyrightXFinal, footerY, kInfo, kFooterScale);
 }
 
 #pragma endregion

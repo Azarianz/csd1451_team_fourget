@@ -15,13 +15,6 @@ static float ScreenToNormY(float py)
     return 1.0f - (py / AEGfxGetWindowHeight()) * 2.0f;
 }
 
-static int ClampI(int v, int lo, int hi)
-{
-    if (v < lo) return lo;
-    if (v > hi) return hi;
-    return v;
-}
-
 void LevelEditor::Init(int w, int h)
 {
     m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 16);
@@ -31,12 +24,11 @@ void LevelEditor::Init(int w, int h)
     m_grid->Init();
 
     m_tilesetTex = AEGfxTextureLoad("Assets/tilesheet.png");
-    if (!m_tilesetTex)
-        PRINT("FAILED to load tileset: Assets/tilesheet.png\n");
+    //if (!m_tilesetTex)
+    //    PRINT("FAILED to load tileset: Assets/tilesheet.png\n");
 
     const int tilePx = 16;
 
-    // NOTE: Hardcoded for now
     const int texW = 80;
     const int texH = 160;
 
@@ -173,46 +165,39 @@ void LevelEditor::HandleFileNameTyping()
     // A-Z -> a-z
     for (int key = AEVK_A; key <= AEVK_Z; ++key)
     {
-        if (AEInputCheckTriggered(key))
+        if (AEInputCheckTriggered(static_cast<u8>(key)))
         {
-            char ch = (char)('a' + (key - AEVK_A));
-            saveFileName.push_back(ch);
+            saveFileName.push_back(static_cast<char>('a' + (key - AEVK_A)));
         }
     }
 
     // 0-9
     for (int key = AEVK_0; key <= AEVK_9; ++key)
     {
-        if (AEInputCheckTriggered(key))
+        if (AEInputCheckTriggered(static_cast<u8>(key)))
         {
-            char ch = (char)('0' + (key - AEVK_0));
-            saveFileName.push_back(ch);
+            saveFileName.push_back(static_cast<char>('0' + (key - AEVK_0)));
         }
     }
 
     // Numpad 0-9
     for (int key = AEVK_NUMPAD0; key <= AEVK_NUMPAD9; ++key)
     {
-        if (AEInputCheckTriggered(key))
+        if (AEInputCheckTriggered(static_cast<u8>(key)))
         {
-            char ch = (char)('0' + (key - AEVK_NUMPAD0));
-            saveFileName.push_back(ch);
+            saveFileName.push_back(static_cast<char>('0' + (key - AEVK_NUMPAD0)));
         }
     }
 
-    // underscore
     if (AEInputCheckTriggered(AEVK_MINUS))
         saveFileName.push_back('_');
 
-    // optional dot
     if (AEInputCheckTriggered(AEVK_PERIOD))
         saveFileName.push_back('.');
 
-    // Backspace
     if (AEInputCheckTriggered(AEVK_BACK) && !saveFileName.empty())
         saveFileName.pop_back();
 
-    // Enter = confirm
     if (AEInputCheckTriggered(AEVK_RETURN))
     {
         if (saveFileName.empty())
@@ -221,7 +206,6 @@ void LevelEditor::HandleFileNameTyping()
         m_isTypingFileName = false;
     }
 
-    // Escape = cancel and restore old name
     if (AEInputCheckTriggered(AEVK_ESCAPE))
     {
         saveFileName = m_fileNameBeforeTyping;

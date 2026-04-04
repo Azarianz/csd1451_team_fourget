@@ -2,8 +2,6 @@
 
 namespace GridSystem {
 
-    static float MinF(float a, float b) { return (a < b) ? a : b; }
-
     float RoundToPixel(float v) { return floorf(v + 0.5f); }
 
     Grid::Grid(int width, int height, float cellSize, Vec2 originWorld)
@@ -34,10 +32,10 @@ namespace GridSystem {
         pTileTex = nullptr;
 
         pTileTex = AEGfxTextureLoad("Assets/grid_highlighted.png");
-        if (!pTileTex) PRINT("FAILED to load Assets/grid_highlighted.png\n");
-        else {
-            PRINT("SUCCESSFULLY loaded Assets/grid_highlighted.png\n");
-        }
+        //if (!pTileTex) PRINT("FAILED to load Assets/grid_highlighted.png\n");
+        //else {
+        //    PRINT("SUCCESSFULLY loaded Assets/grid_highlighted.png\n");
+        //}
 
         AEGfxMeshStart();
 
@@ -50,10 +48,10 @@ namespace GridSystem {
             -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
 
         pTileMesh = AEGfxMeshEnd();
-        if (!pTileMesh) PRINT("Grid Init: pTileMesh is NULL\n");
-        else {
-            PRINT("SUCCESSFULLY init pTileMesh\n");
-        }
+        //if (!pTileMesh) PRINT("Grid Init: pTileMesh is NULL\n");
+        //else {
+        //    PRINT("SUCCESSFULLY init pTileMesh\n");
+        //}
     } 
 
     void Grid::ComputeLayout(float& tileW, float& tileH, float& startX, float& startY) const

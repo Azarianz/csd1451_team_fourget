@@ -167,7 +167,7 @@ void Scene_Credits::DrawNavButtons() const
             const float nx = (px / (float)AEGfxGetWindowWidth()) * 2.0f - 1.0f;
             const float ny = 1.0f - (py / (float)AEGfxGetWindowHeight()) * 2.0f;
 
-            AEGfxPrint(m_uiFont, text, nx, ny, scale, shade, shade, shade, 1.0f);
+            AEGfxPrint((s8)m_uiFont, text, nx, ny, scale, shade, shade, shade, 1.0f);
         };
 
     if (m_page > 0)
@@ -194,16 +194,16 @@ void Scene_Credits::Draw()
     const char* controls = "LEFT/RIGHT or A/D to navigate   ESC to return";
 
     float pageWidth = 0.0f, pageHeight = 0.0f;
-    AEGfxGetPrintSize(m_uiFont, buf, 0.8f, &pageWidth, &pageHeight);
+    AEGfxGetPrintSize((s8)m_uiFont, buf, 0.8f, &pageWidth, &pageHeight);
 
     float ctrlWidth = 0.0f, ctrlHeight = 0.0f;
-    AEGfxGetPrintSize(m_uiFont, controls, 0.8f, &ctrlWidth, &ctrlHeight);
+    AEGfxGetPrintSize((s8)m_uiFont, controls, 0.8f, &ctrlWidth, &ctrlHeight);
 
     float pageX = -(pageWidth / 2.0f);
     float ctrlX = -(ctrlWidth / 2.0f);
 
-    AEGfxPrint(m_uiFont, buf, pageX, 0.92f, 0.8f, 1, 1, 1, 1);
-    AEGfxPrint(m_uiFont, controls, ctrlX, 0.84f, 0.8f, 0.8f, 0.8f, 1, 1);
+    AEGfxPrint((s8)m_uiFont, buf, pageX, 0.92f, 0.8f, 1, 1, 1, 1);
+    AEGfxPrint((s8)m_uiFont, controls, ctrlX, 0.84f, 0.8f, 0.8f, 0.8f, 1, 1);
 }
 
 void Scene_Credits::DrawImagePage()
@@ -269,13 +269,13 @@ void Scene_Credits::DrawTextPage()
         float shade = (i == 0) ? 1.0f : 0.8f;
 
         float width = 0.0f, height = 0.0f;
-        AEGfxGetPrintSize(m_uiFont, text.c_str(), scale, &width, &height);
+        AEGfxGetPrintSize((s8)m_uiFont, text.c_str(), scale, &width, &height);
 
         float x = -(width / 2.0f);
         float yNorm = 1.0f - (y / screenH) * 2.0f;
 
         AEGfxPrint(
-            m_uiFont,
+            (s8)m_uiFont,
             text.c_str(),
             x,
             yNorm,
@@ -303,7 +303,7 @@ void Scene_Credits::Exit()
 
     if (m_uiFont >= 0)
     {
-        AEGfxDestroyFont(m_uiFont);
+        AEGfxDestroyFont((s8)m_uiFont);
         m_uiFont = -1;
     }
 }

@@ -67,25 +67,25 @@ namespace Graphics
         return g_RectMesh;
     }
 
-    static AEGfxVertexList* GetSpriteMesh()
-    {
-        if (g_SpriteMesh) return g_SpriteMesh;
+    //static AEGfxVertexList* GetSpriteMesh()
+    //{
+    //    if (g_SpriteMesh) return g_SpriteMesh;
 
-        AEGfxMeshStart();
+    //    AEGfxMeshStart();
 
-        // Unit quad with full UVs (we will offset/scale UV using AEGfxTextureSet's uvOffset)
-        // Easiest: bake UVs as 0..1 and use AEGfxTextureSet with offsets 0,0.
-        AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
-            0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f,
-            0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
+    //    // Unit quad with full UVs (we will offset/scale UV using AEGfxTextureSet's uvOffset)
+    //    // Easiest: bake UVs as 0..1 and use AEGfxTextureSet with offsets 0,0.
+    //    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+    //        0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f,
+    //        0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
 
-        AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
-            0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f,
-            -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+    //    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+    //        0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f,
+    //        -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
 
-        g_SpriteMesh = AEGfxMeshEnd();
-        return g_SpriteMesh;
-    }
+    //    g_SpriteMesh = AEGfxMeshEnd();
+    //    return g_SpriteMesh;
+    //}
 
     static AEGfxVertexList* GetCircleMesh(int segments)
     {

@@ -142,7 +142,6 @@ void Scene_Prototype::DrawWinPopup() const
     const float left = (screenW - popupW) * 0.5f;
     const float top = (screenH - popupH) * 0.5f;
     const float centerX = left + popupW * 0.5f;
-    const float centerY = top + popupH * 0.5f;
 
     int mouseX = 0;
     int mouseY = 0;
@@ -162,9 +161,6 @@ void Scene_Prototype::DrawWinPopup() const
         };
 
     // same-sized hit/button areas used by hover + click
-    const float buttonW = 280.0f;
-    const float buttonH = 42.0f;
-    const float buttonX = centerX - buttonW * 0.5f;
     const float nextY = top + 118.0f;
     const float menuY = top + 172.0f;
 

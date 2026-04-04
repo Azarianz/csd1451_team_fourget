@@ -55,7 +55,7 @@ void Scene_Settings::Exit()
 {
     if (m_uiFont >= 0)
     {
-        AEGfxDestroyFont(m_uiFont);
+        AEGfxDestroyFont((s8)m_uiFont);
         m_uiFont = -1;
     }
 
@@ -207,7 +207,7 @@ void Scene_Settings::HandleMouseInput()
         int   len = (int)strlen(valueBuf);
         // < is the first character of the string
         float leftCX = valueStartX + charW_left * 0.5f;
-        // > is the last character — uses charW_right so it lands further right
+        // > is the last character ï¿½ uses charW_right so it lands further right
         float rightCX = valueStartX + (len - 0.5f) * charW_right;
 
         bool inLabel = (mx >= labelL && mx <= labelR);
@@ -272,7 +272,7 @@ void Scene_Settings::DrawUI() const
     auto Print = [&](const char* text, float px, float py,
         float r, float g, float b, float scale = 1.0f)
         {
-            AEGfxPrint(m_uiFont, text,
+            AEGfxPrint((s8)m_uiFont, text,
                 ScreenToNormX(px), ScreenToNormY(py),
                 scale, r, g, b, 1.0f);
         };

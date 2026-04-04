@@ -115,15 +115,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             break;
         }
 
-        SceneID sceneThisFrame = SceneManager::I().Current();
-
         SceneManager::I().Update(dt);
         SceneManager::I().Draw();
 
         AESysFrameEnd();
 
         if (SceneManager::I().Current() != SceneID::LevelEditor) {
-            bool escapeHandledByScene = (sceneThisFrame == SceneID::Settings);
             if (GameSettings::quitGame)
                 gGameRunning = 0;
         }

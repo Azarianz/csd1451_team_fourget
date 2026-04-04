@@ -203,8 +203,8 @@ void Enemy::DrawHealthBar() const
 
 void Enemy::Draw()
 {
-    AEGfxVertexList* mesh = GetEnemyFrameMesh(spriteCol, spriteRow);
-    if (!mesh || !g_EnemySpriteSheet) return;
+    AEGfxVertexList* spriteMesh = GetEnemyFrameMesh(spriteCol, spriteRow);
+    if (!spriteMesh || !g_EnemySpriteSheet) return;
 
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxTextureSet(g_EnemySpriteSheet, 0, 0);
@@ -241,7 +241,7 @@ void Enemy::Draw()
     AEMtx33Concat(&transform, &transM, &transform);
 
     AEGfxSetTransform(transform.m);
-    AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
+    AEGfxMeshDraw(spriteMesh, AE_GFX_MDM_TRIANGLES);
 
     DrawHealthBar();
 }

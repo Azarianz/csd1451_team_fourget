@@ -92,7 +92,6 @@ bool TutorialPopup::IsPointInRect(float mx, float my, float x, float y, float w,
 
 TutorialPopup::ButtonRect TutorialPopup::GetLeftArrowRect() const
 {
-    const float screenW = (float)AEGfxGetWindowWidth();
     const float screenH = (float)AEGfxGetWindowHeight();
 
     ButtonRect rect;
@@ -204,7 +203,7 @@ void TutorialPopup::DrawNavButtons(int fontId) const
             const float nx = (px / (float)AEGfxGetWindowWidth()) * 2.0f - 1.0f;
             const float ny = 1.0f - (py / (float)AEGfxGetWindowHeight()) * 2.0f;
 
-            AEGfxPrint(fontId, text, nx, ny, scale, shade, shade, shade, 1.0f);
+            AEGfxPrint((s8)fontId, text, nx, ny, scale, shade, shade, shade, 1.0f);
         };
 
     PrintPx("<",
@@ -262,16 +261,16 @@ void TutorialPopup::Draw(int fontId) const
         const char* help = "LEFT/RIGHT or A/D to navigate   ESC = CLOSE";
 
         float pageWidth = 0.0f, pageHeight = 0.0f;
-        AEGfxGetPrintSize(fontId, pageBuf, 1.0f, &pageWidth, &pageHeight);
+        AEGfxGetPrintSize((s8)fontId, pageBuf, 1.0f, &pageWidth, &pageHeight);
 
         float helpWidth = 0.0f, helpHeight = 0.0f;
-        AEGfxGetPrintSize(fontId, help, 0.85f, &helpWidth, &helpHeight);
+        AEGfxGetPrintSize((s8)fontId, help, 0.85f, &helpWidth, &helpHeight);
 
         const float pageX = -(pageWidth * 0.5f);
         const float helpX = -(helpWidth * 0.5f);
 
-        AEGfxPrint(fontId, pageBuf, pageX, 0.92f, 1.0f, 1, 1, 1, 1);
-        AEGfxPrint(fontId, help, helpX, 0.84f, 0.85f, 1, 1, 1, 1);
+        AEGfxPrint((s8)fontId, pageBuf, pageX, 0.92f, 1.0f, 1, 1, 1, 1);
+        AEGfxPrint((s8)fontId, help, helpX, 0.84f, 0.85f, 1, 1, 1, 1);
     }
 }
 
