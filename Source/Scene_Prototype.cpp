@@ -1143,8 +1143,17 @@ void Scene_Prototype::DrawUI() const
 
     // --- 3. WAVE TIMER ---
     if (!waveManager.waveComplete && waveManager.IsWaitingForWavestarter()) {
-        sprintf_s(buf, "NEXT WAVE IN: %.1f", waveManager.GetTimeUntilNextSpawn());
-        AEGfxPrint(m_uiFont, buf, -0.2f, 0.90f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+        float timeRemaining = waveManager.GetTimeUntilNextSpawn();
+        sprintf_s(buf, "NEXT WAVE IN: %.1f", timeRemaining);
+
+        if (timeRemaining <= 3.0f) {
+            // Print in Red if 3 seconds or less (R=1.0, G=0.0, B=0.0)
+            AEGfxPrint(m_uiFont, buf, -0.2f, 0.90f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f);
+        }
+        else {
+            // Print in Black otherwise (R=0.0, G=0.0, B=0.0)
+            AEGfxPrint(m_uiFont, buf, -0.2f, 0.90f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+        }
     }
 
     // Get screen dimensions for dynamic positioning
