@@ -9,16 +9,16 @@ bool LevelLoader::Init(const char* levelPath)
 
     if (!LoadFromText(levelPath))
     {
-        PRINT("Loading level file: %s\n", levelPath);
-        PRINT("FAILED to load level: %s\n", levelPath);
+        //PRINT("Loading level file: %s\n", levelPath);
+        //PRINT("FAILED to load level: %s\n", levelPath);
         return false;
     }
 
     if (!IsValid())
     {
-        const size_t expected = (size_t)width * (size_t)height;
-        PRINT("LEVEL DATA SIZE MISMATCH! w=%d h=%d expected=%zu map=%zu region=%zu\n",
-            width, height, expected, map.size(), region.size());
+        //const size_t expected = (size_t)width * (size_t)height;
+        //PRINT("LEVEL DATA SIZE MISMATCH! w=%d h=%d expected=%zu map=%zu region=%zu\n",
+        //      width, height, expected, map.size(), region.size());
         return false;
     }
 
@@ -97,7 +97,7 @@ bool LevelLoader::BuildPath(const GridSystem::Grid& grid, std::vector<Point>& ou
     GridSystem::GridCoord spawn{};
     if (!FindSpawnCell(spawn))
     {
-        PRINT("No ENEMYSPAWN found.\n");
+        //PRINT("No ENEMYSPAWN found.\n");
         return false;
     }
 
@@ -108,7 +108,7 @@ bool LevelLoader::BuildPath(const GridSystem::Grid& grid, std::vector<Point>& ou
 
     if (!FindNextFromSpawn(spawn, next))
     {
-        PRINT("Spawn does not connect to any enemy path or goal.\n");
+        //PRINT("Spawn does not connect to any enemy path or goal.\n");
         return false;
     }
 
@@ -123,18 +123,18 @@ bool LevelLoader::BuildPath(const GridSystem::Grid& grid, std::vector<Point>& ou
 
         if (flag == RegionFlag::ENEMYGOAL)
         {
-            PRINT("Enemy path built. Total points: %d\n", (int)outPath.size());
+            //PRINT("Enemy path built. Total points: %d\n", (int)outPath.size());
             return true;
         }
 
         if (!StepFromRegionFlag(current, next))
         {
-            PRINT("Broken enemy path at cell (%d, %d)\n", current.x, current.y);
+            //("Broken enemy path at cell (%d, %d)\n", current.x, current.y);
             return false;
         }
     }
 
-    PRINT("Enemy path exceeded safety limit. Possible loop.\n");
+    //PRINT("Enemy path exceeded safety limit. Possible loop.\n");
     return false;
 }
 
@@ -239,7 +239,7 @@ bool LevelLoader::EnsureRenderReady()
     m_tilesetTex = AEGfxTextureLoad("Assets/tilesheet.png");
     if (!m_tilesetTex)
     {
-        PRINT("FAILED to load tileset: Assets/tilesheet.png\n");
+        //PRINT("FAILED to load tileset: Assets/tilesheet.png\n");
         return false;
     }
 

@@ -329,37 +329,37 @@ void LevelEditor::Update(float /*dt*/)
 
         if (!ValidateLevelForExport(reason, sizeof(reason)))
         {
-            PRINT("%s\n", reason);
+            //PRINT("%s\n", reason);
         }
         else if (!m_level.Save(levelPath))
         {
-            PRINT("Failed to save level: %s\n", levelPath.c_str());
+            //PRINT("Failed to save level: %s\n", levelPath.c_str());
         }
         else
         {
             bool easyCopied = CopyFileContents("Assets/Waves/level_01_easy.txt", easyWavePath);
             bool hardCopied = CopyFileContents("Assets/Waves/level_01_hard.txt", hardWavePath);
 
-            PRINT("Saved level: %s\n", levelPath.c_str());
+            //PRINT("Saved level: %s\n", levelPath.c_str());
 
-            if (easyCopied)
-                PRINT("Created easy waves: %s\n", easyWavePath.c_str());
-            else
-                PRINT("Failed to create easy waves from template: %s\n", easyWavePath.c_str());
+            //if (easyCopied)
+            //    PRINT("Created easy waves: %s\n", easyWavePath.c_str());
+            //else
+            //    PRINT("Failed to create easy waves from template: %s\n", easyWavePath.c_str());
 
-            if (hardCopied)
-                PRINT("Created hard waves: %s\n", hardWavePath.c_str());
-            else
-                PRINT("Failed to create hard waves from template: %s\n", hardWavePath.c_str());
+            //if (hardCopied)
+            //    PRINT("Created hard waves: %s\n", hardWavePath.c_str());
+            //else
+            //    PRINT("Failed to create hard waves from template: %s\n", hardWavePath.c_str());
         }
     }
 
     if (AEInputCheckTriggered(AEVK_F4))
     {
-        if (m_level.Load(levelPath))
-            PRINT("Loaded level: %s\n", levelPath.c_str());
-        else
-            PRINT("Failed to load level: %s\n", levelPath.c_str());
+        if (m_level.Load(levelPath)) {}
+        //    PRINT("Loaded level: %s\n", levelPath.c_str());
+        //else
+        //    PRINT("Failed to load level: %s\n", levelPath.c_str());
     }
 
     // Cycle brush

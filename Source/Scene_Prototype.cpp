@@ -15,13 +15,13 @@ void Scene_Prototype::HandleDebugInput()
     if (AEInputCheckTriggered(AEVK_F1))
     {
         shop.AddPoints(1000);
-        PRINT("[DEBUG] +1000 GOLD\n");
+        //PRINT("[DEBUG] +1000 GOLD\n");
     }
 
     // F2 - Kill all enemies
     if (AEInputCheckTriggered(AEVK_F2))
     {
-        PRINT("[DEBUG] CLEAR ALL ENEMIES\n");
+        //PRINT("[DEBUG] CLEAR ALL ENEMIES\n");
 
         for (Enemy* e : enemies)
         {
@@ -33,7 +33,7 @@ void Scene_Prototype::HandleDebugInput()
     // F3 - Force win
     if (AEInputCheckTriggered(AEVK_F3))
     {
-        PRINT("[DEBUG] FORCE WIN\n");
+        //PRINT("[DEBUG] FORCE WIN\n");
         OpenWinPopup();
     }
 }
@@ -101,7 +101,7 @@ void Scene_Prototype::UpdateWinPopup(int mouseX, int mouseY)
         {
             if (!LoadNextLevel())
             {
-                PRINT("No next stage configured. Returning to main menu.\n");
+                //PRINT("No next stage configured. Returning to main menu.\n");
                 SceneManager::I().SwitchTo(SceneID::MainMenu);
             }
             return;
@@ -118,7 +118,7 @@ void Scene_Prototype::UpdateWinPopup(int mouseX, int mouseY)
     {
         if (!LoadNextLevel())
         {
-            PRINT("No next stage configured. Returning to main menu.\n");
+            //PRINT("No next stage configured. Returning to main menu.\n");
             SceneManager::I().SwitchTo(SceneID::MainMenu);
         }
     }
@@ -790,7 +790,7 @@ bool Scene_Prototype::LoadNextLevel() const
     }
     else if (nextLevel.find("level_03.txt") != std::string::npos)
     {
-        PRINT("Final stage cleared. Going to credits.\n");
+        //PRINT("Final stage cleared. Going to credits.\n");
         SceneManager::I().SwitchTo(SceneID::Credits);
         return true;
     }
@@ -800,7 +800,7 @@ bool Scene_Prototype::LoadNextLevel() const
     }
 
     GameSettings::selectedLevelFile = nextLevel;
-    PRINT("Loading next level file: %s\n", GameSettings::selectedLevelFile.c_str());
+    //PRINT("Loading next level file: %s\n", GameSettings::selectedLevelFile.c_str());
 
     SceneManager::I().SwitchTo(SceneID::Prototype);
     return true;
@@ -852,7 +852,7 @@ bool Scene_Prototype::InitLevelAndGrid()
     //Load Level File
     levelFile = GameSettings::selectedLevelFile;
 
-    PRINT("Prototype received level file: %s\n", levelFile.c_str());
+    //PRINT("Prototype received level file: %s\n", levelFile.c_str());
 
     if (levelFile.empty())
     {
@@ -860,11 +860,11 @@ bool Scene_Prototype::InitLevelAndGrid()
         levelFile = "Assets/Levels/level_01.txt";
     }
 
-    PRINT("Loading level file: %s\n", levelFile.c_str());
+    //PRINT("Loading level file: %s\n", levelFile.c_str());
 
     if (!level.Init(levelFile.c_str()))
     {
-        PRINT("FAILED to load level: %s\n", levelFile.c_str());
+        //("FAILED to load level: %s\n", levelFile.c_str());
         GameSettings::levelLoadFailed = true;
         GameSettings::levelLoadError = "Failed to load level file.";
         return false;
@@ -878,7 +878,7 @@ bool Scene_Prototype::InitLevelAndGrid()
     path.clear();
     if (!level.BuildPath(*grid, path))
     {
-        PRINT("FAILED to build enemy path from region flags.\n");
+        //("FAILED to build enemy path from region flags.\n");
         GameSettings::levelLoadFailed = true;
         GameSettings::levelLoadError = "Invalid enemy path, spawn, or goal.";
         return false;
@@ -1258,7 +1258,7 @@ void Scene_Prototype::Init()
 
     if (!InitLevelAndGrid())
     {
-        PRINT("Scene_Prototype Init failed to load level.\n");
+        //("Scene_Prototype Init failed to load level.\n");
 
         if (gameOverFont < 0)
             gameOverFont = AEGfxCreateFont("Assets/buggy-font.ttf", 64);
@@ -1301,10 +1301,10 @@ void Scene_Prototype::Init()
 
     if (!waveManager.LoadFromFile(waveFilePath))
     {
-        PRINT("Failed to load %s! Falling back to Assets/waves.txt\n", waveFilePath.c_str());
+        //PRINT("Failed to load %s! Falling back to Assets/waves.txt\n", waveFilePath.c_str());
 
         if (!waveManager.LoadFromFile("Assets/waves.txt")) {
-            PRINT("Failed to load fallback waves.txt!\n");
+            //PRINT("Failed to load fallback waves.txt!\n");
         }
     }
 
@@ -1321,7 +1321,7 @@ void Scene_Prototype::Init()
     m_tutorialPopup.Reset();
 
     m_tutorialPopup.SetEnabled(IsTutorialLevel());
-    PRINT("IsTutorialLevel: %d\n", IsTutorialLevel());
+    //PRINT("IsTutorialLevel: %d\n", IsTutorialLevel());
     m_tutorialPopup.SetSlides({
         "Assets/controls.png",
         "Assets/Tutorial/tutorial_01.png",
