@@ -8,6 +8,7 @@
 #include "AEInput.h"
 #include "Utility.h"
 #include <cstdio>
+#include "GlobalFonts.h"
 
 #pragma region Debug
 void Scene_Prototype::HandleDebugInput()
@@ -212,10 +213,10 @@ void Scene_Prototype::DrawQuitConfirmPopup() const
         const float titleScale = 0.75f;
         const float optionScale = 1.0f;
 
-        const float titleX = GetCenteredX(titleText, titleScale, centerX - 100.0f);
+        const float titleX = GetCenteredX(titleText, titleScale, centerX - 100.0f) + 90.f;
         const float titleY = top + 64.0f;
 
-        const float msgTextX = GetCenteredX(msgText, optionScale, centerX);
+        const float msgTextX = GetCenteredX(msgText, optionScale, centerX) - 100.f;
         const float yesTextX = GetCenteredX(yesText, optionScale, centerX);
         const float noTextX = GetCenteredX(noText, optionScale, centerX);
 
@@ -427,7 +428,7 @@ void Scene_Prototype::DrawWinPopup() const
         const float titleScale = 1.25f;
         const float optionScale = 1.0f;
 
-        const float titleX = GetCenteredX(titleText, titleScale, centerX - 180);
+        const float titleX = GetCenteredX(titleText, titleScale, centerX - 180) + 180.f;
         const float titleY = top + 64.0f;
 
         const float nextTextX = GetCenteredX(nextText, optionScale, centerX);
@@ -607,7 +608,7 @@ void Scene_Prototype::DrawLosePopup() const
         const float titleScale = 1.25f;
         const float optionScale = 1.0f;
 
-        const float titleX = GetCenteredX(titleText, titleScale, centerX - 210);
+        const float titleX = GetCenteredX(titleText, titleScale, centerX - 210) + 200.f;
         const float titleY = top + 64.0f;
 
         const float retryTextX = GetCenteredX(retryText, optionScale, centerX);
@@ -825,7 +826,7 @@ void Scene_Prototype::DrawPausePopup() const
         const float titleScale = 1.25f;
         const float optionScale = 1.0f;
 
-        const float titleX = GetCenteredX(titleText, titleScale, centerX - 130.0f);
+        const float titleX = GetCenteredX(titleText, titleScale, centerX - 130.0f) + 130.f;
         const float titleY = top + 64.0f;
 
         const float resumeTextX = GetCenteredX(resumeText, optionScale, centerX);
@@ -1174,7 +1175,7 @@ void Scene_Prototype::DrawUI() const
         AEMtx33Scale(&scaleM, 40.0f, 40.0f);
         AEMtx33Rot(&rotM, 0.0f);
 
-        float flagWorldX = (screenW * 0.5f) * 0.88f;
+        float flagWorldX = (screenW * 0.5f) * 0.92f;
         float flagWorldY = (screenH * 0.5f) * 0.84f;
         AEMtx33Trans(&transM, flagWorldX, flagWorldY);
 
@@ -1464,10 +1465,10 @@ void Scene_Prototype::Init()
         //("Scene_Prototype Init failed to load level.\n");
 
         if (gameOverFont < 0)
-            gameOverFont = AEGfxCreateFont("Assets/buggy-font.ttf", 64);
+			gameOverFont = g_TitleFont28;
 
         if (m_uiFont < 0)
-            m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
+            m_uiFont = g_TitleFont28;
 
         return;
     }
@@ -1480,10 +1481,10 @@ void Scene_Prototype::Init()
     CreateBaseTower();
 
     if (gameOverFont < 0)
-        gameOverFont = AEGfxCreateFont("Assets/buggy-font.ttf", 64);
+        gameOverFont = g_TitleFont28;
 
     if (m_uiFont < 0)
-        m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
+        m_uiFont = g_TitleFont28;
 
     // Load level easy/ Hard
     std::string baseName = "level_01";
@@ -1708,18 +1709,6 @@ void Scene_Prototype::Exit()
     for (Enemy* e : enemies)
         delete e;
     enemies.clear();
-
-    if (gameOverFont >= 0)
-    {
-        AEGfxDestroyFont(gameOverFont);
-        gameOverFont = -1;
-    }
-
-    if (m_uiFont >= 0)
-    {
-        AEGfxDestroyFont(m_uiFont);
-        m_uiFont = -1;
-    }
 
     if (m_spriteSheet)
     {

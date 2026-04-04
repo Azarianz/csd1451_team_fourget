@@ -7,6 +7,7 @@
 #include "AEInput.h"
 #include <cstring>
 #include <cstdio>
+#include "GlobalFonts.h"
 
 const float Scene_Settings::INPUT_REPEAT_DELAY = 0.15f;
 
@@ -40,7 +41,7 @@ void Scene_Settings::Init()
     m_selected = SettingRow::Resolution;
     m_inputCooldown = 0.0f;
 
-    m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 28);
+	m_uiFont = g_TitleFont28;
 
     // Load and play background music
     //m_bgm = AEAudioLoadMusic("Assets/bouken.mp3");
@@ -53,12 +54,6 @@ void Scene_Settings::Init()
 
 void Scene_Settings::Exit()
 {
-    if (m_uiFont >= 0)
-    {
-        AEGfxDestroyFont((s8)m_uiFont);
-        m_uiFont = -1;
-    }
-
     //if (m_bgmLoaded)
     //{
     //    AEAudioStopGroup(m_bgmGroup);

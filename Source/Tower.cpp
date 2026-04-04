@@ -9,6 +9,7 @@
 #include "ParticleSystem.h"
 #include "AudioManager.h"
 #include "GameSettings.h"
+#include "GlobalFonts.h"
 
 namespace TowerHandler {
 
@@ -34,7 +35,7 @@ namespace TowerHandler {
     void Tower::LoadStatsFont()
     {
         if (g_StatsFont == -1)
-            g_StatsFont = AEGfxCreateFont("Assets/liberation-mono.ttf", 20);
+			g_StatsFont = g_UIFont24;
     }
 
     // ============================================================

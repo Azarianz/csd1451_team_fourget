@@ -6,6 +6,7 @@
 #include "GameSettings.h"
 #include "AudioManager.h"
 #include "Scene_LevelSelect.h"
+#include "GlobalFonts.h"
 
 #include <cstring>
 #include <cmath>
@@ -57,7 +58,7 @@ void Scene_MainMenu::Init()
 
     if (m_uiFont < 0)
     {
-        m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
+        m_uiFont = g_TitleFont28;
     }
 
     if (!m_bgTex)
@@ -97,12 +98,6 @@ void Scene_MainMenu::Draw()
 
 void Scene_MainMenu::Exit()
 {
-    if (m_uiFont >= 0)
-    {
-        AEGfxDestroyFont((s8)m_uiFont);
-        m_uiFont = -1;
-    }
-
     if (m_bgTex)
     {
         AEGfxTextureUnload(m_bgTex);
@@ -500,7 +495,7 @@ void Scene_MainMenu::DrawUI() const
     const bool quitHover =
         IsPointInRect((float)mouseX, (float)mouseY, quitRect.x, quitRect.y, quitRect.w, quitRect.h);
 
-    Print("MERGE DEFENDERS", GetCenteredX("MERGE DEFENDERS", kTitleScale), titleY, kBright, kTitleScale);
+    Print("MERGE DEFENDERS", GetCenteredX("MERGE DEFENDERS", kTitleScale) - 50.f, titleY, kBright, kTitleScale);
 
     const float bounceOffset = sinf(m_bounceTimer * kBounceSpeed) * kBounceAmplitude;
 

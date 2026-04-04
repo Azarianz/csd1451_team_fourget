@@ -3,11 +3,12 @@
 #include "SceneID.h"
 #include "AEEngine.h"
 #include "AEInput.h"
+#include "GlobalFonts.h"
 
 void Scene_Controls::Init()
 {
     if (m_uiFont < 0)
-        m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
+		m_uiFont = g_TitleFont28;
 
     m_tutorialPopup.Init();
     m_tutorialPopup.Reset();
@@ -45,10 +46,4 @@ void Scene_Controls::Draw()
 void Scene_Controls::Exit()
 {
     m_tutorialPopup.Shutdown();
-
-    if (m_uiFont >= 0)
-    {
-        AEGfxDestroyFont(m_uiFont);
-        m_uiFont = -1;
-    }
 }

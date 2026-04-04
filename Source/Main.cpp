@@ -7,6 +7,10 @@
 #include "AudioManager.h"
 
 #include "AEMath.h"
+#include "GlobalFonts.h"
+
+s8 g_UIFont24 = -1;
+s8 g_TitleFont28 = -1;
 
 namespace
 {
@@ -98,10 +102,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     AESysInit(hInstance, nCmdShow, res.width, res.height, 1, 60, true, NULL);
     AESysSetWindowTitle("Merge Defenders Prototype");
 
+    // Init Audio Manager before any scenes, so that scenes can play BGM/SFX in their Init() if needed
     AudioManager::Init();
 
     // Splash first
     RunSplashScreen();
+
+    // Init Fonts, so that scenes can use it in their Init() if needed
+    if (g_UIFont24 < 0)
+        g_UIFont24 = AEGfxCreateFont("Assets/liberation-mono.ttf", 24);
+    if (g_TitleFont28 < 0)
+        g_TitleFont28 = AEGfxCreateFont("Assets/buggy-font.ttf", 28);
 
     // Then boot main menu
     SceneManager::I().Init(SceneID::MainMenu);
@@ -136,6 +147,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             if (GameSettings::quitGame)
                 gGameRunning = 0;
         }
+    }
+
+    //Destroy
+    if (g_UIFont24 >= 0)
+    {
+        AEGfxDestroyFont(g_UIFont24);
+        g_UIFont24 = -1;
+    }
+
+    if (g_TitleFont28 >= 0)
+    {
+        AEGfxDestroyFont(g_TitleFont28);
+        g_TitleFont28 = -1;
     }
 
     AudioManager::Shutdown();

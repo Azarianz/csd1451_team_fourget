@@ -4,6 +4,7 @@
 #include <cstdio>
 #include "GameSettings.h"
 #include "AudioManager.h"
+#include "GlobalFonts.h"
 
 namespace TowerHandler {
 
@@ -117,7 +118,7 @@ namespace TowerHandler {
 
         int fontSize = (int)(24.0f * m_uiScale);
         if (fontSize < 10) fontSize = 10;
-        m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", fontSize);
+		m_uiFont = g_TitleFont28;
         m_points = 300;
 
         RefreshSlots();
@@ -491,7 +492,6 @@ namespace TowerHandler {
         if (pSlotTex) { AEGfxTextureUnload(pSlotTex);       pSlotTex = nullptr; }
         if (pSpritesheet) { AEGfxTextureUnload(pSpritesheet);   pSpritesheet = nullptr; }
         if (pRefreshSheet) { AEGfxTextureUnload(pRefreshSheet);  pRefreshSheet = nullptr; }
-        if (m_uiFont >= 0) { AEGfxDestroyFont(m_uiFont);         m_uiFont = -1; }
         m_towerDefIndex.clear();
     }
 

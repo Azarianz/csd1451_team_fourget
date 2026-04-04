@@ -22,7 +22,7 @@ bool Scene_LoadLevel::LoadLevel(int idx)
 
     if (!level.LoadFromText(levelPath))
     {
-        PRINT("FAILED to load level text: %s\n", levelPath);
+        //PRINT("FAILED to load level text: %s\n", levelPath);
         return false;
     }
 

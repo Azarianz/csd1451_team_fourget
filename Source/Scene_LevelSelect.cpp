@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cstring>
 #include <Windows.h>
+#include "GlobalFonts.h"
 
 SceneID Scene_LevelSelect::s_returnScene = SceneID::MainMenu;
 
@@ -111,7 +112,7 @@ void Scene_LevelSelect::Init()
     m_columns = 2; // 2 columns
 
     if (m_uiFont < 0)
-        m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
+        m_uiFont = g_TitleFont28;
 
     AEGfxMeshStart();
     AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
@@ -128,12 +129,6 @@ void Scene_LevelSelect::Init()
 
 void Scene_LevelSelect::Exit()
 {
-    if (m_uiFont >= 0)
-    {
-        AEGfxDestroyFont(m_uiFont);
-        m_uiFont = -1;
-    }
-
     if (m_imageQuad)
     {
         AEGfxMeshFree(m_imageQuad);
@@ -171,14 +166,8 @@ void Scene_LevelSelect::LoadLevelList()
         b.displayName = name;
 
         // Try to load thumbnail matching the level name
-        std::string imgPath = "Assets/" + b.displayName + ".png";
+        std::string imgPath = "Assets/Levels/" + b.displayName + ".png";
         b.thumbnail = AEGfxTextureLoad(imgPath.c_str());
-
-        if (!b.thumbnail)
-        {
-            imgPath = "Assets/Levels/" + b.displayName + ".png";
-            b.thumbnail = AEGfxTextureLoad(imgPath.c_str());
-        }
 
         m_buttons.push_back(b);
 
@@ -462,12 +451,12 @@ void Scene_LevelSelect::DrawUI() const
         return;
     }
 
-    const char* controls = "WASD/ARROWS - MOVE    ENTER - SELECT    F5 - LEVEL EDITOR    ESC - BACK";
-    Print(controls, GetCenteredX(controls, 0.60f), infoY, info, 0.60f);
+    const char* controls = "WASD/ARROWS: MOVE | ENTER: SELECT | F5: LEVEL EDITOR | ESC: BACK";
+    Print(controls, GetCenteredX(controls, 0.50f) - 150.0f, infoY, info, 0.60f);
 
     if (GetPageCount() > 1)
     {
-        const char* pageControls = "Q/E - CHANGE PAGE";
+        const char* pageControls = "Q/E: CHANGE PAGE";
         Print(pageControls, GetCenteredX(pageControls, 0.55f), screenH * 0.92f, info, 0.55f);
 
         char pageText[32];
@@ -563,7 +552,7 @@ void Scene_LevelSelect::DrawUI() const
 
         const char* popTitle = "SELECT DIFFICULTY";
         float popTitleY = screenH * 0.4f;
-        Print(popTitle, GetCenteredX(popTitle, 1.2f), popTitleY, bright, 1.2f);
+        Print(popTitle, GetCenteredX(popTitle, 1.2f) - 40.f, popTitleY, bright, 1.2f);
 
         float easyX = screenW * 0.4f;
         float hardX = screenW * 0.6f;
@@ -576,6 +565,6 @@ void Scene_LevelSelect::DrawUI() const
         if (m_selectedDifficulty == 1) Print(">", hardX - 56.0f, popY, bright, 1.0f);
 
         const char* popControls = "A/D - SELECT    ENTER - CONFIRM    ESC - CANCEL";
-        Print(popControls, GetCenteredX(popControls, 0.7f), screenH * 0.65f, info, 0.7f);
+        Print(popControls, GetCenteredX(popControls, 0.7f) - 65.f, screenH * 0.65f, info, 0.7f);
     }
 }

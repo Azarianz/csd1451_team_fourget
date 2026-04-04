@@ -49,7 +49,7 @@ void AudioManager::PlayBGM(const char* filepath, float volume, float pitch, bool
     }
 
     s_bgm = AEAudioLoadMusic(filepath);
-    PRINT("PlayBGM called: %s  volume=%f\n", filepath, s_bgmVolume);
+    //PRINT("PlayBGM called: %s  volume=%f\n", filepath, s_bgmVolume);
 
     AEAudioPlay(s_bgm, s_bgmGroup, s_bgmVolume, pitch, loop ? -1 : 0);
     AEAudioSetGroupVolume(s_bgmGroup, s_bgmVolume);

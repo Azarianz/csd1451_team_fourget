@@ -3,6 +3,7 @@
 #include "AEEngine.h"
 #include "AEInput.h"
 #include <cstdio> 
+#include "GlobalFonts.h"
 
 // Helper to generate the mesh for the flag UI
 static AEGfxVertexList* CreateFlagMesh(int row, int col)
@@ -31,7 +32,7 @@ static AEGfxVertexList* CreateFlagMesh(int row, int col)
 
 void Scene_Enemy::Init()
 {
-    m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
+	m_uiFont = g_UIFont24;
 
     myPath.push_back({ -600.0f,  300.0f });
     myPath.push_back({ 600.0f,  300.0f });
@@ -39,7 +40,7 @@ void Scene_Enemy::Init()
     myPath.push_back({ -600.0f, -300.0f });
 
     if (!waveManager.LoadFromFile("Assets/waves.txt")) {
-        PRINT("Failed to load waves.txt!\n");
+        //PRINT("Failed to load waves.txt!\n");
     }
 
     gameSpeedMultiplier = 1.0f;
@@ -193,11 +194,6 @@ void Scene_Enemy::Draw()
 
 void Scene_Enemy::Exit()
 {
-    if (m_uiFont >= 0) {
-        AEGfxDestroyFont(m_uiFont);
-        m_uiFont = -1;
-    }
-
     for (auto* e : activeEnemies) {
         e->Destroy();
         delete e;

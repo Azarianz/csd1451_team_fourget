@@ -269,8 +269,8 @@ void TutorialPopup::Draw(int fontId) const
         const float pageX = -(pageWidth * 0.5f);
         const float helpX = -(helpWidth * 0.5f);
 
-        AEGfxPrint((s8)fontId, pageBuf, pageX, 0.92f, 1.0f, 1, 1, 1, 1);
-        AEGfxPrint((s8)fontId, help, helpX, 0.84f, 0.85f, 1, 1, 1, 1);
+        AEGfxPrint((s8)fontId, pageBuf, pageX, 0.85f, 1.0f, 1, 1, 1, 1);
+        AEGfxPrint((s8)fontId, help, helpX, 0.8f, 0.85f, 1, 1, 1, 1);
     }
 }
 

@@ -3,6 +3,7 @@
 #include <cstdio>   // for sprintf_s
 #include <cctype>   // for std::tolower
 #include <fstream>
+#include "GlobalFonts.h"
 
 // Helper Functions
 static float ScreenToNormX(float px)
@@ -17,7 +18,7 @@ static float ScreenToNormY(float py)
 
 void LevelEditor::Init(int w, int h)
 {
-    m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 16);
+    m_uiFont = g_UIFont24;
     m_level.Resize(w, h);
 
     m_grid = new GridSystem::Grid(w, h, 1.0f);
@@ -54,12 +55,6 @@ void LevelEditor::Shutdown()
         m_grid->Destroy();
         delete m_grid;
         m_grid = nullptr;
-    }
-
-    if (m_uiFont >= 0)
-    {
-        AEGfxDestroyFont(m_uiFont);
-        m_uiFont = -1;
     }
 
     // free cached tile meshes

@@ -4,10 +4,11 @@
 #include "AEEngine.h"
 #include "AEInput.h"
 #include "AEMath.h"
+#include "GlobalFonts.h"
 
 void Scene_Credits::Init()
 {
-    m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 24);
+	m_uiFont = g_TitleFont28;
     m_page = 0;
 
     m_firstPageTex = AEGfxTextureLoad("Assets/copyright.png");
@@ -202,8 +203,8 @@ void Scene_Credits::Draw()
     float pageX = -(pageWidth / 2.0f);
     float ctrlX = -(ctrlWidth / 2.0f);
 
-    AEGfxPrint((s8)m_uiFont, buf, pageX, 0.92f, 0.8f, 1, 1, 1, 1);
-    AEGfxPrint((s8)m_uiFont, controls, ctrlX, 0.84f, 0.8f, 0.8f, 0.8f, 1, 1);
+    AEGfxPrint((s8)m_uiFont, buf, pageX, 0.85f, 0.8f, 1, 1, 1, 1);
+    AEGfxPrint((s8)m_uiFont, controls, ctrlX, 0.8f, 0.8f, 0.8f, 0.8f, 1, 1);
 }
 
 void Scene_Credits::DrawImagePage()
@@ -278,7 +279,7 @@ void Scene_Credits::DrawTextPage()
             (s8)m_uiFont,
             text.c_str(),
             x,
-            yNorm,
+            yNorm - 0.2f,
             scale,
             shade, shade, shade, 1.0f
         );
@@ -299,12 +300,6 @@ void Scene_Credits::Exit()
     {
         AEGfxTextureUnload(m_firstPageTex);
         m_firstPageTex = nullptr;
-    }
-
-    if (m_uiFont >= 0)
-    {
-        AEGfxDestroyFont((s8)m_uiFont);
-        m_uiFont = -1;
     }
 }
 
