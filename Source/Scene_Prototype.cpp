@@ -1421,19 +1421,28 @@ void Scene_Prototype::CleanupDeadEnemies()
         if (!e || e->health <= 0.0f)
         {
             if (e && !e->escapedBase)
+            {
+                // Award points
                 shop.AddPoints(e->GetPoints());
 
+                // TRIGGER DEATH PARTICLES HERE
+                ParticleSystem::SpawnBurst(e->x, e->y,
+                                            0.6f, 0.6f, 0.6f, // Grey color
+                                            ParticleSystem::BurstSize::LARGE);
+            }
+
 			// Nulls bullet targets pointing to an enemy before 
-            // deleting it to prevent dangling pointers
+            // deleting it to prevent dangling pointers (FIXED TYPO HERE)
             for(auto& b : activeBullets)
-				if (b.target == 0) b.target = nullptr;
+            {
+				if (b.target == e) b.target = nullptr;
+            }
 
             delete e;
             enemies.erase(enemies.begin() + i);
         }
     }
 }
-
 // --------------------------------------------------------
 //  CreateBaseTower
 //  Spawns the base tower at the end of the enemy path.
