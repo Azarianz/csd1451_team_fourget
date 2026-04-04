@@ -776,7 +776,7 @@ bool Scene_Prototype::IsStageCleared() const
     return waveManager.waveComplete && enemies.empty();
 }
 
-bool Scene_Prototype::LoadNextLevel()
+bool Scene_Prototype::LoadNextLevel() const
 {
     std::string nextLevel = levelFile;
 
@@ -912,7 +912,7 @@ void Scene_Prototype::InitAudio()
 //  - Displays active enemy count
 //  - Draws pause/resume label in the top-right
 // --------------------------------------------------------
-void Scene_Prototype::DrawUI()
+void Scene_Prototype::DrawUI() const
 {
     if (m_uiFont < 0) return;
 

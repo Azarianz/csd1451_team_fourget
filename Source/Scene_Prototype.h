@@ -40,7 +40,7 @@ private:
     void UpdateReturningTowers(float dt);
 
     bool IsStageCleared() const;
-    bool LoadNextLevel();
+    bool LoadNextLevel() const;
 
     // Win Popup
     void OpenWinPopup();
@@ -94,7 +94,7 @@ private:
 
     WaveManager waveManager;
     s8 m_uiFont = -1;
-    void DrawUI();
+    void DrawUI() const;
 
     std::vector<Point> path;
     std::vector<Enemy*> enemies;

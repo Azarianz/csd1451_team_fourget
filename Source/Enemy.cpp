@@ -332,7 +332,7 @@ bool WaveManager::LoadFromFile(const std::string& filename)
     if (!file.is_open()) return false;
 
     waves.clear();
-    WaveData wd;
+    WaveData wd{};
     totalWavestarters = 0; // Reset total counter
 
     // File format expectation: [EnemyType] [Count] [SpawnDelay]

@@ -149,7 +149,7 @@ namespace TowerHandler {
         // Rendering
         void Draw();
         void DrawHealthBar() const;
-        void DrawTextBox();
+        void DrawTextBox() const;
  
         // Base-tower health
         bool TakeDamage(float dmg); // returns true if tower dies

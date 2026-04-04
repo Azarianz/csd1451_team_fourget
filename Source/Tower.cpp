@@ -442,7 +442,7 @@ namespace TowerHandler {
     //  Draws a translucent stat panel at the bottom-left of screen
     //  when a tower is selected.
     // ============================================================
-    void Tower::DrawTextBox()
+    void Tower::DrawTextBox() const
     {
         if (g_StatsFont == -1) return;
 

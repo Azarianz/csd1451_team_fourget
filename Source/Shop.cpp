@@ -34,7 +34,7 @@ namespace TowerHandler {
 
     SpriteUV Shop::GetUVFrom(int col, int row, int sheetCols, int sheetRows) const
     {
-        SpriteUV uv;
+        SpriteUV uv{};
         uv.u0 = (float)col / (float)sheetCols;
         uv.u1 = (float)(col + 1) / (float)sheetCols;
         uv.v0 = (float)row / (float)sheetRows;
