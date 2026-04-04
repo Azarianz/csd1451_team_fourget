@@ -366,11 +366,15 @@ bool BuildMergeSystem::TryMergeAtCell(int placedX, int placedY)
     if (placedIndex < 0)
         return false;
 
-    TowerHandler::Tower& placedTower = (*activeTowers)[(size_t)placedIndex];
+    TowerHandler::Tower& placedTower = (*activeTowers)[(size_t)placedIndex]; 
     TowerHandler::TowerType type = placedTower.details.towerType;
     int towerLevel = placedTower.details.level;
 
     if (type == TowerHandler::BASE_TOWER || type == TowerHandler::BOMB_TOWER)
+        return false;
+
+    // Max level towers should not merge anymore
+    if (towerLevel >= 3)
         return false;
 
     // Find full connected cluster of same type + same level
@@ -602,7 +606,7 @@ bool BuildMergeSystem::SnapDraggedTowerToGrid(int mouseX, int mouseY)
 
         // play demolish sound
         AudioManager::PlaySFX(
-            "Assets/TowerDemolish.wav",
+            "Assets/Audio/TowerDemolish.wav",
             GameSettings::masterVolume / 100.0f
         );
 
@@ -633,7 +637,7 @@ bool BuildMergeSystem::SnapDraggedTowerToGrid(int mouseX, int mouseY)
     (*activeTowers)[draggedIndex].isPlaced = true;  // using TS code
 
     AudioManager::PlaySFX(
-        "Assets/TowerPlace.mp3",
+        "Assets/Audio/TowerPlace.mp3",
         GameSettings::masterVolume / 100.0f
     );
 

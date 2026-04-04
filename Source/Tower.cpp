@@ -7,6 +7,8 @@
 #include <sstream>
 #include <string>
 #include "ParticleSystem.h"
+#include "AudioManager.h"
+#include "GameSettings.h"
 
 namespace TowerHandler {
 
@@ -876,6 +878,22 @@ namespace TowerHandler {
             b._sizeX * 2.0f, b._sizeY * 2.0f,
             b.color.r, b.color.g, b.color.b, b.color.a
         );
+
+        static const char* SHOOT_SOUNDS[] =
+        {
+            "Assets/Audio/Tower_Shoot.wav",
+            "Assets/Audio/Tower_Shoot2.wav",
+            "Assets/Audio/Tower_Shoot3.wav",
+            "Assets/Audio/Tower_Shoot4.wav"
+        };
+
+        int index = rand() % 3;
+        const char* sound = SHOOT_SOUNDS[index];
+
+        float t = (float)rand() / (float)RAND_MAX;
+        float pitch = 0.9f + t * 0.2f;
+
+        AudioManager::PlaySFX(sound, GameSettings::masterVolume / 100.0f, pitch);
  
         bullets.push_back(b);
         tower.details.fireTimer = tower.details.fireCooldown;
@@ -986,6 +1004,23 @@ namespace TowerHandler {
                     ParticleSystem::SpawnBurst(e->x, e->y,
                                                 b.color.r, b.color.g, b.color.b,
                                                 burstSize);
+
+                    static const char* SHOOT_SOUNDS[] =
+                    {
+                        "Assets/Audio/Hit_Hurt.wav",
+                        "Assets/Audio/Hit_Hurt2.wav",
+                        "Assets/Audio/Hit_Hurt3.wav",
+                        "Assets/Audio/Hit_Hurt4.wav",
+                        "Assets/Audio/Hit_Hurt5.wav"
+                    };
+
+                    int index = rand() % 3;
+                    const char* sound = SHOOT_SOUNDS[index];
+
+                    float t = (float)rand() / (float)RAND_MAX;
+                    float pitch = 0.9f + t * 0.2f;
+
+                    AudioManager::PlaySFX(sound, (GameSettings::masterVolume / 100.0f) * 0.5f, pitch);
 
                     b.shouldRemove = true;
                     break;

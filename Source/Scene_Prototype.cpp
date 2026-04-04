@@ -1355,7 +1355,7 @@ void Scene_Prototype::UpdateBaseCollision()
         {
             e->health = 0.0f;
             e->escapedBase = true;
-            AudioManager::PlaySFX("Assets/Boom.wav", GameSettings::masterVolume / 100.0f);
+            AudioManager::PlaySFX("Assets/Audio/BaseHit.wav", GameSettings::masterVolume / 100.0f);
 
 			// Null any bullet targets pointing to this enemy to prevent dangling pointers
             for (auto& b : activeBullets)
@@ -1511,7 +1511,7 @@ void Scene_Prototype::Init()
     }
 
     //Codex assets
-    m_codexTex = AEGfxTextureLoad("Assets/codex.png");
+    m_codexTex = AEGfxTextureLoad("Assets/Tutorial/codex.png");
 
 	//Tutorial assets
     m_spriteSheet = AEGfxTextureLoad("Assets/rawspritesheet.png");
@@ -1525,14 +1525,14 @@ void Scene_Prototype::Init()
     m_tutorialPopup.SetEnabled(IsTutorialLevel());
     //PRINT("IsTutorialLevel: %d\n", IsTutorialLevel());
     m_tutorialPopup.SetSlides({
-        "Assets/controls.png",
+        "Assets/Tutorial/controls.png",
         "Assets/Tutorial/tutorial_01.png",
         "Assets/Tutorial/tutorial_02.png",
         "Assets/Tutorial/tutorial_03.png",
         "Assets/Tutorial/tutorial_04.png",
         "Assets/Tutorial/tutorial_05.png",
         "Assets/Tutorial/tutorial_06.png",
-        "Assets/codex.png"
+        "Assets/Tutorial/codex.png"
         });
 }
 

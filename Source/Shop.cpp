@@ -246,7 +246,7 @@ namespace TowerHandler {
                         TriggerShake();
 
                         AudioManager::PlaySFX(
-                            "Assets/LowCost.mp3",
+                            "Assets/Audio/LowCost.mp3",
                             GameSettings::masterVolume / 100.0f
                         );
 
@@ -255,7 +255,7 @@ namespace TowerHandler {
                     }
                     m_points -= REFRESH_COST;
                     RefreshSlots();
-                    AudioManager::PlaySFX("Assets/PowerUp.wav", GameSettings::masterVolume / 100.0f);
+                    AudioManager::PlaySFX("Assets/Audio/ShopRefresh.wav", GameSettings::masterVolume / 100.0f);
                     return;
                 }
 

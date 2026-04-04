@@ -111,7 +111,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     if (bgmVol < 0.0f) bgmVol = 0.0f;
     if (bgmVol > 1.0f) bgmVol = 1.0f;
 
-    AudioManager::PlayBGM("Assets/bouken.mp3", bgmVol);
+    AudioManager::PlayBGM("Assets/Audio/bouken.mp3", bgmVol);
     AudioManager::SetBGMVolume(bgmVol);
     AudioManager::SetSFXVolume(1.f);
 
