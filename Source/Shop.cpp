@@ -79,6 +79,10 @@ namespace TowerHandler {
         AEGfxSetTransform(transform.m);
         AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
         AEGfxMeshFree(mesh);
+
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+        AEGfxSetTransparency(1.0f);
     }
 
     // Init

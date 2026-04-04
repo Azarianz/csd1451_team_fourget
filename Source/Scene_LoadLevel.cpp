@@ -147,7 +147,8 @@ void Scene_LoadLevel::DrawXAtCell(int x, int y, float alpha)
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetColorToAdd(0, 0, 0, 0);
-    AEGfxSetColorToMultiply(1, 1, 1, 1);
+    
+    (1, 1, 1, 1);
     AEGfxSetTransparency(alpha);
 
     AEMtx33 scale, trans, m;

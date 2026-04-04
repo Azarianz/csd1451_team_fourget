@@ -1184,6 +1184,11 @@ void Scene_Prototype::DrawUI() const
 
         AEGfxSetTransform(transform.m);
         AEGfxMeshDraw(m_flagMeshes[flagIndex], AE_GFX_MDM_TRIANGLES);
+
+        //Reset
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+        AEGfxSetTransparency(1.0f);
     }
 }
 // --------------------------------------------------------
@@ -1612,8 +1617,6 @@ void Scene_Prototype::Update(float dt)
         UpdateWinPopup(mouseX, mouseY);
         return;
     }
-
-
 }
 
 void Scene_Prototype::Draw()
@@ -1673,6 +1676,13 @@ void Scene_Prototype::Draw()
     DrawUI();
 
     Graphics::RenderAll();
+
+    //Reset
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
     // Only draw tutorial/codex when no blocking popup is covering them
     if (!IsBlockingPopupOpen())

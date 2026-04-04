@@ -347,7 +347,8 @@ namespace TowerHandler {
             AEGfxTextureSet(g_CircleOutlineTex, 0, 0);
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
             AEGfxSetTransparency(0.45f);
-            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            
+
             AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
             AEGfxMeshStart();
@@ -423,6 +424,12 @@ namespace TowerHandler {
         }
 
         DrawHealthBar(); // only for base tower
+
+
+        //Reset
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+        AEGfxSetTransparency(1.0f);
     }
 
     // ============================================================

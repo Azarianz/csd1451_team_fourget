@@ -199,6 +199,10 @@ void Enemy::DrawHealthBar() const
     AEMtx33Concat(&transformFg, &transFg, &scaleFg);
     AEGfxSetTransform(transformFg.m);
     AEGfxMeshDraw(quad, AE_GFX_MDM_TRIANGLES);
+
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+    AEGfxSetTransparency(1.0f);
 }
 
 void Enemy::Draw()
@@ -247,7 +251,6 @@ void Enemy::Draw()
 }
 
 // --- Specific Enemies ---
-
 void ZombieV1::Init()
 {
     Enemy::Init(40.0f, 40.0f, { 1.0f, 1.0f, 1.0f, 1.0f }, 50.0f, 10.0f, 125.0f);
