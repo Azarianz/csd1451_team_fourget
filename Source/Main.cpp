@@ -104,6 +104,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     AESysInit(hInstance, nCmdShow, res.width, res.height, 1, 60, true, NULL);
     AESysSetWindowTitle("Merge Defenders Prototype");
+    AESysSetWindowIcon("Assets/GameIcon.ico", 32, 32);
 
     // Init Audio Manager before any scenes, so that scenes can play BGM/SFX in their Init() if needed
     AudioManager::Init();

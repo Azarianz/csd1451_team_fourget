@@ -16,6 +16,7 @@
     <ProjectGuid>{a18c2fc6-9dbd-460a-96b9-2d85efbaaee5}</ProjectGuid>
     <RootNamespace>AlphaEngineProject</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>MergeDefenders</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -159,6 +160,13 @@ xcopy "$(SolutionDir)Extern\AlphaEngine\lib\fmod.dll" "$(OutDir)" /s /r /y /q</C
     <ClInclude Include="..\Source\Tower.h" />
     <ClInclude Include="..\Source\TutorialPopup.h" />
     <ClInclude Include="..\Source\Utility.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MergeDefenders.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Assets\GameIcon.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
