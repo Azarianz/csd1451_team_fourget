@@ -216,6 +216,8 @@ namespace TowerHandler {
         Enemy* target = nullptr; // homing target (nulled when enemy dies)
         bool   shouldRemove = false;
 
+        Graphics::ShapeId spriteId = 0;
+
         void Update(float dt)
         {
 			lifeTime -= dt;

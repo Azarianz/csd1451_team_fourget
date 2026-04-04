@@ -1652,8 +1652,10 @@ void Scene_Prototype::Draw()
     for (auto& t : activeTowers)
         t.Draw();
 
-    for (auto& b : activeBullets)
-        b.Draw();
+    //Because once bullets are using Graphics::DrawSprite(...), 
+    //they’ll be rendered later by Graphics::RenderAll()
+    //for (auto& b : activeBullets)
+    //    b.Draw();
 
     for (Enemy* e : enemies)
     {

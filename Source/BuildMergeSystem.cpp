@@ -487,7 +487,18 @@ void BuildMergeSystem::RemoveTowerAtIndex(int idx)
 
     // Clear bullets to avoid bullets referencing removed towers
     if (activeBullets)
+    {
+        for (auto& b : *activeBullets)
+        {
+            if (b.spriteId != 0)
+            {
+                Graphics::Destroy(b.spriteId);
+                b.spriteId = 0;
+            }
+        }
+
         activeBullets->clear();
+    }
 }
 
 /*

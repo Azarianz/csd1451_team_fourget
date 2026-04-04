@@ -13,6 +13,8 @@ namespace TowerHandler {
     // --------------------------------------------------------
     //  File-scope data
     // --------------------------------------------------------
+    static AEGfxTexture* g_ProjectileTex = nullptr;
+    static AEGfxTexture* g_CircleOutlineTex = nullptr;
     static AEGfxTexture* g_TowerSheet = nullptr;
     int nextTowerID = 0;
     LevelStats g_TowerLevelStats[6][3] = {};
@@ -125,6 +127,12 @@ namespace TowerHandler {
     //  Asset loading
     // ============================================================
     void LoadTowerAssets(){
+        if (!g_ProjectileTex)
+            g_ProjectileTex = AEGfxTextureLoad("Assets/projectile.png");
+
+        if (!g_CircleOutlineTex)
+            g_CircleOutlineTex = AEGfxTextureLoad("Assets/circle_outline.png");
+
         if (!g_TowerSheet)
             g_TowerSheet = AEGfxTextureLoad("Assets/spritesheet.png");
 
@@ -332,17 +340,36 @@ namespace TowerHandler {
         // Range ring (only while dragging or selected)
         if (isDragging || isSelected)
         {
-            float savedSX    = _sizeX;
-            float savedSY    = _sizeY;
-            Color savedColor = color;
- 
-            _sizeX = _sizeY = details.range;
-            color = { 1.f, 1.f, 1.f, 0.4f };
-            GameObject::Draw();
- 
-            _sizeX = savedSX;
-            _sizeY = savedSY;
-            color  = savedColor;
+            AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+            AEGfxTextureSet(g_CircleOutlineTex, 0, 0);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetTransparency(0.45f);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
+
+            AEGfxMeshStart();
+            AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+                0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f,
+                0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
+            AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+                0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f,
+                -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+
+            AEGfxVertexList* ringMesh = AEGfxMeshEnd();
+            if (ringMesh)
+            {
+                AEMtx33 s, r, t, m;
+                AEMtx33Scale(&s, details.range * 2.0f, details.range * 2.0f);
+                AEMtx33Rot(&r, 0.0f);
+                AEMtx33Trans(&t, x, y);
+                AEMtx33Concat(&m, &r, &s);
+                AEMtx33Concat(&m, &t, &m);
+                AEGfxSetTransform(m.m);
+                AEGfxMeshDraw(ringMesh, AE_GFX_MDM_TRIANGLES);
+                AEGfxMeshFree(ringMesh);
+            }
+
+            AEGfxSetTransparency(1.0f);
         }
 
         // Only draw textbox when placed and selected.
@@ -354,26 +381,42 @@ namespace TowerHandler {
         // Expanding AoE ring (slow tower only)
         if (details.towerType == SLOW_TOWER && aoeRingActive)
         {
-            // fireTimer counts down from fireCooldown to 0
-            // ring grows from 0 to size of range as fireCooldown goes to 0
             float progress = 1.0f - (details.fireTimer / details.fireCooldown);
             float ringRadius = progress * details.range;
 
-            // Deactivate once the ring has fully expanded
             if (details.fireTimer <= 0.0f)
                 aoeRingActive = false;
 
-            float savedSX = _sizeX;
-            float savedSY = _sizeY;
-            Color savedColor = color;
+            AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+            AEGfxTextureSet(g_CircleOutlineTex, 0, 0);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetTransparency(0.5f);
+            AEGfxSetColorToMultiply(0.4f, 0.8f, 1.0f, 1.0f);
+            AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
 
-            _sizeX = _sizeY = ringRadius;
-            color = { 0.4f, 0.8f, 1.0f, 0.35f }; // translucent light blue
-            GameObject::Draw();
+            AEGfxMeshStart();
+            AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+                0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f,
+                0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f);
+            AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f,
+                0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f,
+                -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
 
-            _sizeX = savedSX;
-            _sizeY = savedSY;
-            color = savedColor;
+            AEGfxVertexList* ringMesh = AEGfxMeshEnd();
+            if (ringMesh)
+            {
+                AEMtx33 s, r, t, m;
+                AEMtx33Scale(&s, ringRadius * 2.0f, ringRadius * 2.0f);
+                AEMtx33Rot(&r, 0.0f);
+                AEMtx33Trans(&t, x, y);
+                AEMtx33Concat(&m, &r, &s);
+                AEMtx33Concat(&m, &t, &m);
+                AEGfxSetTransform(m.m);
+                AEGfxMeshDraw(ringMesh, AE_GFX_MDM_TRIANGLES);
+                AEGfxMeshFree(ringMesh);
+            }
+
+            AEGfxSetTransparency(1.0f);
         }
 
         DrawHealthBar(); // only for base tower
@@ -789,10 +832,33 @@ namespace TowerHandler {
         b._sizeY   = 10.0f;
         b.damage   = tower.details.projectile.damage;
         b.speed    = tower.details.projectile.speed;
-        b.color    = tower.color;
         b.segments = 20;
-        b.mesh     = nullptr;
-        b.target   = &enemy;
+        b.mesh = nullptr;
+        b.target = &enemy;
+
+		//Color based on tower type
+        switch (tower.details.towerType)
+        {
+        case BASIC_TOWER:
+            b.color = { 0.2f, 1.0f, 0.2f, 0.9f }; // bright green
+            break;
+
+        case SNIPER_TOWER:
+            b.color = { 0.8f, 0.5f, 1.0f, 0.85f }; // bright blue
+            break;
+
+        case SLOW_TOWER:
+            b.color = { 0.8f, 0.5f, 1.0f, 0.8f }; // purple
+            break;
+
+        case RAPID_TOWER:
+            b.color = { 1.0f, 0.7f, 0.1f, 1.0f };  // yellow-orange
+            break;
+
+        default:
+            b.color = { 1.0f, 1.0f, 1.0f, 0.8f };
+            break;
+        }
  
         // Initial direction toward target
         float dx     = enemy.x - tower.x;
@@ -803,6 +869,13 @@ namespace TowerHandler {
             b.dirX = dx / length;
             b.dirY = dy / length;
         }
+
+        b.spriteId = Graphics::DrawSprite(
+            g_ProjectileTex,
+            b.x, b.y,
+            b._sizeX * 2.0f, b._sizeY * 2.0f,
+            b.color.r, b.color.g, b.color.b, b.color.a
+        );
  
         bullets.push_back(b);
         tower.details.fireTimer = tower.details.fireCooldown;
@@ -887,6 +960,13 @@ namespace TowerHandler {
         {
             b.Update(dt);
  
+            if (b.spriteId != 0)
+            {
+                Graphics::SetPosition(b.spriteId, b.x, b.y);
+                Graphics::SetScale(b.spriteId, b._sizeX * 2.0f, b._sizeY * 2.0f);
+                Graphics::SetColor(b.spriteId, b.color.r, b.color.g, b.color.b, b.color.a);
+            }
+
             // Hit detection
             for (Enemy* e : enemies)
             {
@@ -917,6 +997,15 @@ namespace TowerHandler {
                 b.shouldRemove = true;
         }
  
+        for (auto& b : activeBullets)
+        {
+            if (b.shouldRemove && b.spriteId != 0)
+            {
+                Graphics::Destroy(b.spriteId);
+                b.spriteId = 0;
+            }
+        }
+
         activeBullets.erase(
             std::remove_if(activeBullets.begin(), activeBullets.end(),
                 [](const ActiveBullet& b) { return b.shouldRemove; }),
