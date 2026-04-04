@@ -31,7 +31,7 @@ namespace GridSystem {
         pTileMesh = nullptr;
         pTileTex = nullptr;
 
-        pTileTex = AEGfxTextureLoad("Assets/grid_highlighted.png");
+        pTileTex = AEGfxTextureLoad("Assets/Sprites/grid_highlighted.png");
         //if (!pTileTex) PRINT("FAILED to load Assets/grid_highlighted.png\n");
         //else {
         //    PRINT("SUCCESSFULLY loaded Assets/grid_highlighted.png\n");

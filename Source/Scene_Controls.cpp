@@ -13,14 +13,14 @@ void Scene_Controls::Init()
     m_tutorialPopup.Reset();
     m_tutorialPopup.SetEnabled(true);
     m_tutorialPopup.SetSlides({
-        "Assets/controls.png",
+        "Assets/Tutorial/controls.png",
         "Assets/Tutorial/tutorial_01.png",
         "Assets/Tutorial/tutorial_02.png",
         "Assets/Tutorial/tutorial_03.png",
         "Assets/Tutorial/tutorial_04.png",
         "Assets/Tutorial/tutorial_05.png",
         "Assets/Tutorial/tutorial_06.png",
-        "Assets/codex.png"
+        "Assets/Tutorial/codex.png"
         });
     m_tutorialPopup.ForceStart();
 }

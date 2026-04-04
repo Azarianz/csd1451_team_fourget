@@ -104,9 +104,9 @@ namespace TowerHandler {
         }
 
         pCircleMesh = BuildCircleMesh(64);
-        pSpritesheet = AEGfxTextureLoad("Assets/spritesheet.png");
-        pRefreshSheet = AEGfxTextureLoad("Assets/refresh_icon.png");
-        pSlotTex = AEGfxTextureLoad("Assets/item_window.png");
+        pSpritesheet = AEGfxTextureLoad("Assets/Sprites/spritesheet.png");
+        pRefreshSheet = AEGfxTextureLoad("Assets/Sprites/refresh_icon.png");
+        pSlotTex = AEGfxTextureLoad("Assets/Sprites/item_window.png");
 
         /*
         if (!pSlotTex) PRINT("Shop Init: Failed to load Assets/item_window.png!\n");

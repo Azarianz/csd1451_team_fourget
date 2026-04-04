@@ -130,13 +130,13 @@ namespace TowerHandler {
     // ============================================================
     void LoadTowerAssets(){
         if (!g_ProjectileTex)
-            g_ProjectileTex = AEGfxTextureLoad("Assets/projectile.png");
+            g_ProjectileTex = AEGfxTextureLoad("Assets/Sprites/projectile.png");
 
         if (!g_CircleOutlineTex)
-            g_CircleOutlineTex = AEGfxTextureLoad("Assets/circle_outline.png");
+            g_CircleOutlineTex = AEGfxTextureLoad("Assets/Sprites/circle_outline.png");
 
         if (!g_TowerSheet)
-            g_TowerSheet = AEGfxTextureLoad("Assets/spritesheet.png");
+            g_TowerSheet = AEGfxTextureLoad("Assets/Sprites/spritesheet.png");
 
         Tower::LoadStatsFont();
 
@@ -893,7 +893,7 @@ namespace TowerHandler {
         float t = (float)rand() / (float)RAND_MAX;
         float pitch = 0.9f + t * 0.2f;
 
-        AudioManager::PlaySFX(sound, GameSettings::masterVolume / 100.0f, pitch);
+        AudioManager::PlaySFX(sound, (GameSettings::masterVolume / 100.0f) * 0.45f, pitch);
  
         bullets.push_back(b);
         tower.details.fireTimer = tower.details.fireCooldown;
@@ -1020,7 +1020,7 @@ namespace TowerHandler {
                     float t = (float)rand() / (float)RAND_MAX;
                     float pitch = 0.9f + t * 0.2f;
 
-                    AudioManager::PlaySFX(sound, (GameSettings::masterVolume / 100.0f) * 0.5f, pitch);
+                    AudioManager::PlaySFX(sound, (GameSettings::masterVolume / 100.0f) * 0.55f, pitch);
 
                     b.shouldRemove = true;
                     break;

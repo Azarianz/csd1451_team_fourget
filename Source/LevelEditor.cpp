@@ -23,7 +23,7 @@ void LevelEditor::Init(int w, int h)
     m_grid = new GridSystem::Grid(w, h, 1.0f);
     m_grid->Init();
 
-    m_tilesetTex = AEGfxTextureLoad("Assets/tilesheet.png");
+    m_tilesetTex = AEGfxTextureLoad("Assets/Sprites/tilesheet.png");
     //if (!m_tilesetTex)
     //    PRINT("FAILED to load tileset: Assets/tilesheet.png\n");
 

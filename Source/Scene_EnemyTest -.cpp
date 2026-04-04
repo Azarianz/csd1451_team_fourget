@@ -45,7 +45,7 @@ void Scene_Enemy::Init()
     gameSpeedMultiplier = 1.0f;
 
     // Load sprite sheet and specific flag UV meshes (Col 12, Rows 0, 1, 2)
-    m_spriteSheet = AEGfxTextureLoad("Assets/rawspritesheet.png");
+    m_spriteSheet = AEGfxTextureLoad("Assets/Sprites/rawspritesheet.png");
     m_flagMeshes[0] = CreateFlagMesh(9, 17); // White Flag (1x)
     m_flagMeshes[1] = CreateFlagMesh(6, 17); // Green Flag (2x)
     m_flagMeshes[2] = CreateFlagMesh(7, 17); // Blue Flag (4x)

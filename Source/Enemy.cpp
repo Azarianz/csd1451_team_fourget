@@ -17,7 +17,7 @@ static AEGfxVertexList* GetEnemyFrameMesh(int col, int row)
 {
     // Check if sprite sheet loaded
     if (!g_EnemySpriteSheet) {
-        g_EnemySpriteSheet = AEGfxTextureLoad("Assets/spritesheet.png");
+        g_EnemySpriteSheet = AEGfxTextureLoad("Assets/Sprites/spritesheet.png");
     }
 
     if (g_FrameMeshes[row][col]) return g_FrameMeshes[row][col];

@@ -236,7 +236,7 @@ bool LevelLoader::EnsureRenderReady()
     if (m_tilesetTex)
         return true;
 
-    m_tilesetTex = AEGfxTextureLoad("Assets/tilesheet.png");
+    m_tilesetTex = AEGfxTextureLoad("Assets/Sprites/tilesheet.png");
     if (!m_tilesetTex)
     {
         //PRINT("FAILED to load tileset: Assets/tilesheet.png\n");
