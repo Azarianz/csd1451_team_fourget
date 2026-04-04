@@ -275,9 +275,9 @@ bool Scene_Prototype::IsInNextStageButton(int mouseX, int mouseY) const
     const float centerX = left + popupW * 0.5f;
 
     const float buttonW = 190.0f;
-    const float buttonH = 24.0f;
+    const float buttonH = 28.0f;
     const float buttonX = centerX - buttonW * 0.5f;
-    const float buttonY = top + 118.0f; // match draw row
+    const float buttonY = top + 86.0f; // match draw row
 
     return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
         (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
@@ -295,9 +295,9 @@ bool Scene_Prototype::IsInMainMenuButton(int mouseX, int mouseY) const
     const float centerX = left + popupW * 0.5f;
 
     const float buttonW = 180.0f;
-    const float buttonH = 24.0f;
+    const float buttonH = 28.0f;
     const float buttonX = centerX - buttonW * 0.5f;
-    const float buttonY = top + 172.0f;
+    const float buttonY = top + 140.0f;
 
     return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
         (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
@@ -481,9 +481,9 @@ bool Scene_Prototype::IsInRetryButton(int mouseX, int mouseY) const
     const float centerX = left + popupW * 0.5f;
 
     const float buttonW = 190.0f;
-    const float buttonH = 24.0f;
+    const float buttonH = 28.0f;
     const float buttonX = centerX - buttonW * 0.5f;
-    const float buttonY = top + 118.0f;
+    const float buttonY = top + 86.0f;
 
     return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
         (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
@@ -668,9 +668,9 @@ bool Scene_Prototype::IsInResumeButton(int mouseX, int mouseY) const
     const float centerX = left + popupW * 0.5f;
 
     const float buttonW = 190.0f;
-    const float buttonH = 24.0f;
+    const float buttonH = 28.0f;
     const float buttonX = centerX - buttonW * 0.5f;
-    const float buttonY = top + 118.0f;
+    const float buttonY = top + 86.0f;
 
     return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
         (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
@@ -688,9 +688,9 @@ bool Scene_Prototype::IsInGuideButton(int mouseX, int mouseY) const
     const float centerX = left + popupW * 0.5f;
 
     const float buttonW = 190.0f;
-    const float buttonH = 24.0f;
+    const float buttonH = 22.0f;
     const float buttonX = centerX - buttonW * 0.5f;
-    const float buttonY = top + 145.0f;
+    const float buttonY = top + 114.f;
 
     return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
         (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
