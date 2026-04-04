@@ -74,9 +74,9 @@ bool Scene_Prototype::IsInQuitYesButton(int mouseX, int mouseY) const
     const float centerX = left + popupW * 0.5f;
 
     const float buttonW = 160.0f;
-    const float buttonH = 24.0f;
+    const float buttonH = 28.0f;
     const float buttonX = centerX - buttonW * 0.5f;
-    const float buttonY = top + 145.0f;
+    const float buttonY = top + 155.0f; // Matched with text render
 
     return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
         (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
@@ -94,9 +94,9 @@ bool Scene_Prototype::IsInQuitNoButton(int mouseX, int mouseY) const
     const float centerX = left + popupW * 0.5f;
 
     const float buttonW = 120.0f;
-    const float buttonH = 24.0f;
+    const float buttonH = 28.0f;
     const float buttonX = centerX - buttonW * 0.5f;
-    const float buttonY = top + 172.0f;
+    const float buttonY = top + 195.0f; // Matched with text render
 
     return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
         (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
@@ -287,7 +287,7 @@ bool Scene_Prototype::IsInNextStageButton(int mouseX, int mouseY) const
     const float buttonW = 190.0f;
     const float buttonH = 28.0f;
     const float buttonX = centerX - buttonW * 0.5f;
-    const float buttonY = top + 86.0f; // match draw row
+    const float buttonY = top + 118.0f; // Matched with text render
 
     return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
         (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
@@ -307,7 +307,12 @@ bool Scene_Prototype::IsInMainMenuButton(int mouseX, int mouseY) const
     const float buttonW = 180.0f;
     const float buttonH = 28.0f;
     const float buttonX = centerX - buttonW * 0.5f;
-    const float buttonY = top + 140.0f;
+
+    // Dynamic adjustment so Main Menu hitboxes match exactly where they are rendered
+    float buttonY = top + 172.0f; // Default for Win/Lose Popup
+    if (m_pauseMenuOpen) {
+        buttonY = top + 190.0f; // Specific for Pause Popup
+    }
 
     return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
         (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
@@ -495,7 +500,7 @@ bool Scene_Prototype::IsInRetryButton(int mouseX, int mouseY) const
     const float buttonW = 190.0f;
     const float buttonH = 28.0f;
     const float buttonX = centerX - buttonW * 0.5f;
-    const float buttonY = top + 86.0f;
+    const float buttonY = top + 118.0f; // Matched with text render
 
     return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
         (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
@@ -688,7 +693,7 @@ bool Scene_Prototype::IsInResumeButton(int mouseX, int mouseY) const
     const float buttonW = 190.0f;
     const float buttonH = 28.0f;
     const float buttonX = centerX - buttonW * 0.5f;
-    const float buttonY = top + 86.0f;
+    const float buttonY = top + 100.0f; // Matched with text render
 
     return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
         (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
@@ -706,9 +711,9 @@ bool Scene_Prototype::IsInGuideButton(int mouseX, int mouseY) const
     const float centerX = left + popupW * 0.5f;
 
     const float buttonW = 190.0f;
-    const float buttonH = 22.0f;
+    const float buttonH = 28.0f;
     const float buttonX = centerX - buttonW * 0.5f;
-    const float buttonY = top + 114.f;
+    const float buttonY = top + 145.0f; // Matched with text render
 
     return ((float)mouseX >= buttonX && (float)mouseX <= buttonX + buttonW &&
         (float)mouseY >= buttonY && (float)mouseY <= buttonY + buttonH);
@@ -780,9 +785,10 @@ void Scene_Prototype::DrawPausePopup() const
             return areaCenterX - textWidth * 0.5f;
         };
 
-    const float resumeY = top + 118.0f;
+    // Adjusted Y layout with larger gaps
+    const float resumeY = top + 100.0f;
     const float guideY = top + 145.0f;
-    const float menuY = top + 172.0f;
+    const float menuY = top + 190.0f;
 
     // dark fullscreen overlay
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
@@ -1372,7 +1378,7 @@ void Scene_Prototype::UpdateBaseCollision()
             e->escapedBase = true;
             AudioManager::PlaySFX("Assets/Audio/BaseHit.wav", GameSettings::masterVolume / 100.0f);
 
-			// Null any bullet targets pointing to this enemy to prevent dangling pointers
+            // Null any bullet targets pointing to this enemy to prevent dangling pointers
             for (auto& b : activeBullets)
             {
                 if (b.target == e) b.target = nullptr;
@@ -1436,15 +1442,15 @@ void Scene_Prototype::CleanupDeadEnemies()
 
                 // TRIGGER DEATH PARTICLES HERE
                 ParticleSystem::SpawnBurst(e->x, e->y,
-                                            0.6f, 0.6f, 0.6f, // Grey color
-                                            ParticleSystem::BurstSize::LARGE);
+                    0.6f, 0.6f, 0.6f, // Grey color
+                    ParticleSystem::BurstSize::LARGE);
             }
 
-			// Nulls bullet targets pointing to an enemy before 
+            // Nulls bullet targets pointing to an enemy before 
             // deleting it to prevent dangling pointers (FIXED TYPO HERE)
-            for(auto& b : activeBullets)
+            for (auto& b : activeBullets)
             {
-				if (b.target == e) b.target = nullptr;
+                if (b.target == e) b.target = nullptr;
             }
 
             delete e;
@@ -1488,7 +1494,7 @@ void Scene_Prototype::Init()
         //("Scene_Prototype Init failed to load level.\n");
 
         if (gameOverFont < 0)
-			gameOverFont = g_TitleFont28;
+            gameOverFont = g_TitleFont28;
 
         if (m_uiFont < 0)
             m_uiFont = g_TitleFont28;
@@ -1537,7 +1543,7 @@ void Scene_Prototype::Init()
     //Codex assets
     m_codexTex = AEGfxTextureLoad("Assets/Tutorial/codex.png");
 
-	//Tutorial assets
+    //Tutorial assets
     m_spriteSheet = AEGfxTextureLoad("Assets/Sprites/rawspritesheet.png");
     m_flagMeshes[0] = CreateFlagMesh(9, 17);
     m_flagMeshes[1] = CreateFlagMesh(6, 17);
