@@ -83,9 +83,6 @@ namespace TowerHandler {
         int m_purchaseCount = 0;
         int GetCurrentTowerCost() const;
 
-        AEAudio m_sfxRefresh = {};
-        AEAudioGroup m_sfxGroup = {};
-
         static const int TOTAL_SLOTS = 7;
         static const int TOWER_SLOTS = 6;
 

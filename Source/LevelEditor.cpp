@@ -337,9 +337,6 @@ void LevelEditor::Update(float /*dt*/)
         }
         else
         {
-            bool easyCopied = CopyFileContents("Assets/Waves/level_01_easy.txt", easyWavePath);
-            bool hardCopied = CopyFileContents("Assets/Waves/level_01_hard.txt", hardWavePath);
-
             //PRINT("Saved level: %s\n", levelPath.c_str());
 
             //if (easyCopied)

@@ -16,7 +16,6 @@ public:
     void SwitchTo(SceneID next);
 
     SceneID Current() const { return currentId; }
-    void SetBGMVolume(float volume);
 
 private:
     SceneManager() = default;
@@ -30,8 +29,4 @@ private:
 private:
     Scene* currentScene = nullptr;
     SceneID currentId = SceneID::None;
-
-    AEAudio      m_persistentBgm;
-    AEAudioGroup m_bgmGroup;
-    bool         m_audioInitialized = false;
 };

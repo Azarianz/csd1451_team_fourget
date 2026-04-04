@@ -20,11 +20,6 @@ private:
     float m_inputCooldown = 0.0f;
     static const float INPUT_REPEAT_DELAY;
 
-    // Background music
-    AEAudio      m_bgm = {};
-    AEAudioGroup m_bgmGroup = {};
-    bool         m_bgmLoaded = false;
-
     // Helpers
     void HandleInput(float dt);
     void HandleMouseInput();

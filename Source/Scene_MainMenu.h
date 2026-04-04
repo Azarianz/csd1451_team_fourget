@@ -33,11 +33,6 @@ private:
     int m_uiFont = -1;
     float m_bounceTimer = 0.0f;
 
-    // Background music
-    AEAudio      m_bgm;
-    AEAudioGroup m_bgmGroup;
-    bool         m_bgmLoaded = false;
-
     // Main menu background
     AEGfxTexture* m_bgTex = nullptr;
 

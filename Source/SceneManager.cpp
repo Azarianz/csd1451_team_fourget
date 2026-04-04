@@ -24,20 +24,6 @@ SceneManager& SceneManager::I()
 void SceneManager::Init(SceneID startScene)
 {
     SwitchTo(startScene);
-    m_persistentBgm = AEAudioLoadMusic("Assets/bouken.mp3");
-    m_bgmGroup = AEAudioCreateGroup();
-    AEAudioPlay(m_persistentBgm, m_bgmGroup, 1.0f, 1.0f, -1);
-    m_audioInitialized = true;
-
-    if (!m_audioInitialized)
-    {
-        m_persistentBgm = AEAudioLoadMusic("Assets/bouken.mp3");
-        m_bgmGroup = AEAudioCreateGroup();
-
-        float initialVol = GameSettings::masterVolume / 100.0f;
-        AEAudioPlay(m_persistentBgm, m_bgmGroup, initialVol, 1.0f, -1);
-        m_audioInitialized = true;
-    }
 }
 
 void SceneManager::Update(float dt)
@@ -61,12 +47,6 @@ void SceneManager::Exit()
         currentScene = nullptr;
     }
     currentId = SceneID::None;
-
-    if (m_audioInitialized)
-    {
-        AEAudioStopGroup(m_bgmGroup);
-        m_audioInitialized = false;
-    }
 }
 
 void SceneManager::SwitchTo(SceneID next)
@@ -85,12 +65,6 @@ void SceneManager::SwitchTo(SceneID next)
 
     assert(currentScene && "CreateScene() returned nullptr. Did you register the scene?");
     currentScene->Init();
-}
-
-void SceneManager::SetBGMVolume(float volume) {
-    if (m_audioInitialized) {
-        AEAudioSetGroupVolume(m_bgmGroup, volume);
-    }
 }
 
 Scene* SceneManager::CreateScene(SceneID id)

@@ -1,4 +1,6 @@
 #include "BuildMergeSystem.h"
+#include "AudioManager.h"
+#include "GameSettings.h"
 
 #include <algorithm>
 #include <cmath>
@@ -587,6 +589,12 @@ bool BuildMergeSystem::SnapDraggedTowerToGrid(int mouseX, int mouseY)
 
         RemoveTowerAtIndex(targetIdx);
 
+        // play demolish sound
+        AudioManager::PlaySFX(
+            "Assets/TowerDemolish.wav",
+            GameSettings::masterVolume / 100.0f
+        );
+
         // If removed tower was before dragged tower, index shifts left by 1
         if (targetIdx < draggedIndex)
             --draggedIndex;
@@ -612,6 +620,11 @@ bool BuildMergeSystem::SnapDraggedTowerToGrid(int mouseX, int mouseY)
     (*activeTowers)[(size_t)draggedIndex].isDragging = false;
     (*activeTowers)[(size_t)draggedIndex].isSelected = false;
     (*activeTowers)[draggedIndex].isPlaced = true;  // using TS code
+
+    AudioManager::PlaySFX(
+        "Assets/TowerPlace.mp3",
+        GameSettings::masterVolume / 100.0f
+    );
 
     // Update occupancy after placement
     RebuildOccupiedFromTowers();

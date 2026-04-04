@@ -4,6 +4,7 @@
 #include "AEEngine.h"
 #include "AEInput.h"
 #include "GameSettings.h"
+#include "AudioManager.h"
 #include "Scene_LevelSelect.h"
 
 #include <cstring>
@@ -63,10 +64,6 @@ void Scene_MainMenu::Init()
     {
         m_bgTex = AEGfxTextureLoad("Assets/mainmenu_bg.png");
     }
-
-    m_bgmLoaded = true;
-    float normalised = GameSettings::masterVolume / 100.0f;
-    AEAudioSetGroupVolume(m_bgmGroup, normalised);
 }
 
 void Scene_MainMenu::Update(float dt)
@@ -110,11 +107,6 @@ void Scene_MainMenu::Exit()
     {
         AEGfxTextureUnload(m_bgTex);
         m_bgTex = nullptr;
-    }
-
-    if (m_bgmLoaded)
-    {
-        m_bgmLoaded = false;
     }
 }
 

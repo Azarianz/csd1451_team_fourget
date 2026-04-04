@@ -2,6 +2,7 @@
 #include "GameSettings.h"
 #include "SceneManager.h"
 #include "SceneID.h"
+#include "AudioManager.h"
 #include "AEEngine.h"
 #include "AEInput.h"
 #include <cstring>
@@ -28,9 +29,9 @@ float Scene_Settings::GetCenteredX(const char* text, float scale) const
 
 void Scene_Settings::ApplyVolume() const
 {
-    if (!m_bgmLoaded) return;
     float normalised = GameSettings::masterVolume / 100.0f;
-    AEAudioSetGroupVolume(m_bgmGroup, normalised);
+    AudioManager::SetBGMVolume(normalised);
+    AudioManager::SetSFXVolume(normalised);
 }
 
 // Init
@@ -38,17 +39,16 @@ void Scene_Settings::Init()
 {
     m_selected = SettingRow::Resolution;
     m_inputCooldown = 0.0f;
-    m_bgmLoaded = false;
 
     m_uiFont = AEGfxCreateFont("Assets/buggy-font.ttf", 28);
 
     // Load and play background music
-    m_bgm = AEAudioLoadMusic("Assets/bouken.mp3");
-    m_bgmGroup = AEAudioCreateGroup();
+    //m_bgm = AEAudioLoadMusic("Assets/bouken.mp3");
+    //m_bgmGroup = AEAudioCreateGroup();
 
-    m_bgmLoaded = true;
-    AEAudioPlay(m_bgm, m_bgmGroup, 1.0f, 1.0f, -1);
-    ApplyVolume();
+    //m_bgmLoaded = true;
+    //AEAudioPlay(m_bgm, m_bgmGroup, 1.0f, 1.0f, -1);
+    //ApplyVolume();
 }
 
 void Scene_Settings::Exit()
@@ -59,11 +59,11 @@ void Scene_Settings::Exit()
         m_uiFont = -1;
     }
 
-    if (m_bgmLoaded)
-    {
-        AEAudioStopGroup(m_bgmGroup);
-        m_bgmLoaded = false;
-    }
+    //if (m_bgmLoaded)
+    //{
+    //    AEAudioStopGroup(m_bgmGroup);
+    //    m_bgmLoaded = false;
+    //}
 }
 
 // HandleInput
@@ -137,7 +137,8 @@ void Scene_Settings::Update(float dt)
     if (GameSettings::masterVolume != previousVolume)
     {
         float normalizedVol = GameSettings::masterVolume / 100.0f;
-        SceneManager::I().SetBGMVolume(normalizedVol);
+        AudioManager::SetBGMVolume(normalizedVol);
+        AudioManager::SetSFXVolume(normalizedVol);
     }
 }
 

@@ -28,7 +28,6 @@ private:
     void DestroyGrid();
 
     bool InitLevelAndGrid();
-    void InitAudio();
     void ResetRuntimeState();
     void CreateBaseTower();
 
@@ -99,10 +98,6 @@ private:
     bool m_quitConfirmOpen = false;
     s8 gameOverFont = -1;
 
-    //SFX
-    AEAudio m_sfxBoom = {};
-    AEAudioGroup m_sfxGroup = {};
-
     WaveManager waveManager;
     s8 m_uiFont = -1;
     void DrawUI() const;
@@ -114,10 +109,6 @@ private:
     BuildMergeSystem buildMergeSystem;
     std::vector<TowerHandler::Tower> activeTowers;
     std::vector<TowerHandler::ActiveBullet> activeBullets;
-
-    AEAudio      m_bgm = AEAudio();
-    AEAudioGroup m_bgmGroup = AEAudioGroup();
-    bool         m_bgmLoaded = false;
 
     std::vector<uint8_t> occupied;
 

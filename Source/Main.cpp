@@ -4,6 +4,7 @@
 #include "SceneManager.h"
 #include "SceneID.h"
 #include "GameSettings.h"
+#include "AudioManager.h"
 
 #include "AEMath.h"
 
@@ -97,11 +98,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     AESysInit(hInstance, nCmdShow, res.width, res.height, 1, 60, true, NULL);
     AESysSetWindowTitle("Merge Defenders Prototype");
 
+    AudioManager::Init();
+
     // Splash first
     RunSplashScreen();
 
     // Then boot main menu
     SceneManager::I().Init(SceneID::MainMenu);
+
+    // Start global BGM once after splash + scene init
+    float bgmVol = GameSettings::masterVolume / 100.0f;
+    if (bgmVol < 0.0f) bgmVol = 0.0f;
+    if (bgmVol > 1.0f) bgmVol = 1.0f;
+
+    AudioManager::PlayBGM("Assets/bouken.mp3", bgmVol);
+    AudioManager::SetBGMVolume(bgmVol);
+    AudioManager::SetSFXVolume(1.f);
 
     int gGameRunning = 1;
     while (gGameRunning)
@@ -126,6 +138,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
     }
 
+    AudioManager::Shutdown();
     SceneManager::I().Exit();
     AESysExit();
 }

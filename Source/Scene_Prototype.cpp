@@ -2,6 +2,7 @@
 #include "Scene_Prototype.h"
 #include "SceneManager.h"
 #include "GameSettings.h"
+#include "AudioManager.h"
 
 #include "AEEngine.h"
 #include "AEInput.h"
@@ -109,6 +110,7 @@ void Scene_Prototype::UpdateQuitConfirmPopup(int mouseX, int mouseY)
     {
         if (IsInQuitYesButton(mouseX, mouseY))
         {
+            AudioManager::ResumeBGM();
             SceneManager::I().SwitchTo(SceneID::MainMenu);
             return;
         }
@@ -122,6 +124,7 @@ void Scene_Prototype::UpdateQuitConfirmPopup(int mouseX, int mouseY)
 
     if (AEInputCheckTriggered(AEVK_RETURN) || AEInputCheckTriggered(AEVK_SPACE))
     {
+        AudioManager::ResumeBGM();
         SceneManager::I().SwitchTo(SceneID::MainMenu);
         return;
     }
@@ -266,9 +269,7 @@ void Scene_Prototype::OpenWinPopup()
 {
     m_stageWon = true;
     m_paused = true;
-
-    if (m_bgmLoaded)
-        AEAudioPauseGroup(m_bgmGroup);
+    AudioManager::PauseBGM();
 }
 
 bool Scene_Prototype::IsInNextStageButton(int mouseX, int mouseY) const
@@ -323,6 +324,7 @@ void Scene_Prototype::UpdateWinPopup(int mouseX, int mouseY)
             if (!LoadNextLevel())
             {
                 //PRINT("No next stage configured. Returning to main menu.\n");
+                AudioManager::ResumeBGM();
                 SceneManager::I().SwitchTo(SceneID::MainMenu);
             }
             return;
@@ -330,6 +332,7 @@ void Scene_Prototype::UpdateWinPopup(int mouseX, int mouseY)
 
         if (IsInMainMenuButton(mouseX, mouseY))
         {
+            AudioManager::ResumeBGM();
             SceneManager::I().SwitchTo(SceneID::MainMenu);
             return;
         }
@@ -340,12 +343,14 @@ void Scene_Prototype::UpdateWinPopup(int mouseX, int mouseY)
         if (!LoadNextLevel())
         {
             //PRINT("No next stage configured. Returning to main menu.\n");
+            AudioManager::ResumeBGM();
             SceneManager::I().SwitchTo(SceneID::MainMenu);
         }
     }
 
     if (AEInputCheckTriggered(AEVK_ESCAPE))
     {
+        AudioManager::ResumeBGM();
         SceneManager::I().SwitchTo(SceneID::MainMenu);
     }
 }
@@ -472,9 +477,7 @@ void Scene_Prototype::OpenLosePopup()
 {
     gameOver = true;
     m_paused = true;
-
-    if (m_bgmLoaded)
-        AEAudioPauseGroup(m_bgmGroup);
+    AudioManager::PauseBGM();
 }
 
 bool Scene_Prototype::IsInRetryButton(int mouseX, int mouseY) const
@@ -506,12 +509,14 @@ void Scene_Prototype::UpdateLosePopup(int mouseX, int mouseY)
     {
         if (IsInRetryButton(mouseX, mouseY))
         {
+            AudioManager::ResumeBGM();
             SceneManager::I().SwitchTo(SceneID::Prototype);
             return;
         }
 
         if (IsInMainMenuButton(mouseX, mouseY))
         {
+            AudioManager::ResumeBGM();
             SceneManager::I().SwitchTo(SceneID::MainMenu);
             return;
         }
@@ -519,12 +524,14 @@ void Scene_Prototype::UpdateLosePopup(int mouseX, int mouseY)
 
     if (AEInputCheckTriggered(AEVK_RETURN) || AEInputCheckTriggered(AEVK_SPACE))
     {
+        AudioManager::ResumeBGM();
         SceneManager::I().SwitchTo(SceneID::Prototype);
         return;
     }
 
     if (AEInputCheckTriggered(AEVK_ESCAPE))
     {
+        AudioManager::ResumeBGM();
         SceneManager::I().SwitchTo(SceneID::MainMenu);
     }
 }
@@ -656,17 +663,14 @@ void Scene_Prototype::OpenPausePopup()
 
     m_showCodex = false;
 
-    if (m_bgmLoaded)
-        AEAudioPauseGroup(m_bgmGroup);
+    AudioManager::PauseBGM();
 }
 
 void Scene_Prototype::ClosePausePopup()
 {
     m_pauseMenuOpen = false;
     m_paused = false;
-
-    if (m_bgmLoaded)
-        AEAudioResumeGroup(m_bgmGroup);
+    AudioManager::ResumeBGM();
 }
 
 bool Scene_Prototype::IsInResumeButton(int mouseX, int mouseY) const
@@ -913,14 +917,10 @@ void Scene_Prototype::UpdateTutorialPopup()
     if (!wasActive && isActive)
     {
         m_paused = true;
-        if (m_bgmLoaded)
-            AEAudioPauseGroup(m_bgmGroup);
     }
     else if (wasActive && !isActive)
     {
         m_paused = false;
-        if (m_bgmLoaded)
-            AEAudioResumeGroup(m_bgmGroup);
     }
 }
 #pragma endregion
@@ -936,14 +936,6 @@ void Scene_Prototype::UpdateCodex()
             m_showCodex = !m_showCodex;
 
             m_paused = m_showCodex;
-
-            if (m_bgmLoaded)
-            {
-                if (m_showCodex)
-                    AEAudioPauseGroup(m_bgmGroup);
-                else
-                    AEAudioResumeGroup(m_bgmGroup);
-            }
         }
     }
 
@@ -951,9 +943,6 @@ void Scene_Prototype::UpdateCodex()
     {
         m_showCodex = false;
         m_paused = false;
-
-        if (m_bgmLoaded)
-            AEAudioResumeGroup(m_bgmGroup);
     }
 }
 
@@ -1032,6 +1021,7 @@ bool Scene_Prototype::LoadNextLevel() const
     GameSettings::selectedLevelFile = nextLevel;
     //PRINT("Loading next level file: %s\n", GameSettings::selectedLevelFile.c_str());
 
+    AudioManager::ResumeBGM();
     SceneManager::I().SwitchTo(SceneID::Prototype);
     return true;
 }
@@ -1115,24 +1105,6 @@ bool Scene_Prototype::InitLevelAndGrid()
     }
 
     return true;
-}
-
-// --------------------------------------------------------
-//  InitAudio
-//  Loads and starts background music for the scene.
-// --------------------------------------------------------
-void Scene_Prototype::InitAudio()
-{
-    m_bgm = AEAudioLoadMusic("Assets/bouken.mp3");
-    m_bgmGroup = AEAudioCreateGroup();
-    m_bgmLoaded = true;
-    AEAudioPlay(m_bgm, m_bgmGroup, 1.0f, 1.0f, -1);
-
-    float vol = GameSettings::masterVolume / 100.0f;
-    AEAudioSetGroupVolume(m_bgmGroup, vol);
-
-    m_sfxBoom = AEAudioLoadMusic("Assets/Boom.wav");
-    m_sfxGroup = AEAudioCreateGroup();
 }
 
 // --------------------------------------------------------
@@ -1383,8 +1355,7 @@ void Scene_Prototype::UpdateBaseCollision()
         {
             e->health = 0.0f;
             e->escapedBase = true;
-            float sfxVol = GameSettings::masterVolume / 100.0f;
-            AEAudioPlay(m_sfxBoom, m_sfxGroup, sfxVol, 1.0f, 0);
+            AudioManager::PlaySFX("Assets/Boom.wav", GameSettings::masterVolume / 100.0f);
 
 			// Null any bullet targets pointing to this enemy to prevent dangling pointers
             for (auto& b : activeBullets)
@@ -1506,7 +1477,6 @@ void Scene_Prototype::Init()
     shop.Init();
     buildMergeSystem.Init(&level, grid, &shop, &activeTowers, &activeBullets, &occupied);
 
-    InitAudio();
     CreateBaseTower();
 
     if (gameOverFont < 0)
@@ -1768,13 +1738,6 @@ void Scene_Prototype::Exit()
     ParticleSystem::Shutdown();
     level.Shutdown();
     DestroyGrid();
-
-    if (m_bgmLoaded)
-    {
-        AEAudioStopGroup(m_bgmGroup);
-        m_bgmLoaded = false;
-    }
-
     buildMergeSystem.Shutdown();
 }
 #pragma endregion
