@@ -126,8 +126,7 @@ namespace TowerHandler {
 
     // ----------------------------------------------------------------
     //  RefreshSlots
-    //  Fills all 6 tower slots with random tower types, then randomly
-    //  display exactly 2 of them at level2.
+    //  Fills all 6 tower slots with random tower types
     // ----------------------------------------------------------------
     void Shop::RefreshSlots()
     {
@@ -138,24 +137,35 @@ namespace TowerHandler {
             slots[i].isLevelTwo = false;
         }
 
-        // Pick 2 distinct NON-BOMB slot indices to be level2
-        int idx1 = -1;
-        int idx2 = -1;
+        int nonBombSlots[TOWER_SLOTS] = {};
+        int nonBombCount = 0;
 
-        do
+        for (int i = 0; i < TOWER_SLOTS; ++i)
         {
-            idx1 = rand() % TOWER_SLOTS;
-        } while (TOWER_DEFS[slots[idx1].defIndex].type == BOMB_TOWER);
+            if (TOWER_DEFS[slots[i].defIndex].type != BOMB_TOWER)
+            {
+                nonBombSlots[nonBombCount++] = i;
+            }
+        }
 
-        do
+        // pick how many lv2 towers this refresh gets: 0, 1, or 2
+        int level2Count = rand() % 3;
+
+        if (level2Count > nonBombCount)
+            level2Count = nonBombCount;
+
+        for (int n = 0; n < level2Count; ++n)
         {
-            idx2 = rand() % TOWER_SLOTS;
-        } while (idx2 == idx1 || TOWER_DEFS[slots[idx2].defIndex].type == BOMB_TOWER);
+            int pick = n + (rand() % (nonBombCount - n));
 
-        slots[idx1].isLevelTwo = true;
-        slots[idx2].isLevelTwo = true;
+            int temp = nonBombSlots[n];
+            nonBombSlots[n] = nonBombSlots[pick];
+            nonBombSlots[pick] = temp;
 
-        m_purchaseCount = 0; // reset escalating cost back to original TOWER_COST
+            slots[nonBombSlots[n]].isLevelTwo = true;
+        }
+
+        m_purchaseCount = 0;
     }
 
     //  GetCurrentTowerCost  (level1 slots only)

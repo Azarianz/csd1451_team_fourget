@@ -8,6 +8,7 @@
 
 #include "AEMath.h"
 #include "GlobalFonts.h"
+#include <ctime>
 
 s8 g_UIFont24 = -1;
 s8 g_TitleFont28 = -1;
@@ -98,6 +99,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     GameSettings::pendingRestart = false; // fresh launch, no pending restart
 
     const GameSettings::Resolution& res = GameSettings::RESOLUTIONS[GameSettings::resolutionIndex];
+
+	srand((unsigned int)time(nullptr)); //seed random with current time for variety in gameplay elements
 
     AESysInit(hInstance, nCmdShow, res.width, res.height, 1, 60, true, NULL);
     AESysSetWindowTitle("Merge Defenders Prototype");
