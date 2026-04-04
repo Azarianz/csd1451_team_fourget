@@ -545,19 +545,19 @@ void Scene_MainMenu::DrawUI() const
     const float settingsTextY = settingsRect.y + kTextBaselineInsetY + settingsOffsetY;
     const float quitTextY = quitRect.y + kTextBaselineInsetY + quitOffsetY;
 
-    Print(playText, playTextX, playTextY,
+    Print(playText, playTextX - 5.f, playTextY,
         (selectedOption == MenuOption::Play || playHover) ? kBright : kDim, kBaseTextScale);
 
-    Print(controlsText, controlsTextX, controlsTextY,
+    Print(controlsText, controlsTextX - 10.f, controlsTextY,
         (selectedOption == MenuOption::Controls || controlsHover) ? kBright : kDim, kBaseTextScale);
 
-    Print(creditsText, creditsTextX, creditsTextY,
+    Print(creditsText, creditsTextX - 15.f, creditsTextY,
         (selectedOption == MenuOption::Credits || creditsHover) ? kBright : kDim, kBaseTextScale);
 
-    Print(settingsText, settingsTextX, settingsTextY,
+    Print(settingsText, settingsTextX - 18.f, settingsTextY,
         (selectedOption == MenuOption::Settings || settingsHover) ? kBright : kDim, kBaseTextScale);
 
-    Print(quitText, quitTextX, quitTextY,
+    Print(quitText, quitTextX - 5.f, quitTextY,
         (selectedOption == MenuOption::Quit || quitHover) ? kBright : kDim, kBaseTextScale);
 
     if (selectedOption == MenuOption::Play)

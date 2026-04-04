@@ -64,14 +64,16 @@ void Scene_Credits::Init()
         {
             "ASSETS USED",
             "",
-            "buggy-font.ttf - CodeMan38",
+            "SFXs - bfxr",
+            "buggy-font - CodeMan38",
+            "liberation-mono - Ascender Corporation",
             "bouken.mp3 - MAKOOTO",
             "Tiny Battle 2D - Kenney Assets",
             "Tiny Tower (Bomb Sprite) - Kenney Assets",
             "item_window.png - Asesprite",
             "refresh_icon.png - Asesprite",
             "tutorial_01 to tutorial_06 - Asesprite",
-            "codex.png - Asesprite"
+            "codex & controls - Asesprite"
         }
     };
 }
