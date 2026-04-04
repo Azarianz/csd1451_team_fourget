@@ -60,7 +60,7 @@
     <ClCompile Include="..\Source\Enemy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\Scene_EnemyTest -.cpp">
+    <ClCompile Include="..\Source\Scene_EnemyTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Scene_Prototype.cpp">
